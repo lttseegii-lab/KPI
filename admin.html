@@ -80,6 +80,9 @@
   .save-bar { display:flex; gap:10px; align-items:center; margin-top:20px; padding-top:18px; border-top:1px solid var(--line); flex-wrap:wrap; }
   .saved-msg { color:var(--accent-2); font-size:13.5px; font-weight:600; opacity:0; transition:opacity .2s; }
   .saved-msg.show { opacity:1; }
+  .form-msg { font-size:13px; font-weight:600; display:none; }
+  .form-msg.ok { display:inline; color:var(--accent-2); }
+  .form-msg.err { display:inline; color:var(--danger); }
   .code-note { font-size:12px; color:var(--muted); background:var(--bg-soft); border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-top:8px; line-height:1.6; }
   .empty { color:var(--muted); text-align:center; padding:30px; border:1px dashed var(--line); border-radius:12px; }
   .book-label { font-size:13px; font-weight:600; color:var(--muted); }
@@ -153,6 +156,7 @@
       <div class="tab" data-tab="pricing" onclick="switchTab('pricing')">📋 Үнийн санал</div>
       <div class="tab" data-tab="schedule" onclick="switchTab('schedule')">📅 Цаг товлолт</div>
       <div class="tab" data-tab="users" onclick="switchTab('users')">👥 Бүртгэлүүд</div>
+      <div class="tab" data-tab="admins" onclick="switchTab('admins')">🔐 Админууд</div>
       <div class="tab" data-tab="contact" onclick="switchTab('contact')">☎️ Холбоо барих</div>
     </div>
 
@@ -288,10 +292,55 @@
     <section id="tab-users" class="hidden">
       <div class="panel-head">
         <h2>Бүртгүүлсэн хэрэглэгчид</h2>
-        <div class="actions"><span id="usrCount" style="font-size:13px; color:var(--muted);"></span></div>
+        <div class="actions">
+          <button class="btn btn-sm" onclick="toggleUserEditor()">+ Хэрэглэгч нэмэх</button>
+          <span id="usrCount" style="font-size:13px; color:var(--muted);"></span>
+        </div>
       </div>
       <div class="hint">Сайтад бүртгүүлсэн хүмүүсийн мэдээлэл энд харагдана — эдгээр нь боломжит үйлчлүүлэгчид (лид) юм.</div>
+      <div class="editor hidden" id="userEditor" style="margin-bottom:20px;">
+        <h3>Шинэ хэрэглэгч нэмэх</h3>
+        <div class="row2">
+          <div class="field"><label>Нэр</label><input id="u-name" placeholder="Овог нэр"></div>
+          <div class="field"><label>И-мэйл</label><input type="email" id="u-email" placeholder="name@example.com"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Утас</label><input id="u-phone" placeholder="+976 ..."></div>
+          <div class="field"><label>Байгууллага</label><input id="u-org" placeholder="Байгууллагын нэр"></div>
+        </div>
+        <div class="field"><label>Албан тушаал</label><input id="u-role" placeholder="Жишээ: Гүйцэтгэх захирал"></div>
+        <div class="save-bar">
+          <button class="btn btn-primary" id="userAddBtn" onclick="addUser()">💾 Нэмэх</button>
+          <button class="btn" onclick="toggleUserEditor(false)">Болих</button>
+          <span class="form-msg" id="userMsg"></span>
+        </div>
+      </div>
       <div class="list" id="usrList"></div>
+    </section>
+
+    <!-- ===== Admin users panel ===== -->
+    <section id="tab-admins" class="hidden">
+      <div class="panel-head">
+        <h2>Админ хэрэглэгчид</h2>
+        <div class="actions"><span id="admCount" style="font-size:13px; color:var(--muted);"></span></div>
+      </div>
+      <div class="hint">Шинэ админ нь энэ админ хэсэгт нэвтэрч контент, хүсэлт, цаг товлолтыг удирдах эрхтэй болно.</div>
+      <div class="editor" style="margin-bottom:20px;">
+        <h3>Шинэ админ нэмэх</h3>
+        <div class="row2">
+          <div class="field"><label>Нэр</label><input id="a-name" placeholder="Овог нэр"></div>
+          <div class="field"><label>И-мэйл</label><input type="email" id="a-email" placeholder="admin@example.com"></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Нууц үг</label><input type="password" id="a-pass" autocomplete="new-password" placeholder="Доод тал нь 6 тэмдэгт"></div>
+          <div class="field"><label>Нууц үг давтах</label><input type="password" id="a-pass2" autocomplete="new-password" placeholder="Давтан оруулна уу"></div>
+        </div>
+        <div class="save-bar">
+          <button class="btn btn-primary" id="adminAddBtn" onclick="addAdmin()">🔐 Админ нэмэх</button>
+          <span class="form-msg" id="adminMsg"></span>
+        </div>
+      </div>
+      <div class="list" id="admList"></div>
     </section>
 
     <!-- ===== Schedule panel ===== -->
@@ -503,6 +552,7 @@
     renderAvList();
     renderBookings();
     renderUsers();
+    renderAdmins();
     appShown = true;
   }
   function showGate() {
@@ -511,7 +561,7 @@
     document.getElementById('pw').value = '';
     appShown = false;
     // Гарсны дараа хувийн мэдээллийг DOM-оос цэвэрлэх (хуваалцсан компьютерээс сэргийлэх)
-    ['qrList', 'bookingList', 'usrList'].forEach(id => {
+    ['qrList', 'bookingList', 'usrList', 'admList'].forEach(id => {
       const el = document.getElementById(id); if (el) el.innerHTML = '';
     });
   }
@@ -519,11 +569,12 @@
   // ---------- Tabs ----------
   function switchTab(t) {
     document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.dataset.tab === t));
-    ['templates','articles','why','pricing','schedule','users','contact'].forEach(name =>
+    ['templates','articles','why','pricing','schedule','users','admins','contact'].forEach(name =>
       document.getElementById('tab-' + name).classList.toggle('hidden', name !== t));
     if (t === 'schedule') { renderAvList(); renderBookings(); }
     if (t === 'pricing') { renderQuestions(); renderQuoteRequests(); }
-    if (t === 'users') { renderUsers(); }
+    if (t === 'users') { renderUsers(); clearUserMsg(); }
+    if (t === 'admins') { renderAdmins(); clearAdminMsg(); }
   }
 
   // ---------- Quote questionnaire builder ----------
@@ -647,6 +698,62 @@
 
   // ---------- Registered users (Firestore submissions kind:'user') ----------
   let usersList = [];
+  function clearUserMsg() {
+    const el = document.getElementById('userMsg');
+    if (!el) return;
+    el.textContent = '';
+    el.className = 'form-msg';
+  }
+  function showUserMsg(msg, ok) {
+    const el = document.getElementById('userMsg');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'form-msg ' + (ok ? 'ok' : 'err');
+  }
+  function clearUserForm() {
+    ['u-name','u-email','u-phone','u-org','u-role'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+  }
+  function toggleUserEditor(force) {
+    const editor = document.getElementById('userEditor');
+    const open = typeof force === 'boolean' ? force : editor.classList.contains('hidden');
+    editor.classList.toggle('hidden', !open);
+    clearUserMsg();
+    if (open) {
+      const first = document.getElementById('u-name');
+      editor.scrollIntoView({ behavior:'smooth', block:'center' });
+      if (first) first.focus();
+    }
+  }
+  function addUser() {
+    const user = {
+      name: document.getElementById('u-name').value.trim(),
+      email: document.getElementById('u-email').value.trim(),
+      phone: document.getElementById('u-phone').value.trim(),
+      org: document.getElementById('u-org').value.trim(),
+      role: document.getElementById('u-role').value.trim(),
+      at: new Date().toISOString(),
+    };
+    const okEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(user.email);
+    if (!user.name || !okEmail || !user.phone || !user.org || !user.role) {
+      showUserMsg('Бүх талбарыг зөв бөглөнө үү.', false);
+      return;
+    }
+    const btn = document.getElementById('userAddBtn');
+    btn.textContent = 'Нэмж байна…'; btn.style.pointerEvents = 'none'; btn.style.opacity = '.7';
+    clearUserMsg();
+    KPICloud.addSubmission('user', user).then(() => {
+      clearUserForm();
+      showUserMsg('Хэрэглэгч нэмэгдлээ.', true);
+      setTimeout(() => toggleUserEditor(false), 800);
+    }).catch(err => {
+      showUserMsg((err && err.message) ? err.message : 'Хэрэглэгч нэмэх үед алдаа гарлаа.', false);
+    }).finally(() => {
+      btn.textContent = '💾 Нэмэх'; btn.style.pointerEvents = ''; btn.style.opacity = '';
+    });
+  }
   function renderUsers() {
     const users = usersList.slice().reverse(); // шинэ нь эхэнд
     document.getElementById('usrCount').textContent = users.length ? users.length + ' бүртгэл' : '';
@@ -663,6 +770,77 @@
   function delUser(id) {
     if (!confirm('Энэ бүртгэлийг устгах уу?')) return;
     KPICloud.deleteSubmission(id); // renderUsers нь watch-аар автоматаар шинэчлэгдэнэ
+  }
+
+  // ---------- Admin users (Firebase Auth + admins/{uid}) ----------
+  let adminsList = [];
+  function clearAdminMsg() {
+    const el = document.getElementById('adminMsg');
+    if (!el) return;
+    el.textContent = '';
+    el.className = 'form-msg';
+  }
+  function showAdminMsg(msg, ok) {
+    const el = document.getElementById('adminMsg');
+    if (!el) return;
+    el.textContent = msg;
+    el.className = 'form-msg ' + (ok ? 'ok' : 'err');
+  }
+  function clearAdminForm() {
+    ['a-name','a-email','a-pass','a-pass2'].forEach(id => {
+      const el = document.getElementById(id);
+      if (el) el.value = '';
+    });
+  }
+  function addAdmin() {
+    const name = document.getElementById('a-name').value.trim();
+    const email = document.getElementById('a-email').value.trim();
+    const pass = document.getElementById('a-pass').value;
+    const pass2 = document.getElementById('a-pass2').value;
+    const okEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (!name || !okEmail || !pass || pass.length < 6 || pass !== pass2) {
+      showAdminMsg('Нэр, зөв и-мэйл, ижил 6+ тэмдэгттэй нууц үг оруулна уу.', false);
+      return;
+    }
+    const btn = document.getElementById('adminAddBtn');
+    btn.textContent = 'Нэмж байна…'; btn.style.pointerEvents = 'none'; btn.style.opacity = '.7';
+    clearAdminMsg();
+    KPICloud.createAdmin(email, pass, name).then(() => {
+      clearAdminForm();
+      showAdminMsg('Шинэ админ нэмэгдлээ.', true);
+    }).catch(err => {
+      const code = err && err.code || '';
+      let msg = 'Админ нэмэх үед алдаа гарлаа.';
+      if (code === 'auth/email-already-in-use') msg = 'Энэ и-мэйлтэй Auth хэрэглэгч аль хэдийн байна.';
+      else if (code === 'auth/invalid-email') msg = 'И-мэйл буруу байна.';
+      else if (code === 'auth/weak-password') msg = 'Нууц үг хэт сул байна.';
+      else if (code === 'permission-denied') msg = 'Firestore rules шинэчлэгдээгүй байна. firestore.rules файлын шинэ дүрмийг Firebase Console дээр Publish хийнэ үү.';
+      else if (err && err.message) msg = err.message;
+      showAdminMsg(msg, false);
+    }).finally(() => {
+      btn.textContent = '🔐 Админ нэмэх'; btn.style.pointerEvents = ''; btn.style.opacity = '';
+    });
+  }
+  function renderAdmins() {
+    const me = KPICloud.authUser();
+    const admins = adminsList.slice();
+    document.getElementById('admCount').textContent = admins.length ? admins.length + ' админ' : '';
+    if (!admins.length) { document.getElementById('admList').innerHTML = '<div class="empty">Админ жагсаалт ачаалагдаагүй байна.</div>'; return; }
+    document.getElementById('admList').innerHTML = admins.map(a => {
+      const isMe = me && me.uid === a.uid;
+      const name = a.name || (isMe && me.displayName) || 'Админ';
+      const email = a.email || (isMe && me.email) || '';
+      const meta = [email, isMe ? 'одоогийн хэрэглэгч' : '', String(a.createdAt && a.createdAt.toDate ? a.createdAt.toDate().toISOString() : '').slice(0,10)].filter(Boolean).join(' · ');
+      return '<div class="tpl-card">'
+        + '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">'
+        + '<div><b>' + esc(name) + '</b><div class="ct" style="font-size:12.5px; color:var(--muted); margin-top:2px;">' + esc(meta || a.uid) + '</div></div>'
+        + (isMe ? '<span class="tchip">Та</span>' : '<button class="btn btn-danger btn-sm" onclick="removeAdminAccess(\'' + a.uid + '\')">Эрх хасах</button>')
+        + '</div></div>';
+    }).join('');
+  }
+  function removeAdminAccess(uid) {
+    if (!confirm('Энэ хэрэглэгчийн админ эрхийг хасах уу? Auth account устахгүй, зөвхөн админ эрх хасагдана.')) return;
+    KPICloud.removeAdmin(uid).catch(err => alert((err && err.message) ? err.message : 'Админ эрх хасах үед алдаа гарлаа.'));
   }
 
   function fmtDate(d) {
@@ -931,17 +1109,19 @@
   }
 
   // ---------- Init ----------
-  let unsubQuote = null, unsubBooking = null, unsubUser = null;
+  let unsubQuote = null, unsubBooking = null, unsubUser = null, unsubAdmins = null;
   function startAdminWatches() {
     if (!unsubQuote)   unsubQuote   = KPICloud.watchSubmissions('quote',   arr => { quoteReqs = arr;    if (appShown) renderQuoteRequests(); });
     if (!unsubBooking) unsubBooking = KPICloud.watchSubmissions('booking', arr => { bookingsList = arr; if (appShown) renderBookings(); });
     if (!unsubUser)    unsubUser    = KPICloud.watchSubmissions('user',    arr => { usersList = arr;    if (appShown) renderUsers(); });
+    if (!unsubAdmins)  unsubAdmins  = KPICloud.watchAdmins(arr => { adminsList = arr; if (appShown) renderAdmins(); });
   }
   function stopAdminWatches() {
     if (unsubQuote)   { try { unsubQuote(); } catch(e){}   unsubQuote = null; }
     if (unsubBooking) { try { unsubBooking(); } catch(e){} unsubBooking = null; }
     if (unsubUser)    { try { unsubUser(); } catch(e){}    unsubUser = null; }
-    quoteReqs = []; bookingsList = []; usersList = [];
+    if (unsubAdmins)  { try { unsubAdmins(); } catch(e){}  unsubAdmins = null; }
+    quoteReqs = []; bookingsList = []; usersList = []; adminsList = [];
   }
 
   // Контентыг Firestore-оос ачаалж дуусмагц хувьсагчдыг шинэчилнэ

@@ -199,14 +199,7 @@
   .article .acts button.saved svg path { fill: currentColor; }
   .article .acts svg { width: 18px; height: 18px; display: block; }
 
-  /* Feature card — full width, image left / text right */
-  @media (min-width: 780px) {
-    .article.feature { grid-column: 1 / -1; flex-direction: row; }
-    .article.feature .thumb { flex: 0 0 46%; aspect-ratio: auto; }
-    .article.feature .body { padding: 34px 34px 26px; justify-content: center; }
-    .article.feature h3 { font-size: 28px; }
-    .article.feature p { font-size: 16px; }
-  }
+  .article.feature { grid-column: auto; }
 
   /* Category filter chips */
   .filter-bar { display: flex; flex-wrap: wrap; gap: 10px; justify-content: center; margin-bottom: 36px; }
@@ -221,7 +214,12 @@
 
   .insights-empty { text-align: center; color: var(--muted); padding: 40px 0; grid-column: 1 / -1; }
 
-  .insights-foot { text-align: center; margin-top: 44px; }
+  .insights-foot { text-align: center; margin-top: 34px; }
+  .more-articles {
+    display: inline-flex; align-items: center; gap: 8px;
+  }
+  .more-articles .arr { font-size: 16px; transition: transform .2s; }
+  .more-articles:hover .arr { transform: translateY(2px); }
 
   /* ===== Article reader — full page (light) ===== */
   .reader-overlay {
@@ -545,7 +543,7 @@
     <div class="insights-grid" id="insightsGrid"></div>
 
     <div class="insights-foot" id="insightsFoot" style="display:none;">
-      <a href="#" id="showAllBtn" class="btn btn-ghost" onclick="event.preventDefault(); showAllArticles();">Бүх нийтлэл үзэх</a>
+      <a href="#" id="showAllBtn" class="btn btn-ghost more-articles" onclick="event.preventDefault(); showAllArticles();">Дэлгэрэнгүй <span class="arr">↓</span></a>
     </div>
   </div>
 </section>
@@ -1033,10 +1031,9 @@
     }
     const list = showAll ? full : full.slice(0, VISIBLE_LIMIT);
     if (foot) {
-      const remaining = full.length - VISIBLE_LIMIT;
-      if (!showAll && remaining > 0) {
+      if (!showAll && full.length >= VISIBLE_LIMIT) {
         foot.style.display = '';
-        document.getElementById('showAllBtn').textContent = 'Бүх нийтлэл үзэх (' + full.length + ')';
+        document.getElementById('showAllBtn').innerHTML = 'Дэлгэрэнгүй <span class="arr">↓</span>';
       } else {
         foot.style.display = 'none';
       }

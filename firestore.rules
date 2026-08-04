@@ -8,18 +8,16 @@ rules_version = '2';
 //
 // Урьдчилсан нөхцөл:
 //   1) Authentication → Email/Password идэвхжсэн, админ хэрэглэгч үүсгэсэн байх.
-//   2) Firestore-д "admins" коллекц үүсгэж, БАРИМТ (document) ID нь тухайн
-//      админы UID байхаар нэг доκ нэмэх (агуулга ямар ч байж болно, ж: {ok:true}).
-//      UID-г Authentication → Users хэсгээс хуулж авна.
-//      → Ингэснээр зөвхөн жагсаалтад буй админ л засах эрхтэй болно. Хэн нэгэн
-//        өөрийгөө бүртгээд (sign-up) орсон ч энэ жагсаалтад байхгүй тул чадахгүй.
+//   2) Эхний админыг Firestore-д "admins" коллекц үүсгэж, БАРИМТ (document)
+//      ID нь тухайн админы UID байхаар нэг doc нэмнэ (ж: {ok:true}).
+//      Дараагийн админыг админ хэсгээс нэмж болно.
 //
 // Логик:
 //   • content/*      — нийтийн контент. Хэн ч УНШИНА, зөвхөн админ БИЧНЭ.
 //   • submissions/*  — зочны хүсэлт/захиалга/бүртгэл (хувийн мэдээлэлтэй).
 //                      Зочид зөвхөн ҮҮСГЭНЭ, зөвхөн админ УНШИХ/УСТГАНА.
 //   • public/taken_slots — захиалагдсан цаг (огноо+цаг, PII биш). Хэн ч унших/бичих.
-//   • admins/*       — админы UID жагсаалт. Зөвхөн консолоос удирдана.
+//   • admins/*       — админы UID жагсаалт. Зөвхөн одоогийн админ удирдана.
 // =============================================================================
 
 service cloud.firestore {
@@ -29,6 +27,13 @@ service cloud.firestore {
     function isAdmin() {
       return request.auth != null
         && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    function validAdminDoc() {
+      return request.resource.data.keys().hasOnly([
+          'ok','email','name','createdBy','createdAt'
+        ])
+        && request.resource.data.ok == true;
     }
 
     // Нийтийн контент — хэн ч унших, зөвхөн админ засах
@@ -58,10 +63,11 @@ service cloud.firestore {
         && request.resource.data.slots.size() <= 1000;
     }
 
-    // Админы жагсаалт — уншихыг зөвшөөрнө, бичихийг зөвхөн консолоор
+    // Админы жагсаалт — зөвхөн одоогийн админ унших/нэмэх/эрх хасах боломжтой
     match /admins/{uid} {
       allow read: if isAdmin();
-      allow write: if false;
+      allow create, update: if isAdmin() && validAdminDoc();
+      allow delete: if isAdmin() && uid != request.auth.uid;
     }
 
     // Бусад бүх зам — хаалттай

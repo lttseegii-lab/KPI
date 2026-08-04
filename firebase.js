@@ -190,6 +190,64 @@
       .then(function (snap) { return snap.exists; })
       .catch(function (err) { return (err && err.code === "permission-denied") ? false : null; });
   }
+  function createAdmin(email, password, name) {
+    if (!online || !auth || !db) return Promise.reject(new Error("Firebase бэлэн биш"));
+    if (!auth.currentUser) return Promise.reject(new Error("Эхлээд админаар нэвтэрнэ үү"));
+
+    var appName = "kpi-admin-create-" + Date.now() + "-" + Math.floor(Math.random() * 1e6);
+    var secondaryApp = firebase.initializeApp(firebaseConfig, appName);
+    var secondaryAuth = secondaryApp.auth();
+    var createdUser = null;
+    var createdBy = auth.currentUser.uid;
+
+    function cleanup() {
+      return secondaryAuth.signOut().catch(function () {})
+        .then(function () { return secondaryApp.delete ? secondaryApp.delete() : null; })
+        .catch(function () {});
+    }
+
+    return secondaryAuth.createUserWithEmailAndPassword(email, password)
+      .then(function (cred) {
+        createdUser = cred.user;
+        if (createdUser && name && createdUser.updateProfile) {
+          return createdUser.updateProfile({ displayName: name }).then(function () { return cred; });
+        }
+        return cred;
+      })
+      .then(function (cred) {
+        var user = cred.user;
+        return db.collection("admins").doc(user.uid).set({
+          ok: true,
+          email: email,
+          name: name || "",
+          createdBy: createdBy,
+          createdAt: firebase.firestore.FieldValue.serverTimestamp()
+        }).then(function () {
+          return { uid: user.uid, email: email, name: name || "" };
+        });
+      })
+      .catch(function (err) {
+        if (!createdUser || !createdUser.delete) throw err;
+        return createdUser.delete().catch(function () {}).then(function () { throw err; });
+      })
+      .finally(cleanup);
+  }
+  function watchAdmins(cb) {
+    if (!online) { if (cb) cb([]); return noop; }
+    return db.collection("admins").onSnapshot(function (snap) {
+      var arr = [];
+      snap.forEach(function (d) { arr.push(Object.assign({ uid: d.id }, d.data())); });
+      arr.sort(function (a, b) { return String(a.email || a.uid || "").localeCompare(String(b.email || b.uid || "")); });
+      if (cb) cb(arr);
+    }, function (err) { console.error("[KPICloud] admins watch алдаа:", err); });
+  }
+  function removeAdmin(uid) {
+    if (!online || !uid) return Promise.resolve();
+    if (auth && auth.currentUser && auth.currentUser.uid === uid) {
+      return Promise.reject(new Error("Өөрийн админ эрхийг эндээс устгахгүй."));
+    }
+    return db.collection("admins").doc(uid).delete();
+  }
 
   // ================= Эхний ачаалал =================
   var ready;
@@ -235,6 +293,7 @@
     isTaken: isTaken, takenList: takenList, addTakenSlot: addTakenSlot, removeTakenSlot: removeTakenSlot, watchTaken: watchTaken,
     // auth
     signIn: signIn, signOut: signOut, onAuth: onAuth, authUser: authUser, checkAdmin: checkAdmin,
+    createAdmin: createAdmin, watchAdmins: watchAdmins, removeAdmin: removeAdmin,
     // misc
     ready: ready, online: online, db: db, auth: auth, CONTENT_KEYS: CONTENT_KEYS
   };
