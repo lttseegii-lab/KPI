@@ -1,0 +1,11 @@
+# OS
+.DS_Store
+
+# Local tooling / secrets (never commit)
+.claude/settings.local.json
+*.log
+node_modules/
+
+# Firebase
+.firebase/
+firebase-debug.log

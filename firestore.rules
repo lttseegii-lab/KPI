@@ -1,0 +1,72 @@
+rules_version = '2';
+
+// =============================================================================
+// KPI consulting — Firestore аюулгүй байдлын дүрэм (АЮУЛГҮЙ ХУВИЛБАР)
+// =============================================================================
+// Firebase консол → Firestore Database → Rules хэсэгт БҮГДИЙГ нь хуулж тавиад
+// Publish дарна.
+//
+// Урьдчилсан нөхцөл:
+//   1) Authentication → Email/Password идэвхжсэн, админ хэрэглэгч үүсгэсэн байх.
+//   2) Firestore-д "admins" коллекц үүсгэж, БАРИМТ (document) ID нь тухайн
+//      админы UID байхаар нэг доκ нэмэх (агуулга ямар ч байж болно, ж: {ok:true}).
+//      UID-г Authentication → Users хэсгээс хуулж авна.
+//      → Ингэснээр зөвхөн жагсаалтад буй админ л засах эрхтэй болно. Хэн нэгэн
+//        өөрийгөө бүртгээд (sign-up) орсон ч энэ жагсаалтад байхгүй тул чадахгүй.
+//
+// Логик:
+//   • content/*      — нийтийн контент. Хэн ч УНШИНА, зөвхөн админ БИЧНЭ.
+//   • submissions/*  — зочны хүсэлт/захиалга/бүртгэл (хувийн мэдээлэлтэй).
+//                      Зочид зөвхөн ҮҮСГЭНЭ, зөвхөн админ УНШИХ/УСТГАНА.
+//   • public/taken_slots — захиалагдсан цаг (огноо+цаг, PII биш). Хэн ч унших/бичих.
+//   • admins/*       — админы UID жагсаалт. Зөвхөн консолоос удирдана.
+// =============================================================================
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Тухайн хэрэглэгч админ мөн эсэх (admins коллекцид UID нь байгаа эсэх)
+    function isAdmin() {
+      return request.auth != null
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid));
+    }
+
+    // Нийтийн контент — хэн ч унших, зөвхөн админ засах
+    match /content/{doc} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Зочны илгээлт (хувийн мэдээлэл) — зочид зөвхөн үүсгэх, зөвхөн админ унших/устгах.
+    // Спам/хог өгөгдлөөс сэргийлж kind болон талбаруудыг баталгаажуулна.
+    match /submissions/{doc} {
+      allow create: if request.resource.data.kind in ['quote', 'booking', 'user']
+        && request.resource.data.keys().hasOnly([
+             'kind','at','name','email','phone','org',
+             'product','productKey','answers','date','time','paid','role'
+           ])
+        && (!('answers' in request.resource.data) || request.resource.data.answers.size() <= 40);
+      allow read, update, delete: if isAdmin();
+    }
+
+    // Захиалагдсан цаг (PII биш) — нийтэд харагдах, зөвхөн энэ нэг баримт.
+    // Зөвхөн 'slots' массивыг зөвшөөрч, хэмжээг хязгаарлана.
+    match /public/taken_slots {
+      allow read: if true;
+      allow write: if request.resource.data.keys().hasOnly(['slots'])
+        && request.resource.data.slots is list
+        && request.resource.data.slots.size() <= 1000;
+    }
+
+    // Админы жагсаалт — уншихыг зөвшөөрнө, бичихийг зөвхөн консолоор
+    match /admins/{uid} {
+      allow read: if isAdmin();
+      allow write: if false;
+    }
+
+    // Бусад бүх зам — хаалттай
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
