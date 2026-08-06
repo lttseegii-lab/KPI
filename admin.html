@@ -576,6 +576,9 @@
     if (t === 'users') { renderUsers(); clearUserMsg(); }
     if (t === 'admins') { renderAdmins(); clearAdminMsg(); }
   }
+  function confirmDelete(message) {
+    return confirm(message || 'Та энэ мэдээллийг устгахдаа итгэлтэй байна уу?');
+  }
 
   // ---------- Quote questionnaire builder ----------
   function renderQuestions() {
@@ -600,7 +603,10 @@
     const last = inputs[inputs.length - 1];
     if (last) { last.scrollIntoView({ behavior: 'smooth', block: 'center' }); last.focus(); last.select(); }
   }
-  function delQuestion(i) { questions.splice(i, 1); renderQuestions(); }
+  function delQuestion(i) {
+    if (!confirmDelete()) return;
+    questions.splice(i, 1); renderQuestions();
+  }
   function saveQuestions() {
     questions = questions.filter(q => (q.q || '').trim());
     save('kpihub_quote_questions', questions); flash('qSaved'); renderQuestions();
@@ -611,6 +617,15 @@
   }
 
   // ---------- Received quote requests (Firestore submissions) ----------
+  const pendingDeletedSubmissions = new Set();
+  const pendingRemovedAdmins = new Set();
+  function visibleSubmissions(arr) {
+    return arr.filter(item => !pendingDeletedSubmissions.has(item.id));
+  }
+  function visibleAdmins(arr) {
+    return arr.filter(item => !pendingRemovedAdmins.has(item.uid));
+  }
+
   let quoteReqs = [];   // watchSubmissions('quote')-оос бөглөгдөнө
   function renderQuoteRequests() {
     const reqs = quoteReqs.slice().reverse(); // шинэ нь эхэнд
@@ -629,8 +644,17 @@
     }).join('');
   }
   function delQuoteRequest(id) {
-    if (!confirm('Энэ хүсэлтийг устгах уу?')) return;
-    KPICloud.deleteSubmission(id); // renderQuoteRequests нь watch-аар автоматаар шинэчлэгдэнэ
+    if (!confirmDelete()) return;
+    const prev = quoteReqs.slice();
+    pendingDeletedSubmissions.add(id);
+    quoteReqs = quoteReqs.filter(r => r.id !== id);
+    renderQuoteRequests();
+    KPICloud.deleteSubmission(id).catch(err => {
+      pendingDeletedSubmissions.delete(id);
+      quoteReqs = prev;
+      renderQuoteRequests();
+      alert((err && err.message) ? err.message : 'Мэдээлэл устгах үед алдаа гарлаа.');
+    });
   }
 
   // ---------- Schedule / availability ----------
@@ -691,9 +715,17 @@
     const target = bookingsList.find(b => b.id === id);
     if (!target) return;
     if (!confirm(target.name + ' — ' + target.date + ' ' + target.time + ' цагийг цуцлах уу?')) return;
-    KPICloud.deleteSubmission(id);
+    const prev = bookingsList.slice();
+    pendingDeletedSubmissions.add(id);
+    bookingsList = bookingsList.filter(b => b.id !== id);
+    renderBookings();
+    KPICloud.deleteSubmission(id).catch(err => {
+      pendingDeletedSubmissions.delete(id);
+      bookingsList = prev;
+      renderBookings();
+      alert((err && err.message) ? err.message : 'Мэдээлэл устгах үед алдаа гарлаа.');
+    });
     KPICloud.removeTakenSlot(target.date, target.time); // тухайн цагийг дахин нээх
-    // renderBookings нь watch-аар автоматаар шинэчлэгдэнэ
   }
 
   // ---------- Registered users (Firestore submissions kind:'user') ----------
@@ -768,8 +800,17 @@
     }).join('');
   }
   function delUser(id) {
-    if (!confirm('Энэ бүртгэлийг устгах уу?')) return;
-    KPICloud.deleteSubmission(id); // renderUsers нь watch-аар автоматаар шинэчлэгдэнэ
+    if (!confirmDelete()) return;
+    const prev = usersList.slice();
+    pendingDeletedSubmissions.add(id);
+    usersList = usersList.filter(u => u.id !== id);
+    renderUsers();
+    KPICloud.deleteSubmission(id).catch(err => {
+      pendingDeletedSubmissions.delete(id);
+      usersList = prev;
+      renderUsers();
+      alert((err && err.message) ? err.message : 'Мэдээлэл устгах үед алдаа гарлаа.');
+    });
   }
 
   // ---------- Admin users (Firebase Auth + admins/{uid}) ----------
@@ -840,7 +881,16 @@
   }
   function removeAdminAccess(uid) {
     if (!confirm('Энэ хэрэглэгчийн админ эрхийг хасах уу? Auth account устахгүй, зөвхөн админ эрх хасагдана.')) return;
-    KPICloud.removeAdmin(uid).catch(err => alert((err && err.message) ? err.message : 'Админ эрх хасах үед алдаа гарлаа.'));
+    const prev = adminsList.slice();
+    pendingRemovedAdmins.add(uid);
+    adminsList = adminsList.filter(a => a.uid !== uid);
+    renderAdmins();
+    KPICloud.removeAdmin(uid).catch(err => {
+      pendingRemovedAdmins.delete(uid);
+      adminsList = prev;
+      renderAdmins();
+      alert((err && err.message) ? err.message : 'Админ эрх хасах үед алдаа гарлаа.');
+    });
   }
 
   function fmtDate(d) {
@@ -890,9 +940,15 @@
     reader.onload = () => { why.image = reader.result; renderWhyForm(); };
     reader.readAsDataURL(f);
   }
-  function removeWhyImage() { why.image = ''; renderWhyForm(); }
+  function removeWhyImage() {
+    if (!confirmDelete('Та энэ зургийг устгахдаа итгэлтэй байна уу?')) return;
+    why.image = ''; renderWhyForm();
+  }
   function addWhyFeature() { why.features.push(['✨', 'Шинэ давуу тал', 'Тайлбар']); renderWhyFeatures(); }
-  function delWhyFeature(i) { why.features.splice(i, 1); renderWhyFeatures(); }
+  function delWhyFeature(i) {
+    if (!confirmDelete()) return;
+    why.features.splice(i, 1); renderWhyFeatures();
+  }
   function saveWhy() {
     why.eyebrow = document.getElementById('w-eyebrow').value.trim();
     why.title = document.getElementById('w-title').value.trim();
@@ -967,7 +1023,10 @@
     reader.onload = () => { templates[i][3] = { name: f.name, data: reader.result }; renderTemplates(); };
     reader.readAsDataURL(f);
   }
-  function removeTplFile(i) { templates[i][3] = null; renderTemplates(); }
+  function removeTplFile(i) {
+    if (!confirmDelete('Та энэ файлыг устгахдаа итгэлтэй байна уу?')) return;
+    templates[i][3] = null; renderTemplates();
+  }
   function addTemplate() {
     templates.push(['📄', 'Шинэ темплэйт', 'Төрөл', null]);
     renderTemplates();
@@ -979,7 +1038,10 @@
       if (inp) { inp.focus(); inp.select(); }
     }
   }
-  function delTemplate(i) { templates.splice(i, 1); renderTemplates(); }
+  function delTemplate(i) {
+    if (!confirmDelete()) return;
+    templates.splice(i, 1); renderTemplates();
+  }
   function saveTemplates() {
     try { save('kpihub_templates', templates); flash('tplSaved'); }
     catch(e) { alert('Хадгалахад алдаа гарлаа — файлууд хэт том байж болзошгүй. Зарим файлыг устгаад дахин оролдоно уу.'); }
@@ -1030,7 +1092,10 @@
     reader.onload = () => { editImage = reader.result; renderArticleImage(); };
     reader.readAsDataURL(f);
   }
-  function removeArticleImage() { editImage = ''; renderArticleImage(); }
+  function removeArticleImage() {
+    if (!confirmDelete('Та энэ зургийг устгахдаа итгэлтэй байна уу?')) return;
+    editImage = ''; renderArticleImage();
+  }
   function newArticle() {
     editIndex = -1;
     document.getElementById('artEditorTitle').textContent = 'Шинэ нийтлэл';
@@ -1047,7 +1112,7 @@
   }
   function cancelArticle() { document.getElementById('artEditor').classList.add('hidden'); editIndex = -1; }
   function delArticle(i) {
-    if (!confirm('Энэ нийтлэлийг устгах уу?')) return;
+    if (!confirmDelete()) return;
     articles.splice(i, 1); save('kpihub_articles', articles); renderArticles();
   }
   function saveArticle() {
@@ -1111,10 +1176,10 @@
   // ---------- Init ----------
   let unsubQuote = null, unsubBooking = null, unsubUser = null, unsubAdmins = null;
   function startAdminWatches() {
-    if (!unsubQuote)   unsubQuote   = KPICloud.watchSubmissions('quote',   arr => { quoteReqs = arr;    if (appShown) renderQuoteRequests(); });
-    if (!unsubBooking) unsubBooking = KPICloud.watchSubmissions('booking', arr => { bookingsList = arr; if (appShown) renderBookings(); });
-    if (!unsubUser)    unsubUser    = KPICloud.watchSubmissions('user',    arr => { usersList = arr;    if (appShown) renderUsers(); });
-    if (!unsubAdmins)  unsubAdmins  = KPICloud.watchAdmins(arr => { adminsList = arr; if (appShown) renderAdmins(); });
+    if (!unsubQuote)   unsubQuote   = KPICloud.watchSubmissions('quote',   arr => { quoteReqs = visibleSubmissions(arr);    if (appShown) renderQuoteRequests(); });
+    if (!unsubBooking) unsubBooking = KPICloud.watchSubmissions('booking', arr => { bookingsList = visibleSubmissions(arr); if (appShown) renderBookings(); });
+    if (!unsubUser)    unsubUser    = KPICloud.watchSubmissions('user',    arr => { usersList = visibleSubmissions(arr);    if (appShown) renderUsers(); });
+    if (!unsubAdmins)  unsubAdmins  = KPICloud.watchAdmins(arr => { adminsList = visibleAdmins(arr); if (appShown) renderAdmins(); });
   }
   function stopAdminWatches() {
     if (unsubQuote)   { try { unsubQuote(); } catch(e){}   unsubQuote = null; }

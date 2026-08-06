@@ -139,7 +139,10 @@
   function deleteSubmission(id) {
     if (!online || !id) return Promise.resolve();
     return db.collection("submissions").doc(id).delete()
-      .catch(function (err) { console.error("[KPICloud] илгээлт устгаж чадсангүй:", id, err); });
+      .catch(function (err) {
+        console.error("[KPICloud] илгээлт устгаж чадсангүй:", id, err);
+        throw err;
+      });
   }
 
   // ================= Захиалагдсан цаг (public/taken_slots) =================
