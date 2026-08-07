@@ -271,6 +271,12 @@
   .reader-body blockquote {
     border-left: 4px solid var(--accent); padding: 6px 0 6px 22px; margin: 26px 0; color: #444; font-style: italic; font-size: 21px; line-height: 1.5;
   }
+  .reader-body figure { margin: 30px 0; }
+  .reader-body figure img {
+    display: block; width: 100%; max-height: 520px; object-fit: cover;
+    border-radius: 12px; border: 1px solid #e2e4ea; background: #eef0f5;
+  }
+  .reader-body figure figcaption { margin-top: 8px; font-size: 13px; color: #666; text-align: center; }
   .reader-cta {
     max-width: 720px; margin: 46px auto 0; padding-top: 26px; border-top: 1px solid #e0e2e9;
     display: flex; gap: 12px; flex-wrap: wrap;
@@ -1101,6 +1107,7 @@
       if (b[0] === 'h3') return '<h3>' + b[1] + '</h3>';
       if (b[0] === 'blockquote') return '<blockquote>' + b[1] + '</blockquote>';
       if (b[0] === 'ul') return '<ul>' + b[1].map(li => '<li>' + li + '</li>').join('') + '</ul>';
+      if (b[0] === 'img') return '<figure><img src="' + b[1] + '" alt="' + (b[2] || '') + '"><figcaption>' + (b[2] || '') + '</figcaption></figure>';
       return '';
     }).join('');
   }

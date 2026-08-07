@@ -144,6 +144,18 @@
         throw err;
       });
   }
+  function addCrmActivity(data) {
+    if (!online || !auth || !auth.currentUser) return Promise.reject(new Error("Эхлээд админаар нэвтэрнэ үү"));
+    var admin = auth.currentUser;
+    var entry = Object.assign({
+      kind: "crm",
+      at: new Date().toISOString(),
+      byName: admin.displayName || "",
+      byEmail: admin.email || ""
+    }, data || {});
+    return db.collection("submissions").add(entry)
+      .then(function (ref) { return Object.assign({ id: ref.id }, entry); });
+  }
 
   // ================= Захиалагдсан цаг (public/taken_slots) =================
   function slotKey(date, time) { return date + " " + time; }
@@ -292,6 +304,7 @@
     get: get, set: set, watch: watch,
     // submissions
     addSubmission: addSubmission, watchSubmissions: watchSubmissions, deleteSubmission: deleteSubmission,
+    addCrmActivity: addCrmActivity,
     // taken slots
     isTaken: isTaken, takenList: takenList, addTakenSlot: addTakenSlot, removeTakenSlot: removeTakenSlot, watchTaken: watchTaken,
     // auth

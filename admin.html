@@ -6,27 +6,28 @@
 <title>KPI consulting — Админ</title>
 <style>
   :root {
-    --bg:#0a1150; --bg-soft:#0f1a6b; --card:#16227e; --line:#2e3ba8;
-    --text:#eef3ff; --muted:#aeb9ea; --accent:#45a8f0; --accent-2:#7cc7ff;
-    --accent-soft:rgba(69,168,240,.14); --danger:#ff6b6b;
+    --bg:#f6f6f7; --bg-soft:#fafafa; --card:#ffffff; --line:#dedee3;
+    --text:#18181b; --muted:#68686f; --accent:#242428; --accent-2:#3f3f46;
+    --accent-soft:#eeeef0; --danger:#b42318;
   }
   * { margin:0; padding:0; box-sizing:border-box; }
   body { font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif; background:var(--bg); color:var(--text); line-height:1.5; }
   a { color:var(--accent); }
-  .wrap { max-width:1000px; margin:0 auto; padding:0 20px; }
+  .wrap { max-width:1280px; margin:0 auto; padding:0 24px; }
 
-  header { border-bottom:1px solid var(--line); background:rgba(10,17,80,.8); position:sticky; top:0; z-index:10; backdrop-filter:blur(10px); }
+  header { border-bottom:1px solid var(--line); background:rgba(255,255,255,.92); position:sticky; top:0; z-index:10; backdrop-filter:blur(10px); }
   .hrow { display:flex; align-items:center; justify-content:space-between; height:62px; }
   .brand { display:flex; align-items:center; gap:10px; font-weight:700; font-size:17px; }
   .brand-mark { flex-shrink:0; }
-  .brand-text { font-weight:500; color:var(--accent); }
-  .brand-text b { color:#fff; font-weight:800; }
-  .brand .tag { font-size:11px; font-weight:700; color:var(--accent-2); background:rgba(69,168,240,.1); border:1px solid rgba(69,168,240,.25); padding:3px 8px; border-radius:999px; }
+  .brand-text { font-weight:500; color:var(--muted); }
+  .brand-text b { color:var(--text); font-weight:800; }
+  .brand .tag { font-size:11px; font-weight:700; color:var(--text); background:var(--accent-soft); border:1px solid var(--line); padding:3px 8px; border-radius:999px; }
 
   .btn { padding:9px 16px; border-radius:10px; font-size:14px; font-weight:600; cursor:pointer; border:1px solid var(--line); background:var(--card); color:var(--text); transition:background .2s,border-color .2s; text-decoration:none; display:inline-flex; align-items:center; gap:6px; }
   .btn:hover { border-color:var(--accent); }
-  .btn-primary { background:linear-gradient(135deg,var(--accent),#2a3fc0); border:none; color:#fff; }
-  .btn-danger { color:var(--danger); border-color:transparent; background:rgba(255,107,107,.1); }
+  .btn-primary { background:var(--accent); border-color:var(--accent); color:#fff; }
+  .btn-primary:hover { background:#3a3a40; border-color:#3a3a40; }
+  .btn-danger { color:var(--danger); border-color:transparent; background:#fff1f0; }
   .btn-danger:hover { border-color:var(--danger); }
   .btn-sm { padding:6px 12px; font-size:13px; }
 
@@ -42,13 +43,21 @@
   label { display:block; font-size:12.5px; font-weight:600; color:var(--muted); margin-bottom:6px; }
   .field { margin-bottom:14px; text-align:left; }
 
-  main { padding:28px 0 80px; }
-  .tabs { display:flex; gap:8px; margin-bottom:24px; }
-  .tab { padding:9px 18px; border-radius:999px; font-size:14px; font-weight:600; cursor:pointer; background:var(--card); border:1px solid var(--line); color:var(--muted); }
-  .tab.active { color:#fff; background:var(--accent-soft); border-color:var(--accent); }
+  main.admin-layout { display:grid; grid-template-columns:220px minmax(0,1fr); gap:36px; padding-top:28px; padding-bottom:80px; }
+  .tabs { display:flex; flex-direction:column; gap:4px; position:sticky; top:90px; align-self:start; padding-right:20px; border-right:1px solid var(--line); }
+  .tab { width:100%; padding:10px 12px; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer; background:transparent; border:1px solid transparent; color:var(--muted); text-align:left; }
+  .tab:hover { color:var(--text); background:var(--card); }
+  .tab.active { color:var(--text); background:var(--accent-soft); border-color:var(--line); }
+  .admin-content { min-width:0; }
+  @media (max-width:760px) {
+    .wrap { padding-left:16px; padding-right:16px; }
+    main.admin-layout { grid-template-columns:1fr; gap:20px; padding-top:18px; }
+    .tabs { position:static; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); padding:0 0 18px; border-right:0; border-bottom:1px solid var(--line); }
+  }
 
   .panel-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:12px; }
   .panel-head h2 { font-size:20px; }
+  .actions { display:flex; gap:8px; flex-wrap:wrap; }
   .panel-head .actions { display:flex; gap:8px; flex-wrap:wrap; }
   .hint { font-size:12.5px; color:var(--muted); margin-bottom:18px; }
 
@@ -66,8 +75,8 @@
   .tpl-top input { padding:8px 10px; }
   @media (max-width:620px){ .tpl-top { grid-template-columns:1fr auto; } .tpl-top .ty { grid-column:1; } }
   .tpl-file { display:flex; align-items:center; gap:10px; flex-wrap:wrap; padding-top:10px; border-top:1px dashed var(--line); }
-  .file-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 13px; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer; background:var(--accent-soft); border:1px solid rgba(69,168,240,.3); color:var(--accent); }
-  .file-btn:hover { background:rgba(69,168,240,.18); }
+  .file-btn { display:inline-flex; align-items:center; gap:6px; padding:7px 13px; border-radius:9px; font-size:13px; font-weight:600; cursor:pointer; background:var(--accent-soft); border:1px solid var(--line); color:var(--text); }
+  .file-btn:hover { background:#e4e4e7; }
   .file-name { font-size:13px; color:var(--muted); }
   .file-name.has { color:var(--accent-2); font-weight:600; }
   .file-rm { font-size:12px; color:var(--danger); cursor:pointer; background:none; border:none; padding:2px 4px; }
@@ -87,22 +96,38 @@
   .empty { color:var(--muted); text-align:center; padding:30px; border:1px dashed var(--line); border-radius:12px; }
   .book-label { font-size:13px; font-weight:600; color:var(--muted); }
   .av-toggles { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:18px; max-width:420px; }
+  .bulk-days { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; margin-bottom:18px; }
+  .bulk-slots { max-width:none; }
   @media (max-width:520px){ .av-toggles { grid-template-columns:repeat(3,1fr); } }
+  @media (max-width:760px){ .bulk-days { grid-template-columns:repeat(4,minmax(0,1fr)); } }
   .av-chip { padding:10px 0; text-align:center; border-radius:10px; border:1px solid var(--line); background:var(--bg-soft); cursor:pointer; font-size:14px; font-weight:600; transition:all .15s; }
   .av-chip:hover { border-color:var(--accent); }
-  .av-chip.on { background:var(--accent-2); color:#07123a; border-color:var(--accent-2); }
+  .av-chip.on { background:var(--accent); color:#fff; border-color:var(--accent); }
   .av-day { display:flex; align-items:center; gap:12px; padding:12px 16px; background:var(--card); border:1px solid var(--line); border-radius:12px; flex-wrap:wrap; }
   .av-day .d { font-weight:700; font-size:14.5px; min-width:120px; }
   .av-day .times { display:flex; gap:6px; flex-wrap:wrap; flex:1; }
-  .av-day .tchip { font-size:12px; font-weight:600; color:var(--accent-2); background:rgba(69,168,240,.1); border:1px solid rgba(69,168,240,.25); padding:3px 9px; border-radius:999px; }
+  .av-day .tchip { font-size:12px; font-weight:600; color:var(--text); background:var(--accent-soft); border:1px solid var(--line); padding:3px 9px; border-radius:999px; }
   .bk-item { display:flex; align-items:center; gap:14px; padding:14px 16px; background:var(--card); border:1px solid var(--line); border-radius:12px; }
-  .bk-item .when { text-align:center; min-width:78px; padding:8px; border-radius:10px; background:var(--accent-soft); border:1px solid rgba(69,168,240,.25); }
+  .bk-item .when { text-align:center; min-width:78px; padding:8px; border-radius:10px; background:var(--accent-soft); border:1px solid var(--line); }
   .bk-item .when .dt { font-size:12px; color:var(--muted); }
   .bk-item .when .tm { font-size:16px; font-weight:800; color:var(--accent); }
   .bk-item .who { flex:1; min-width:0; }
   .bk-item .who .nm { font-weight:700; font-size:15px; }
   .bk-item .who .ct { font-size:12.5px; color:var(--muted); margin-top:2px; }
   .bk-item.past { opacity:.5; }
+  .crm-head { display:flex; align-items:flex-start; justify-content:space-between; gap:16px; margin-bottom:18px; }
+  .crm-head h3 { margin-bottom:3px; }
+  .crm-contact { color:var(--muted); font-size:13px; }
+  .crm-toolbar { display:flex; align-items:end; gap:10px; flex-wrap:wrap; padding:16px 0; border-top:1px solid var(--line); border-bottom:1px solid var(--line); }
+  .crm-toolbar .field { min-width:180px; margin:0; }
+  .crm-form { margin-top:18px; padding-top:18px; border-top:1px solid var(--line); }
+  .crm-timeline { margin-top:24px; border-top:1px solid var(--line); }
+  .crm-event { display:grid; grid-template-columns:140px minmax(0,1fr); gap:18px; padding:16px 0; border-bottom:1px solid var(--line); }
+  .crm-event-time { color:var(--muted); font-size:12.5px; }
+  .crm-event-title { font-weight:700; font-size:14px; }
+  .crm-event-meta { color:var(--muted); font-size:12.5px; margin-top:3px; }
+  .crm-event-body { font-size:13.5px; margin-top:8px; white-space:pre-wrap; }
+  @media (max-width:620px){ .crm-event { grid-template-columns:1fr; gap:4px; } }
   .hidden { display:none !important; }
 </style>
 </head>
@@ -142,23 +167,24 @@
         <span class="tag">АДМИН</span>
       </div>
       <div style="display:flex; gap:8px;">
-        <a class="btn btn-sm" href="index.html" target="_blank">Сайт нээх ↗</a>
+        <a class="btn btn-sm" href="index.html" target="_blank">Сайт нээх</a>
         <button class="btn btn-sm" onclick="logout()">Гарах</button>
       </div>
     </div>
   </header>
 
-  <main class="wrap">
+  <main class="wrap admin-layout">
     <div class="tabs">
-      <div class="tab active" data-tab="templates" onclick="switchTab('templates')">📦 Темплэйтүүд</div>
-      <div class="tab" data-tab="articles" onclick="switchTab('articles')">📰 Мэдээ нийтлэл</div>
-      <div class="tab" data-tab="why" onclick="switchTab('why')">💡 Яагаад бид</div>
-      <div class="tab" data-tab="pricing" onclick="switchTab('pricing')">📋 Үнийн санал</div>
-      <div class="tab" data-tab="schedule" onclick="switchTab('schedule')">📅 Цаг товлолт</div>
-      <div class="tab" data-tab="users" onclick="switchTab('users')">👥 Бүртгэлүүд</div>
-      <div class="tab" data-tab="admins" onclick="switchTab('admins')">🔐 Админууд</div>
-      <div class="tab" data-tab="contact" onclick="switchTab('contact')">☎️ Холбоо барих</div>
+      <div class="tab active" data-tab="templates" onclick="switchTab('templates')">Темплэйтүүд</div>
+      <div class="tab" data-tab="articles" onclick="switchTab('articles')">Мэдээ нийтлэл</div>
+      <div class="tab" data-tab="why" onclick="switchTab('why')">Яагаад бид</div>
+      <div class="tab" data-tab="pricing" onclick="switchTab('pricing')">Үнийн санал</div>
+      <div class="tab" data-tab="schedule" onclick="switchTab('schedule')">Цаг товлолт</div>
+      <div class="tab" data-tab="users" onclick="switchTab('users')">Хэрэглэгч</div>
+      <div class="tab" data-tab="admins" onclick="switchTab('admins')">Админууд</div>
+      <div class="tab" data-tab="contact" onclick="switchTab('contact')">Холбоо барих</div>
     </div>
+    <div class="admin-content">
 
     <!-- ===== Templates panel ===== -->
     <section id="tab-templates">
@@ -169,11 +195,11 @@
           <button class="btn btn-sm" onclick="resetTemplates()">Анхны төлөвт</button>
         </div>
       </div>
-      <div class="hint">Нэр, төрлийг оруулаад темплэйт бүрд файл хавсаргаж болно (дээд тал нь 2MB). Хавсаргасан файл сайт дээр «⬇ Татах» товчоор татагдана. Хадгалсны дараа «KPI нэвтрүүлэх аргачлал» бүтээгдэхүүн дотор шинэчлэгдэнэ.</div>
+      <div class="hint">Нэр, төрлийг оруулаад темплэйт бүрд файл хавсаргаж болно (дээд тал нь 5MB). Хавсаргасан файл сайт дээр «Татах» товчоор татагдана. Хадгалсны дараа «KPI нэвтрүүлэх аргачлал» бүтээгдэхүүн дотор шинэчлэгдэнэ.</div>
       <div class="list" id="tplList"></div>
       <div class="save-bar">
-        <button class="btn btn-primary" onclick="saveTemplates()">💾 Хадгалах</button>
-        <span class="saved-msg" id="tplSaved">✓ Хадгалагдлаа</span>
+        <button class="btn btn-primary" onclick="saveTemplates()">Хадгалах</button>
+        <span class="saved-msg" id="tplSaved">Хадгалагдлаа</span>
       </div>
     </section>
 
@@ -192,7 +218,7 @@
         <h3 id="artEditorTitle">Шинэ нийтлэл</h3>
         <div class="row2">
           <div class="field"><label>Ангилал</label><input id="e-cat" placeholder="Судалгаа"></div>
-          <div class="field"><label>Огноо</label><input id="e-date" placeholder="2026 оны 6-р сар"></div>
+          <div class="field"><label>Огноо</label><input type="date" id="e-date"></div>
         </div>
         <div class="field"><label>Унших хугацаа</label><input id="e-read" placeholder="5 мин"></div>
         <div class="field"><label>Зохиогч (By ...)</label><input id="e-author" placeholder="Жишээ: Бат Болд"></div>
@@ -200,9 +226,9 @@
         <div class="field">
           <label>Нүүр зураг</label>
           <div class="tpl-file" style="border-top:none; padding-top:0;">
-            <label class="file-btn">🖼️ Зураг сонгох<input type="file" accept="image/*" hidden onchange="onArticleImage(this)"></label>
+            <label class="file-btn">Зураг сонгох<input type="file" accept="image/*" hidden onchange="onArticleImage(this)"></label>
             <span class="file-name" id="e-imgName">Зураг сонгоогүй</span>
-            <button class="file-rm" id="e-imgRm" style="display:none;" onclick="removeArticleImage()">✕ Устгах</button>
+            <button class="file-rm" id="e-imgRm" style="display:none;" onclick="removeArticleImage()">Устгах</button>
           </div>
           <img id="e-imgPreview" style="display:none; margin-top:12px; max-width:280px; width:100%; border-radius:10px; border:1px solid var(--line);">
         </div>
@@ -210,17 +236,22 @@
         <div class="field">
           <label>Агуулга</label>
           <textarea id="e-body" style="min-height:200px" placeholder="Энгийн догол мөр..."></textarea>
+          <div class="tpl-file" style="border-top:none; padding-top:10px;">
+            <label class="file-btn">Агуулгад зураг нэмэх<input type="file" accept="image/*" hidden onchange="onBodyImage(this)"></label>
+            <span class="file-name">Курсор байрласан хэсэгт зураг нэмэгдэнэ</span>
+          </div>
           <div class="code-note">
             Форматлах тэмдэглэгээ:<br>
             • Ердийн мөр → догол мөр&nbsp;&nbsp; • <b>## Гарчиг</b> → дэд гарчиг<br>
             • <b>- зүйл</b> → жагсаалт&nbsp;&nbsp; • <b>&gt; эшлэл</b> → эшлэл (blockquote)<br>
+            • <b>![Тайлбар](зураг)</b> → агуулга доторх зураг<br>
             Хэсгүүдийг хоосон мөрөөр тусгаарлана.
           </div>
         </div>
         <div class="save-bar">
-          <button class="btn btn-primary" onclick="saveArticle()">💾 Хадгалах</button>
+          <button class="btn btn-primary" onclick="saveArticle()">Хадгалах</button>
           <button class="btn" onclick="cancelArticle()">Болих</button>
-          <span class="saved-msg" id="artSaved">✓ Хадгалагдлаа</span>
+          <span class="saved-msg" id="artSaved">Хадгалагдлаа</span>
         </div>
       </div>
     </section>
@@ -244,9 +275,9 @@
         <div class="field">
           <label>Танилцуулга зураг</label>
           <div class="tpl-file" style="border-top:none; padding-top:0;">
-            <label class="file-btn">🖼️ Зураг сонгох<input type="file" accept="image/*" hidden onchange="onWhyImage(this)"></label>
+            <label class="file-btn">Зураг сонгох<input type="file" accept="image/*" hidden onchange="onWhyImage(this)"></label>
             <span class="file-name" id="w-imgName">Зураг сонгоогүй</span>
-            <button class="file-rm" id="w-imgRm" style="display:none;" onclick="removeWhyImage()">✕ Устгах</button>
+            <button class="file-rm" id="w-imgRm" style="display:none;" onclick="removeWhyImage()">Устгах</button>
           </div>
           <img id="w-imgPreview" style="display:none; margin-top:12px; max-width:260px; width:100%; border-radius:12px; border:1px solid var(--line);">
         </div>
@@ -259,8 +290,8 @@
         </div>
 
         <div class="save-bar">
-          <button class="btn btn-primary" onclick="saveWhy()">💾 Хадгалах</button>
-          <span class="saved-msg" id="whySaved">✓ Хадгалагдлаа</span>
+          <button class="btn btn-primary" onclick="saveWhy()">Хадгалах</button>
+          <span class="saved-msg" id="whySaved">Хадгалагдлаа</span>
         </div>
       </div>
     </section>
@@ -277,8 +308,8 @@
       <div class="hint">Хэрэглэгч бүтээгдэхүүн дотор «Үнийн санал авах» дарахад энэ асуулга гарч ирнэ. Бөглөж илгээхэд хүсэлт доорх «Ирсэн хүсэлтүүд» жагсаалтад орж, хэрэглэгчид «16 цагийн дотор үнийн санал илгээнэ» гэсэн мэдэгдэл харагдана.</div>
       <div class="list" id="qList"></div>
       <div class="save-bar">
-        <button class="btn btn-primary" onclick="saveQuestions()">💾 Хадгалах</button>
-        <span class="saved-msg" id="qSaved">✓ Хадгалагдлаа</span>
+        <button class="btn btn-primary" onclick="saveQuestions()">Хадгалах</button>
+        <span class="saved-msg" id="qSaved">Хадгалагдлаа</span>
       </div>
 
       <div class="panel-head" style="margin-top:34px;">
@@ -291,7 +322,7 @@
     <!-- ===== Users panel ===== -->
     <section id="tab-users" class="hidden">
       <div class="panel-head">
-        <h2>Бүртгүүлсэн хэрэглэгчид</h2>
+        <h2>Хэрэглэгчид</h2>
         <div class="actions">
           <button class="btn btn-sm" onclick="toggleUserEditor()">+ Хэрэглэгч нэмэх</button>
           <span id="usrCount" style="font-size:13px; color:var(--muted);"></span>
@@ -310,9 +341,72 @@
         </div>
         <div class="field"><label>Албан тушаал</label><input id="u-role" placeholder="Жишээ: Гүйцэтгэх захирал"></div>
         <div class="save-bar">
-          <button class="btn btn-primary" id="userAddBtn" onclick="addUser()">💾 Нэмэх</button>
+          <button class="btn btn-primary" id="userAddBtn" onclick="addUser()">Нэмэх</button>
           <button class="btn" onclick="toggleUserEditor(false)">Болих</button>
           <span class="form-msg" id="userMsg"></span>
+        </div>
+      </div>
+      <div class="editor hidden" id="crmDetail" style="margin-bottom:20px;">
+        <div class="crm-head">
+          <div>
+            <h3 id="crmName">Хэрэглэгч</h3>
+            <div class="crm-contact" id="crmContact"></div>
+          </div>
+          <button class="btn btn-sm" onclick="closeCrm()">Хаах</button>
+        </div>
+        <div class="crm-toolbar">
+          <div class="field">
+            <label>CRM төлөв</label>
+            <select id="crmStatus" onchange="saveCrmStatus()">
+              <option value="Шинэ">Шинэ</option>
+              <option value="Холбогдсон">Холбогдсон</option>
+              <option value="Санал илгээсэн">Санал илгээсэн</option>
+              <option value="Хэлэлцэж байгаа">Хэлэлцэж байгаа</option>
+              <option value="Амжилттай">Амжилттай</option>
+              <option value="Хаагдсан">Хаагдсан</option>
+            </select>
+          </div>
+          <button class="btn btn-primary" onclick="toggleCrmForm('email')">Мэйл бичих</button>
+          <button class="btn" onclick="toggleCrmForm('call')">Дуудлага бүртгэх</button>
+          <button class="btn" onclick="toggleCrmForm('note')">Тэмдэглэл нэмэх</button>
+        </div>
+
+        <div class="crm-form hidden" id="crmEmailForm">
+          <h3>Мэйл бичих</h3>
+          <div class="field"><label>Хүлээн авагч</label><input id="crmEmailTo" readonly></div>
+          <div class="field"><label>Гарчиг</label><input id="crmEmailSubject" placeholder="Мэйлийн гарчиг"></div>
+          <div class="field"><label>Агуулга</label><textarea id="crmEmailBody" placeholder="Мэйлийн агуулга"></textarea></div>
+          <div class="save-bar">
+            <button class="btn btn-primary" id="crmEmailBtn" onclick="sendCrmEmail()">Mail app-аар нээх</button>
+            <button class="btn" onclick="toggleCrmForm()">Болих</button>
+          </div>
+        </div>
+
+        <div class="crm-form hidden" id="crmCallForm">
+          <h3>Дуудлага бүртгэх</h3>
+          <div class="row2">
+            <div class="field"><label>Холбогдсон огноо, цаг</label><input type="datetime-local" id="crmCallAt"></div>
+            <div class="field"><label>Холбогдсон ажилтан</label><input id="crmCallBy" placeholder="Ажилтны нэр"></div>
+          </div>
+          <div class="field"><label>Ярилцсан тэмдэглэл</label><textarea id="crmCallNote" placeholder="Юу ярилцсан, дараагийн алхам..."></textarea></div>
+          <div class="save-bar">
+            <button class="btn btn-primary" id="crmCallBtn" onclick="saveCrmCall()">Бүртгэх</button>
+            <button class="btn" onclick="toggleCrmForm()">Болих</button>
+          </div>
+        </div>
+
+        <div class="crm-form hidden" id="crmNoteForm">
+          <h3>Дотоод тэмдэглэл</h3>
+          <div class="field"><textarea id="crmNoteBody" placeholder="Хэрэглэгчтэй холбоотой тэмдэглэл..."></textarea></div>
+          <div class="save-bar">
+            <button class="btn btn-primary" id="crmNoteBtn" onclick="saveCrmNote()">Хадгалах</button>
+            <button class="btn" onclick="toggleCrmForm()">Болих</button>
+          </div>
+        </div>
+
+        <div class="crm-timeline">
+          <div class="panel-head" style="margin:20px 0 4px;"><h3>Харилцааны түүх</h3></div>
+          <div id="crmTimeline"></div>
         </div>
       </div>
       <div class="list" id="usrList"></div>
@@ -336,7 +430,7 @@
           <div class="field"><label>Нууц үг давтах</label><input type="password" id="a-pass2" autocomplete="new-password" placeholder="Давтан оруулна уу"></div>
         </div>
         <div class="save-bar">
-          <button class="btn btn-primary" id="adminAddBtn" onclick="addAdmin()">🔐 Админ нэмэх</button>
+          <button class="btn btn-primary" id="adminAddBtn" onclick="addAdmin()">Админ нэмэх</button>
           <span class="form-msg" id="adminMsg"></span>
         </div>
       </div>
@@ -356,8 +450,24 @@
         <span class="book-label" style="display:block; margin-bottom:8px;">Цаг сонгох (дарж нээх/хаах)</span>
         <div class="av-toggles" id="avToggles"></div>
         <div class="save-bar">
-          <button class="btn btn-primary" onclick="saveAvailability()">💾 Хадгалах</button>
-          <span class="saved-msg" id="avSaved">✓ Хадгалагдлаа</span>
+          <button class="btn btn-primary" onclick="saveAvailability()">Хадгалах</button>
+          <span class="saved-msg" id="avSaved">Хадгалагдлаа</span>
+        </div>
+      </div>
+
+      <div class="editor">
+        <h3>Бөөнөөр цаг нээх</h3>
+        <div class="row2">
+          <div class="field"><label>Эхлэх огноо</label><input type="date" id="bulk-start"></div>
+          <div class="field"><label>Дуусах огноо</label><input type="date" id="bulk-end"></div>
+        </div>
+        <span class="book-label" style="display:block; margin-bottom:8px;">Гараг сонгох</span>
+        <div class="bulk-days" id="bulkDays"></div>
+        <span class="book-label" style="display:block; margin-bottom:8px;">Цаг сонгох</span>
+        <div class="av-toggles bulk-slots" id="bulkSlots"></div>
+        <div class="save-bar">
+          <button class="btn btn-primary" onclick="createBulkAvailability()">Бөөнөөр үүсгэх</button>
+          <span class="saved-msg" id="bulkSaved"></span>
         </div>
       </div>
 
@@ -385,31 +495,32 @@
       <div class="editor">
         <div class="field"><label>Танилцуулга текст</label><textarea id="c-intro" style="min-height:70px" placeholder="Асуулт, санал байвал..."></textarea></div>
         <div class="row2">
-          <div class="field"><label>✉️ И-мэйл</label><input id="c-email" placeholder="hello@kpihub.mn"></div>
-          <div class="field"><label>📞 Утас</label><input id="c-phone" placeholder="+976 8800-1234"></div>
+          <div class="field"><label>И-мэйл</label><input id="c-email" placeholder="hello@kpihub.mn"></div>
+          <div class="field"><label>Утас</label><input id="c-phone" placeholder="+976 8800-1234"></div>
         </div>
-        <div class="field"><label>💬 Facebook / Messenger</label><input id="c-facebook" placeholder="@kpihub.mn"></div>
-        <div class="field"><label>📍 Хаяг</label><input id="c-address" placeholder="Улаанбаатар, ..."></div>
-        <div class="field"><label>🕒 Ажиллах цаг</label><input id="c-hours" placeholder="Даваа–Баасан, 09:00–18:00"></div>
+        <div class="field"><label>Facebook / Messenger</label><input id="c-facebook" placeholder="@kpihub.mn"></div>
+        <div class="field"><label>Хаяг</label><input id="c-address" placeholder="Улаанбаатар, ..."></div>
+        <div class="field"><label>Ажиллах цаг</label><input id="c-hours" placeholder="Даваа–Баасан, 09:00–18:00"></div>
 
         <div style="margin-top:18px; padding-top:18px; border-top:1px solid var(--line);">
           <div class="hint" style="margin-bottom:14px;">Хуудасны доод хэсгийн сошиал icon-уудын холбоос. Хоосон орхивол тухайн icon харагдахгүй.</div>
           <div class="row2">
-            <div class="field"><label>📷 Instagram холбоос</label><input id="c-ig" placeholder="https://instagram.com/..."></div>
+            <div class="field"><label>Instagram холбоос</label><input id="c-ig" placeholder="https://instagram.com/..."></div>
             <div class="field"><label>f Facebook холбоос</label><input id="c-fb" placeholder="https://facebook.com/..."></div>
           </div>
           <div class="row2">
-            <div class="field"><label>▶ YouTube холбоос</label><input id="c-yt" placeholder="https://youtube.com/@..."></div>
+            <div class="field"><label>YouTube холбоос</label><input id="c-yt" placeholder="https://youtube.com/@..."></div>
             <div class="field"><label>in LinkedIn холбоос</label><input id="c-li" placeholder="https://linkedin.com/company/..."></div>
           </div>
         </div>
 
         <div class="save-bar">
-          <button class="btn btn-primary" onclick="saveContact()">💾 Хадгалах</button>
-          <span class="saved-msg" id="contactSaved">✓ Хадгалагдлаа</span>
+          <button class="btn btn-primary" onclick="saveContact()">Хадгалах</button>
+          <span class="saved-msg" id="contactSaved">Хадгалагдлаа</span>
         </div>
       </div>
     </section>
+    </div>
   </main>
 </div>
 
@@ -491,6 +602,13 @@
   };
 
   const SCHED_SLOTS = ['09:00','10:00','11:00','13:00','14:00','15:00','16:00','17:00'];
+  const BULK_WEEKDAYS = [
+    { value:1, label:'Даваа' }, { value:2, label:'Мягмар' }, { value:3, label:'Лхагва' },
+    { value:4, label:'Пүрэв' }, { value:5, label:'Баасан' }, { value:6, label:'Бямба' },
+    { value:0, label:'Ням' },
+  ];
+  const bulkSelectedDays = new Set([1,2,3,4,5]);
+  const bulkSelectedTimes = new Set(SCHED_SLOTS);
 
   let templates = load('kpihub_templates', DEFAULT_TEMPLATES.map(t=>t.slice()));
   let articles = load('kpihub_articles', DEFAULT_ARTICLES.map(a=>JSON.parse(JSON.stringify(a))));
@@ -549,6 +667,7 @@
     renderQuestions();
     renderQuoteRequests();
     renderAvToggles();
+    renderBulkControls();
     renderAvList();
     renderBookings();
     renderUsers();
@@ -571,7 +690,7 @@
     document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.dataset.tab === t));
     ['templates','articles','why','pricing','schedule','users','admins','contact'].forEach(name =>
       document.getElementById('tab-' + name).classList.toggle('hidden', name !== t));
-    if (t === 'schedule') { renderAvList(); renderBookings(); }
+    if (t === 'schedule') { renderBulkControls(); renderAvList(); renderBookings(); }
     if (t === 'pricing') { renderQuestions(); renderQuoteRequests(); }
     if (t === 'users') { renderUsers(); clearUserMsg(); }
     if (t === 'admins') { renderAdmins(); clearAdminMsg(); }
@@ -677,6 +796,72 @@
     availability.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
     save('kpihub_availability', availability); flash('avSaved'); renderAvList();
   }
+  function dateInputValue(date) {
+    return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') + '-' + String(date.getDate()).padStart(2, '0');
+  }
+  function parseInputDate(value) {
+    const parts = String(value || '').split('-').map(Number);
+    return parts.length === 3 && parts.every(Boolean) ? new Date(parts[0], parts[1] - 1, parts[2]) : null;
+  }
+  function renderBulkControls() {
+    const startInput = document.getElementById('bulk-start');
+    const endInput = document.getElementById('bulk-end');
+    if (!startInput || !endInput) return;
+    if (!startInput.value) {
+      const today = new Date();
+      const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 30);
+      startInput.value = dateInputValue(today);
+      endInput.value = dateInputValue(end);
+    }
+    document.getElementById('bulkDays').innerHTML = BULK_WEEKDAYS.map(day =>
+      '<div class="av-chip' + (bulkSelectedDays.has(day.value) ? ' on' : '') + '" onclick="toggleBulkDay(' + day.value + ')">' + day.label + '</div>'
+    ).join('');
+    document.getElementById('bulkSlots').innerHTML = SCHED_SLOTS.map(time =>
+      '<div class="av-chip' + (bulkSelectedTimes.has(time) ? ' on' : '') + '" onclick="toggleBulkTime(\'' + time + '\')">' + time + '</div>'
+    ).join('');
+  }
+  function toggleBulkDay(day) {
+    if (bulkSelectedDays.has(day)) bulkSelectedDays.delete(day);
+    else bulkSelectedDays.add(day);
+    renderBulkControls();
+  }
+  function toggleBulkTime(time) {
+    if (bulkSelectedTimes.has(time)) bulkSelectedTimes.delete(time);
+    else bulkSelectedTimes.add(time);
+    renderBulkControls();
+  }
+  function createBulkAvailability() {
+    const start = parseInputDate(document.getElementById('bulk-start').value);
+    const end = parseInputDate(document.getElementById('bulk-end').value);
+    if (!start || !end) { alert('Эхлэх болон дуусах огноог сонгоно уу.'); return; }
+    if (end < start) { alert('Дуусах огноо эхлэх огнооноос хойш байх ёстой.'); return; }
+    const dayCount = Math.floor((end - start) / 86400000) + 1;
+    if (dayCount > 366) { alert('Нэг удаад 366 хүртэл хоногийн цаг үүсгэнэ үү.'); return; }
+    if (!bulkSelectedDays.size) { alert('Доод тал нь нэг гараг сонгоно уу.'); return; }
+    if (!bulkSelectedTimes.size) { alert('Доод тал нь нэг цаг сонгоно уу.'); return; }
+
+    const existing = new Set(availability.map(a => avKey(a.date, a.time)));
+    const times = SCHED_SLOTS.filter(time => bulkSelectedTimes.has(time));
+    let added = 0;
+    for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
+      if (!bulkSelectedDays.has(date.getDay())) continue;
+      const dateValue = dateInputValue(date);
+      times.forEach(time => {
+        const key = avKey(dateValue, time);
+        if (existing.has(key)) return;
+        availability.push({ date:dateValue, time:time });
+        existing.add(key);
+        added++;
+      });
+    }
+    availability.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
+    save('kpihub_availability', availability);
+    const message = document.getElementById('bulkSaved');
+    message.textContent = added ? added + ' цаг нэмэгдлээ' : 'Шинэ цаг нэмэгдсэнгүй';
+    flash('bulkSaved');
+    renderAvList();
+    renderAvToggles();
+  }
   function renderAvList() {
     const byDate = {};
     availability.forEach(a => { (byDate[a.date] = byDate[a.date] || []).push(a.time); });
@@ -730,6 +915,160 @@
 
   // ---------- Registered users (Firestore submissions kind:'user') ----------
   let usersList = [];
+  let crmActivities = [];
+  let selectedCrmUserId = '';
+  const CRM_FORM_IDS = ['crmEmailForm','crmCallForm','crmNoteForm'];
+  function normalizeEmail(value) { return String(value || '').trim().toLowerCase(); }
+  function normalizePhone(value) {
+    const digits = String(value || '').replace(/\D/g, '');
+    return digits.length >= 8 ? digits.slice(-8) : digits;
+  }
+  function sameCrmContact(record, user) {
+    const email = normalizeEmail(user && user.email);
+    const phone = normalizePhone(user && user.phone);
+    return (email && normalizeEmail(record && record.email) === email)
+      || (phone && normalizePhone(record && record.phone) === phone);
+  }
+  function selectedCrmUser() { return usersList.find(u => u.id === selectedCrmUserId) || null; }
+  function crmDateLabel(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    return isNaN(date.getTime()) ? String(value) : date.toLocaleString('mn-MN', { year:'numeric', month:'2-digit', day:'2-digit', hour:'2-digit', minute:'2-digit' });
+  }
+  function crmAdminLabel() {
+    const admin = KPICloud.authUser && KPICloud.authUser();
+    return admin ? (admin.displayName || admin.email || '') : '';
+  }
+  function currentCrmStatus() {
+    const latest = crmActivities.filter(a => a.contactId === selectedCrmUserId && a.activityType === 'status')
+      .sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')))[0];
+    return latest && latest.status ? latest.status : 'Шинэ';
+  }
+  function localDateTimeValue(date) {
+    const d = date || new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
+      + 'T' + String(d.getHours()).padStart(2, '0') + ':' + String(d.getMinutes()).padStart(2, '0');
+  }
+  function openCrm(id) {
+    selectedCrmUserId = id;
+    toggleCrmForm();
+    renderCrmDetail();
+    const detail = document.getElementById('crmDetail');
+    detail.classList.remove('hidden');
+    detail.scrollIntoView({ behavior:'smooth', block:'start' });
+  }
+  function closeCrm() {
+    selectedCrmUserId = '';
+    document.getElementById('crmDetail').classList.add('hidden');
+    toggleCrmForm();
+  }
+  function toggleCrmForm(type) {
+    CRM_FORM_IDS.forEach(id => document.getElementById(id).classList.add('hidden'));
+    if (!type) return;
+    const user = selectedCrmUser();
+    const target = document.getElementById('crm' + type.charAt(0).toUpperCase() + type.slice(1) + 'Form');
+    if (!target || !user) return;
+    target.classList.remove('hidden');
+    if (type === 'email') {
+      document.getElementById('crmEmailTo').value = user.email || '';
+      document.getElementById('crmEmailSubject').focus();
+    } else if (type === 'call') {
+      document.getElementById('crmCallAt').value = localDateTimeValue();
+      document.getElementById('crmCallBy').value = crmAdminLabel();
+      document.getElementById('crmCallNote').focus();
+    } else {
+      document.getElementById('crmNoteBody').focus();
+    }
+  }
+  function renderCrmDetail() {
+    const user = selectedCrmUser();
+    const detail = document.getElementById('crmDetail');
+    if (!user) { detail.classList.add('hidden'); return; }
+    detail.classList.remove('hidden');
+    document.getElementById('crmName').textContent = user.name || 'Хэрэглэгч';
+    document.getElementById('crmContact').textContent = [user.email, user.phone, user.org, user.role].filter(Boolean).join(' · ');
+    document.getElementById('crmEmailTo').value = user.email || '';
+    document.getElementById('crmStatus').value = currentCrmStatus();
+
+    const events = [];
+    quoteReqs.filter(q => sameCrmContact(q, user)).forEach(q => {
+      const answers = (q.answers || []).map(a => (a.q || 'Асуулт') + ': ' + (a.a || '—')).join('\n');
+      events.push({ at:q.at, title:'Үнийн санал хүссэн', meta:q.product || 'Бүтээгдэхүүн тодорхойгүй', body:answers });
+    });
+    bookingsList.filter(b => sameCrmContact(b, user)).forEach(b => {
+      events.push({ at:b.at || (b.date + 'T' + b.time), title:'Цаг товлосон', meta:(b.date || '') + ' ' + (b.time || ''), body:b.product || '' });
+    });
+    crmActivities.filter(a => a.contactId === user.id).forEach(a => {
+      let title = 'CRM үйлдэл';
+      if (a.activityType === 'email') title = 'Мэйл илгээсэн' + (a.subject ? ': ' + a.subject : '');
+      else if (a.activityType === 'call') title = 'Утсаар холбогдсон';
+      else if (a.activityType === 'note') title = 'Дотоод тэмдэглэл';
+      else if (a.activityType === 'status') title = 'CRM төлөв: ' + (a.status || '');
+      const actor = [a.byName, a.byEmail].filter(Boolean).join(' · ');
+      events.push({ at:a.occurredAt || a.at, title:title, meta:actor, body:a.message || '' });
+    });
+    events.sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+    document.getElementById('crmTimeline').innerHTML = events.length ? events.map(event =>
+      '<div class="crm-event">'
+      + '<div class="crm-event-time">' + esc(crmDateLabel(event.at)) + '</div>'
+      + '<div><div class="crm-event-title">' + esc(event.title) + '</div>'
+      + (event.meta ? '<div class="crm-event-meta">' + esc(event.meta) + '</div>' : '')
+      + (event.body ? '<div class="crm-event-body">' + esc(event.body) + '</div>' : '')
+      + '</div></div>'
+    ).join('') : '<div class="empty" style="margin-top:16px;">Харилцааны түүх алга.</div>';
+  }
+  function crmBusy(buttonId, busy, label) {
+    const button = document.getElementById(buttonId);
+    if (!button) return;
+    button.textContent = busy ? 'Хадгалж байна…' : label;
+    button.disabled = busy;
+    button.style.opacity = busy ? '.65' : '';
+  }
+  function saveCrmStatus() {
+    const user = selectedCrmUser();
+    if (!user) return;
+    KPICloud.addCrmActivity({ contactId:user.id, activityType:'status', status:document.getElementById('crmStatus').value })
+      .catch(err => { alert((err && err.message) || 'CRM төлөв хадгалахад алдаа гарлаа.'); renderCrmDetail(); });
+  }
+  function sendCrmEmail() {
+    const user = selectedCrmUser();
+    const subject = document.getElementById('crmEmailSubject').value.trim();
+    const message = document.getElementById('crmEmailBody').value.trim();
+    if (!user || !user.email) { alert('Хэрэглэгчийн и-мэйл байхгүй байна.'); return; }
+    if (!subject || !message) { alert('Мэйлийн гарчиг болон агуулгыг оруулна уу.'); return; }
+    crmBusy('crmEmailBtn', true, 'Mail app-аар нээх');
+    KPICloud.addCrmActivity({ contactId:user.id, activityType:'email', subject:subject, message:message, occurredAt:new Date().toISOString() })
+      .then(() => {
+        document.getElementById('crmEmailSubject').value = '';
+        document.getElementById('crmEmailBody').value = '';
+        toggleCrmForm();
+        window.location.href = 'mailto:' + encodeURIComponent(user.email) + '?subject=' + encodeURIComponent(subject) + '&body=' + encodeURIComponent(message);
+      })
+      .catch(err => alert((err && err.message) || 'Мэйл бүртгэхэд алдаа гарлаа.'))
+      .finally(() => crmBusy('crmEmailBtn', false, 'Mail app-аар нээх'));
+  }
+  function saveCrmCall() {
+    const user = selectedCrmUser();
+    const occurredAt = document.getElementById('crmCallAt').value;
+    const byName = document.getElementById('crmCallBy').value.trim();
+    const message = document.getElementById('crmCallNote').value.trim();
+    if (!user || !occurredAt || !byName || !message) { alert('Дуудлагын бүх мэдээллийг бөглөнө үү.'); return; }
+    crmBusy('crmCallBtn', true, 'Бүртгэх');
+    KPICloud.addCrmActivity({ contactId:user.id, activityType:'call', occurredAt:new Date(occurredAt).toISOString(), byName:byName, message:message })
+      .then(() => { document.getElementById('crmCallNote').value = ''; toggleCrmForm(); })
+      .catch(err => alert((err && err.message) || 'Дуудлага бүртгэхэд алдаа гарлаа.'))
+      .finally(() => crmBusy('crmCallBtn', false, 'Бүртгэх'));
+  }
+  function saveCrmNote() {
+    const user = selectedCrmUser();
+    const message = document.getElementById('crmNoteBody').value.trim();
+    if (!user || !message) { alert('Тэмдэглэлээ оруулна уу.'); return; }
+    crmBusy('crmNoteBtn', true, 'Хадгалах');
+    KPICloud.addCrmActivity({ contactId:user.id, activityType:'note', message:message, occurredAt:new Date().toISOString() })
+      .then(() => { document.getElementById('crmNoteBody').value = ''; toggleCrmForm(); })
+      .catch(err => alert((err && err.message) || 'Тэмдэглэл хадгалахад алдаа гарлаа.'))
+      .finally(() => crmBusy('crmNoteBtn', false, 'Хадгалах'));
+  }
   function clearUserMsg() {
     const el = document.getElementById('userMsg');
     if (!el) return;
@@ -783,24 +1122,27 @@
     }).catch(err => {
       showUserMsg((err && err.message) ? err.message : 'Хэрэглэгч нэмэх үед алдаа гарлаа.', false);
     }).finally(() => {
-      btn.textContent = '💾 Нэмэх'; btn.style.pointerEvents = ''; btn.style.opacity = '';
+      btn.textContent = 'Нэмэх'; btn.style.pointerEvents = ''; btn.style.opacity = '';
     });
   }
   function renderUsers() {
     const users = usersList.slice().reverse(); // шинэ нь эхэнд
-    document.getElementById('usrCount').textContent = users.length ? users.length + ' бүртгэл' : '';
-    if (!users.length) { document.getElementById('usrList').innerHTML = '<div class="empty">Бүртгэл алга.</div>'; return; }
+    document.getElementById('usrCount').textContent = users.length ? users.length + ' хэрэглэгч' : '';
+    if (!users.length) { document.getElementById('usrList').innerHTML = '<div class="empty">Хэрэглэгч алга.</div>'; return; }
     document.getElementById('usrList').innerHTML = users.map((u) => {
       const contact = [u.email, u.phone, u.org, u.role].filter(Boolean).join(' · ');
       return '<div class="tpl-card">'
         + '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">'
         + '<div><b>' + esc(u.name || 'Хэрэглэгч') + '</b><div class="ct" style="font-size:12.5px; color:var(--muted); margin-top:2px;">' + esc(contact) + ' · ' + esc(String(u.at || '').slice(0,10)) + '</div></div>'
-        + '<button class="btn btn-danger btn-sm" onclick="delUser(\'' + u.id + '\')">Устгах</button>'
+        + '<div class="actions"><button class="btn btn-sm" onclick="openCrm(\'' + u.id + '\')">CRM нээх</button>'
+        + '<button class="btn btn-danger btn-sm" onclick="delUser(\'' + u.id + '\')">Устгах</button></div>'
         + '</div></div>';
     }).join('');
+    if (selectedCrmUserId) renderCrmDetail();
   }
   function delUser(id) {
     if (!confirmDelete()) return;
+    if (selectedCrmUserId === id) closeCrm();
     const prev = usersList.slice();
     pendingDeletedSubmissions.add(id);
     usersList = usersList.filter(u => u.id !== id);
@@ -859,7 +1201,7 @@
       else if (err && err.message) msg = err.message;
       showAdminMsg(msg, false);
     }).finally(() => {
-      btn.textContent = '🔐 Админ нэмэх'; btn.style.pointerEvents = ''; btn.style.opacity = '';
+      btn.textContent = 'Админ нэмэх'; btn.style.pointerEvents = ''; btn.style.opacity = '';
     });
   }
   function renderAdmins() {
@@ -931,11 +1273,12 @@
       + '</div>'
     ).join('') || '<div class="empty">Карт алга. «+ Карт нэмэх» дарна уу.</div>';
   }
-  const MAX_IMG = 2 * 1024 * 1024;
+  const MAX_UPLOAD = 5 * 1024 * 1024; // 5MB
+  const MAX_IMG = MAX_UPLOAD;
   function onWhyImage(input) {
     const f = input.files && input.files[0];
     if (!f) return;
-    if (f.size > MAX_IMG) { alert('Зураг хэт том байна (дээд тал нь 2MB).'); input.value=''; return; }
+    if (f.size > MAX_IMG) { alert('Зураг хэт том байна (дээд тал нь 5MB).'); input.value=''; return; }
     const reader = new FileReader();
     reader.onload = () => { why.image = reader.result; renderWhyForm(); };
     reader.readAsDataURL(f);
@@ -999,7 +1342,7 @@
     document.getElementById('tplList').innerHTML = templates.map((t, i) => {
       const file = t[3];
       const fileInfo = (file && file.name)
-        ? '<span class="file-name has">📎 ' + esc(file.name) + '</span><button class="file-rm" onclick="removeTplFile(' + i + ')">✕ Устгах</button>'
+        ? '<span class="file-name has">' + esc(file.name) + '</span><button class="file-rm" onclick="removeTplFile(' + i + ')">Устгах</button>'
         : '<span class="file-name">Файл хавсаргаагүй</span>';
       return '<div class="tpl-card">'
         + '<div class="tpl-top">'
@@ -1008,17 +1351,17 @@
         + '<button class="btn btn-danger btn-sm" onclick="delTemplate(' + i + ')">Устгах</button>'
         + '</div>'
         + '<div class="tpl-file">'
-        + '<label class="file-btn">📎 Файл сонгох<input type="file" hidden onchange="onTplFile(' + i + ', this)"></label>'
+        + '<label class="file-btn">Файл сонгох<input type="file" hidden onchange="onTplFile(' + i + ', this)"></label>'
         + fileInfo
         + '</div>'
         + '</div>';
     }).join('') || '<div class="empty">Темплэйт алга. «+ Темплэйт нэмэх» дарна уу.</div>';
   }
-  const MAX_FILE = 2 * 1024 * 1024; // 2MB
+  const MAX_FILE = MAX_UPLOAD;
   function onTplFile(i, input) {
     const f = input.files && input.files[0];
     if (!f) return;
-    if (f.size > MAX_FILE) { alert('Файл хэт том байна (дээд тал нь 2MB). Жижиг файл сонгоно уу.'); input.value=''; return; }
+    if (f.size > MAX_FILE) { alert('Файл хэт том байна (дээд тал нь 5MB). Жижиг файл сонгоно уу.'); input.value=''; return; }
     const reader = new FileReader();
     reader.onload = () => { templates[i][3] = { name: f.name, data: reader.result }; renderTemplates(); };
     reader.readAsDataURL(f);
@@ -1056,9 +1399,8 @@
   function renderArticles() {
     document.getElementById('artList').innerHTML = articles.map((a, i) =>
       '<div class="item">'
-      + '<span class="ic">' + esc(a.icon) + '</span>'
       + '<div class="grow"><div class="nm">' + esc(a.title) + '</div>'
-      + '<div class="meta">' + esc(a.cat) + ' · ' + esc(a.date) + ' · ' + esc(a.read || '') + (a.feature ? ' · ⭐ онцлох' : '') + '</div></div>'
+      + '<div class="meta">' + esc(a.cat) + ' · ' + esc(a.date) + ' · ' + esc(a.read || '') + (a.feature ? ' · Онцлох' : '') + '</div></div>'
       + '<div class="ops">'
       + '<button class="btn btn-sm" onclick="editArticle(' + i + ')">Засах</button>'
       + '<button class="btn btn-danger btn-sm" onclick="delArticle(' + i + ')">Устгах</button>'
@@ -1068,10 +1410,21 @@
 
   let editImage = '';
   let editIcon = '';
+  function monthDateValue(label) {
+    const m = String(label || '').match(/(\d{4})\s*оны\s*(\d{1,2})-р\s*сар/);
+    if (!m) return '';
+    return m[1] + '-' + String(m[2]).padStart(2, '0') + '-01';
+  }
+  function formatArticleDate(value) {
+    if (!value) return '';
+    const parts = value.split('-').map(Number);
+    if (parts.length < 2 || !parts[0] || !parts[1]) return value;
+    return parts[0] + ' оны ' + parts[1] + '-р сар';
+  }
   function fillEditor(a) {
     editIcon = a.icon || '';
     document.getElementById('e-cat').value = a.cat || '';
-    document.getElementById('e-date').value = a.date || '';
+    document.getElementById('e-date').value = monthDateValue(a.date) || '';
     document.getElementById('e-read').value = a.read || '';
     document.getElementById('e-author').value = a.author || '';
     document.getElementById('e-title').value = a.title || '';
@@ -1087,9 +1440,32 @@
   }
   function onArticleImage(input) {
     const f = input.files && input.files[0]; if (!f) return;
-    if (f.size > 2 * 1024 * 1024) { alert('Зураг хэт том байна (дээд тал нь 2MB).'); input.value = ''; return; }
+    if (f.size > MAX_IMG) { alert('Зураг хэт том байна (дээд тал нь 5MB).'); input.value = ''; return; }
     const reader = new FileReader();
     reader.onload = () => { editImage = reader.result; renderArticleImage(); };
+    reader.readAsDataURL(f);
+  }
+  function insertBodyText(text) {
+    const body = document.getElementById('e-body');
+    const start = body.selectionStart || 0;
+    const end = body.selectionEnd || start;
+    const before = body.value.slice(0, start);
+    const after = body.value.slice(end);
+    const prefix = before && !before.endsWith('\n\n') ? (before.endsWith('\n') ? '\n' : '\n\n') : '';
+    const suffix = after && !after.startsWith('\n\n') ? (after.startsWith('\n') ? '\n' : '\n\n') : '';
+    body.value = before + prefix + text + suffix + after;
+    const pos = (before + prefix + text).length;
+    body.focus();
+    body.setSelectionRange(pos, pos);
+  }
+  function onBodyImage(input) {
+    const f = input.files && input.files[0]; if (!f) return;
+    if (f.size > MAX_IMG) { alert('Зураг хэт том байна (дээд тал нь 5MB).'); input.value = ''; return; }
+    const reader = new FileReader();
+    reader.onload = () => {
+      insertBodyText('![' + (f.name || 'Зураг') + '](' + reader.result + ')');
+      input.value = '';
+    };
     reader.readAsDataURL(f);
   }
   function removeArticleImage() {
@@ -1122,7 +1498,7 @@
       id: editIndex >= 0 ? articles[editIndex].id : 'x' + Date.now(),
       icon: editIcon || '📄',
       cat: document.getElementById('e-cat').value.trim() || 'Бусад',
-      date: document.getElementById('e-date').value.trim(),
+      date: formatArticleDate(document.getElementById('e-date').value.trim()),
       read: document.getElementById('e-read').value.trim() || '5 мин',
       author: document.getElementById('e-author').value.trim(),
       image: editImage || '',
@@ -1142,6 +1518,7 @@
       if (b[0] === 'h3') return '## ' + b[1];
       if (b[0] === 'blockquote') return '> ' + b[1];
       if (b[0] === 'ul') return b[1].map(li => '- ' + li).join('\n');
+      if (b[0] === 'img') return '![' + (b[2] || 'Зураг') + '](' + b[1] + ')';
       return b[1];
     }).join('\n\n');
   }
@@ -1156,10 +1533,17 @@
         blocks.push(['h3', lines[0].slice(3).trim()]);
       } else if (lines.length === 1 && lines[0].startsWith('> ')) {
         blocks.push(['blockquote', lines[0].slice(2).trim()]);
+      } else if (lines.length === 1 && /^!\[[^\]]*\]\(.+\)$/.test(lines[0])) {
+        const m = lines[0].match(/^!\[([^\]]*)\]\((.+)\)$/);
+        blocks.push(['img', m[2], m[1] || 'Зураг']);
       } else {
         lines.forEach(l => {
           if (l.startsWith('## ')) blocks.push(['h3', l.slice(3).trim()]);
           else if (l.startsWith('> ')) blocks.push(['blockquote', l.slice(2).trim()]);
+          else if (/^!\[[^\]]*\]\(.+\)$/.test(l)) {
+            const m = l.match(/^!\[([^\]]*)\]\((.+)\)$/);
+            blocks.push(['img', m[2], m[1] || 'Зураг']);
+          }
           else blocks.push(['p', l]);
         });
       }
@@ -1174,19 +1558,22 @@
   }
 
   // ---------- Init ----------
-  let unsubQuote = null, unsubBooking = null, unsubUser = null, unsubAdmins = null;
+  let unsubQuote = null, unsubBooking = null, unsubUser = null, unsubCrm = null, unsubAdmins = null;
   function startAdminWatches() {
-    if (!unsubQuote)   unsubQuote   = KPICloud.watchSubmissions('quote',   arr => { quoteReqs = visibleSubmissions(arr);    if (appShown) renderQuoteRequests(); });
-    if (!unsubBooking) unsubBooking = KPICloud.watchSubmissions('booking', arr => { bookingsList = visibleSubmissions(arr); if (appShown) renderBookings(); });
+    if (!unsubQuote)   unsubQuote   = KPICloud.watchSubmissions('quote',   arr => { quoteReqs = visibleSubmissions(arr);    if (appShown) { renderQuoteRequests(); if (selectedCrmUserId) renderCrmDetail(); } });
+    if (!unsubBooking) unsubBooking = KPICloud.watchSubmissions('booking', arr => { bookingsList = visibleSubmissions(arr); if (appShown) { renderBookings(); if (selectedCrmUserId) renderCrmDetail(); } });
     if (!unsubUser)    unsubUser    = KPICloud.watchSubmissions('user',    arr => { usersList = visibleSubmissions(arr);    if (appShown) renderUsers(); });
+    if (!unsubCrm)     unsubCrm     = KPICloud.watchSubmissions('crm',     arr => { crmActivities = arr;                    if (appShown && selectedCrmUserId) renderCrmDetail(); });
     if (!unsubAdmins)  unsubAdmins  = KPICloud.watchAdmins(arr => { adminsList = visibleAdmins(arr); if (appShown) renderAdmins(); });
   }
   function stopAdminWatches() {
     if (unsubQuote)   { try { unsubQuote(); } catch(e){}   unsubQuote = null; }
     if (unsubBooking) { try { unsubBooking(); } catch(e){} unsubBooking = null; }
     if (unsubUser)    { try { unsubUser(); } catch(e){}    unsubUser = null; }
+    if (unsubCrm)     { try { unsubCrm(); } catch(e){}     unsubCrm = null; }
     if (unsubAdmins)  { try { unsubAdmins(); } catch(e){}  unsubAdmins = null; }
-    quoteReqs = []; bookingsList = []; usersList = []; adminsList = [];
+    quoteReqs = []; bookingsList = []; usersList = []; crmActivities = []; adminsList = [];
+    selectedCrmUserId = '';
   }
 
   // Контентыг Firestore-оос ачаалж дуусмагц хувьсагчдыг шинэчилнэ

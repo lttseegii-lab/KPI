@@ -51,6 +51,16 @@ service cloud.firestore {
              'product','productKey','answers','date','time','paid','role'
            ])
         && (!('answers' in request.resource.data) || request.resource.data.answers.size() <= 40);
+      allow create: if isAdmin()
+        && request.resource.data.kind == 'crm'
+        && request.resource.data.keys().hasOnly([
+             'kind','at','contactId','activityType','subject','message',
+             'status','occurredAt','byName','byEmail'
+           ])
+        && request.resource.data.contactId is string
+        && request.resource.data.activityType in ['email','call','note','status']
+        && (!('subject' in request.resource.data) || request.resource.data.subject is string)
+        && (!('message' in request.resource.data) || request.resource.data.message is string);
       allow read, update, delete: if isAdmin();
     }
 
