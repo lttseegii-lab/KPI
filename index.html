@@ -262,6 +262,21 @@
   .chip.active { color: #fff; background: var(--accent-soft); border-color: var(--accent); }
   .chip .count { opacity: .6; font-weight: 500; margin-left: 4px; }
 
+  /* Хуваалцах цэс — карт нь overflow:hidden тул body-д залгагдаж, fixed байрлана */
+  .share-menu {
+    position: fixed; z-index: 200; min-width: 186px; padding: 8px; display: none;
+    background: #fff; border-radius: 10px; border: 1px solid #e2e4ea;
+    box-shadow: 0 6px 16px rgba(0,0,0,.14), 0 22px 48px -18px rgba(0,0,0,.45);
+  }
+  .share-menu.open { display: block; }
+  .share-menu button {
+    display: flex; align-items: center; gap: 13px; width: 100%; text-align: left;
+    padding: 10px 12px; border: 0; border-radius: 8px; background: none;
+    font-family: inherit; font-size: 14.5px; color: #1a1a1a; cursor: pointer;
+  }
+  .share-menu button:hover { background: #f1f3f8; }
+  .share-menu svg { width: 18px; height: 18px; flex-shrink: 0; }
+
   .insights-empty { text-align: center; color: var(--muted); padding: 40px 0; grid-column: 1 / -1; }
 
   .insights-foot { text-align: center; margin-top: 34px; }
@@ -983,11 +998,14 @@
   </div>
 </div>
 
+<!-- Хуваалцах цэс (карт бүрд дундаа ашиглагдана) -->
+<div class="share-menu" id="shareMenu" role="menu" onclick="event.stopPropagation()"></div>
+
 <!-- Firebase SDK + нийтлэг Firestore store -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
-<script src="firebase.js?v=3"></script>
+<script src="firebase.js?v=4"></script>
 
 <script>
   // ---------- Insights / articles ----------
@@ -1132,7 +1150,7 @@
         + '<span class="info">' + a.date + ' | ' + (a.read || '') + '</span>'
         + '<span class="acts">'
         + '<button class="' + (saved.has(a.id) ? 'saved' : '') + '" title="Хадгалах" onclick="event.stopPropagation(); toggleSaveArticle(\'' + a.id + '\', this)">' + BM + '</button>'
-        + '<button title="Хуваалцах" onclick="event.stopPropagation(); shareArticle(\'' + a.id + '\')">' + SH + '</button>'
+        + '<button title="Хуваалцах" onclick="event.stopPropagation(); shareArticle(\'' + a.id + '\', this)">' + SH + '</button>'
         + '</span></div>'
         + '</div></div>';
     }).join('');
@@ -1147,12 +1165,62 @@
     try { localStorage.setItem('kpihub_saved', JSON.stringify([...s])); } catch (e) {}
     btn.classList.toggle('saved', s.has(id));
   }
-  function shareArticle(id) {
-    const a = ARTICLES.find(x => x.id === id); if (!a) return;
-    const data = { title: a.title, text: a.excerpt, url: location.href };
-    if (navigator.share) { navigator.share(data).catch(() => {}); }
-    else if (navigator.clipboard) { navigator.clipboard.writeText(a.title + ' — ' + location.href); alert('Холбоос хуулагдлаа.'); }
+  // ---------- Хуваалцах ----------
+  const SHARE_ICONS = {
+    li: '<svg viewBox="0 0 24 24" fill="#0a66c2"><path d="M6.94 5a1.94 1.94 0 1 1-3.88 0 1.94 1.94 0 0 1 3.88 0zM3.4 8.4h3.1V21H3.4V8.4zm5.06 0h2.97v1.72h.04c.41-.78 1.42-1.6 2.93-1.6 3.13 0 3.71 2.06 3.71 4.74V21h-3.1v-5.4c0-1.29-.02-2.95-1.8-2.95-1.8 0-2.08 1.4-2.08 2.85V21H8.46V8.4z"/></svg>',
+    x: '<svg viewBox="0 0 24 24" fill="#000"><path d="M18.9 2H22l-7.1 8.1L23.2 22h-6.6l-5.2-6.8L5.5 22H2.4l7.6-8.7L1.2 2h6.8l4.7 6.2L18.9 2zm-1.2 18h1.8L7.4 3.9H5.5L17.7 20z"/></svg>',
+    fb: '<svg viewBox="0 0 24 24" fill="#1877f2"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1V7.9c0-.9.25-1.5 1.55-1.5H17V3.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v2.1H7.5V13h2.8v8h3.2z"/></svg>',
+    email: '<svg viewBox="0 0 24 24" fill="none" stroke="#5f6368" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5 12 13l8.5-6.5"/></svg>'
+  };
+  const SHARE_TARGETS = [
+    { key: 'li', label: 'LinkedIn' },
+    { key: 'x', label: 'X' },
+    { key: 'fb', label: 'Facebook' },
+    { key: 'email', label: 'Email' }
+  ];
+  // Нийтлэл бүр өөрийн холбоостой байхын тулд #article-<id> хаяг үүсгэнэ
+  function articleUrl(id) {
+    return location.origin + location.pathname + '#article-' + encodeURIComponent(id);
   }
+  function shareTo(platform, id) {
+    const a = ARTICLES.find(x => x.id === id);
+    const url = encodeURIComponent(id ? articleUrl(id) : location.href);
+    const title = encodeURIComponent(a ? a.title : document.title);
+    let u = '';
+    if (platform === 'li') u = 'https://www.linkedin.com/sharing/share-offsite/?url=' + url;
+    else if (platform === 'fb') u = 'https://www.facebook.com/sharer/sharer.php?u=' + url;
+    else if (platform === 'x') u = 'https://twitter.com/intent/tweet?url=' + url + '&text=' + title;
+    else if (platform === 'email') u = 'mailto:?subject=' + title + '&body=' + url;
+    if (u) window.open(u, '_blank', 'noopener');
+  }
+  function closeShareMenu() {
+    const m = document.getElementById('shareMenu');
+    if (m) m.classList.remove('open');
+  }
+  function shareArticle(id, btn) {
+    const m = document.getElementById('shareMenu');
+    if (!m) return;
+    // Дахин дарвал хаагдана
+    if (m.classList.contains('open') && m.dataset.for === id) { closeShareMenu(); return; }
+    m.dataset.for = id;
+    m.innerHTML = SHARE_TARGETS.map(t =>
+      '<button role="menuitem" onclick="shareTo(\'' + t.key + '\', \'' + id + '\'); closeShareMenu();">'
+      + SHARE_ICONS[t.key] + '<span>' + t.label + '</span></button>'
+    ).join('');
+    m.classList.add('open');
+    // Товчны доор баруун талд — дэлгэцээс гарвал дотогш нь татна
+    const r = btn.getBoundingClientRect();
+    const mw = m.offsetWidth, mh = m.offsetHeight;
+    let left = Math.min(Math.max(8, r.right - mw), window.innerWidth - mw - 8);
+    let top = r.bottom + 8;
+    if (top + mh > window.innerHeight - 8) top = Math.max(8, r.top - mh - 8);
+    m.style.left = left + 'px';
+    m.style.top = top + 'px';
+  }
+  document.addEventListener('click', closeShareMenu);
+  window.addEventListener('resize', closeShareMenu);
+  window.addEventListener('scroll', closeShareMenu, true);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeShareMenu(); });
 
   function setFilter(cat) {
     activeFilter = cat;
@@ -1195,8 +1263,30 @@
     arOverlay.scrollTop = 0; window.scrollTo(0, 0);
     arOverlay.classList.add('open');
     document.body.style.overflow = 'hidden';
+    // Хуваалцсан холбоос нээгдэхэд яг энэ нийтлэл дээр очихын тулд хаягийг тэмдэглэнэ
+    try { history.replaceState(null, '', '#article-' + encodeURIComponent(id)); } catch (e) {}
   }
-  function closeArticle() { arOverlay.classList.remove('open'); document.body.style.overflow = ''; }
+  function closeArticle() {
+    arOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+    if (location.hash.indexOf('#article-') === 0) {
+      try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    }
+  }
+  // #article-<id> хаягаар орж ирвэл тухайн нийтлэлийг нээнэ (нэг л удаа)
+  let hashArticleDone = false;
+  function openArticleFromHash() {
+    if (hashArticleDone) return;
+    const m = /^#article-(.+)$/.exec(location.hash || '');
+    if (!m) return;
+    const id = decodeURIComponent(m[1]);
+    if (!ARTICLES.some(x => x.id === id)) return;
+    hashArticleDone = true;
+    openArticle(id);
+  }
+  // Хаяг дараа нь өөрчлөгдвөл (холбоос буулгах, back/forward) дахин шалгана.
+  // openArticle/closeArticle нь replaceState ашигладаг тул энэ эвент дуудагдахгүй.
+  window.addEventListener('hashchange', () => { hashArticleDone = false; openArticleFromHash(); });
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeArticle(); });
 
   function toggleReaderSave() {
@@ -1207,20 +1297,11 @@
     document.getElementById('arSaveBtn').classList.toggle('saved', s.has(currentArticleId));
     renderArticles();
   }
-  function readerShare(platform) {
-    const a = ARTICLES.find(x => x.id === currentArticleId);
-    const url = encodeURIComponent(location.href);
-    const title = encodeURIComponent(a ? a.title : document.title);
-    let u = '';
-    if (platform === 'li') u = 'https://www.linkedin.com/sharing/share-offsite/?url=' + url;
-    else if (platform === 'fb') u = 'https://www.facebook.com/sharer/sharer.php?u=' + url;
-    else if (platform === 'x') u = 'https://twitter.com/intent/tweet?url=' + url + '&text=' + title;
-    else if (platform === 'email') u = 'mailto:?subject=' + title + '&body=' + url;
-    if (u) window.open(u, '_blank', 'noopener');
-  }
+  function readerShare(platform) { shareTo(platform, currentArticleId); }
 
   renderFilters();
   renderArticles();
+  openArticleFromHash();
 
   // ---------- Product detail data ----------
   const PRODUCTS = {
@@ -1928,6 +2009,9 @@
     if (bookingModal && bookingModal.classList.contains('open')) {
       try { renderBookDays(); renderBookSlots(); } catch (e) {}
     }
+    // Хуваалцсан холбоосоор орж ирсэн нийтлэл үүлнээс ачаалагдсаны дараа л
+    // олдож болзошгүй тул энд дахин оролдоно (дотроо нэг удаа ажиллана)
+    openArticleFromHash();
   }
 
   KPICloud.ready.then(applyCloudContent);
