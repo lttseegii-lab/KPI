@@ -51,6 +51,12 @@ service cloud.firestore {
              'product','productKey','answers','date','time','paid','role'
            ])
         && (!('answers' in request.resource.data) || request.resource.data.answers.size() <= 40);
+      // Мэдээллийн захиалга — зөвхөн и-мэйл хаяг (хамгийн бага өгөгдөл)
+      allow create: if request.resource.data.kind == 'subscribe'
+        && request.resource.data.keys().hasOnly(['kind','at','email'])
+        && request.resource.data.email is string
+        && request.resource.data.email.size() > 3
+        && request.resource.data.email.size() <= 200;
       allow create: if isAdmin()
         && request.resource.data.kind == 'crm'
         && request.resource.data.keys().hasOnly([

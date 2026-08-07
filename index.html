@@ -100,6 +100,40 @@
   .btn-primary:hover { transform: translateY(-2px); }
   .btn-ghost { background: transparent; border-color: var(--line); color: var(--text); }
   .btn-ghost:hover { background: var(--accent-soft); border-color: var(--accent); }
+
+  /* Мэдээллийн захиалга (и-мэйл) */
+  .subscribe-sec { padding: 54px 0; }
+  .subscribe-bar {
+    display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;
+    background: var(--card); border: 1px solid var(--line);
+    border-radius: var(--radius); padding: 22px 26px; box-shadow: var(--shadow);
+  }
+  .subscribe-copy { flex: 1 1 330px; min-width: 0; }
+  .subscribe-title { font-size: 17px; font-weight: 700; line-height: 1.4; }
+  .subscribe-sub { font-size: 13.5px; color: var(--muted); margin-top: 4px; }
+  .subscribe-form {
+    display: flex; align-items: center; flex: 0 1 430px; min-width: 270px;
+    background: var(--bg-soft); border: 1px solid var(--line); border-radius: 999px; padding: 5px;
+    transition: border-color .2s;
+  }
+  .subscribe-form:focus-within { border-color: var(--accent); }
+  .subscribe-form input {
+    flex: 1; min-width: 0; background: transparent; border: 0; outline: none;
+    color: var(--text); font-family: inherit; font-size: 14.5px; padding: 9px 8px 9px 16px;
+  }
+  .subscribe-form input::placeholder { color: var(--muted); opacity: .75; }
+  .subscribe-form .btn { border-radius: 999px; padding: 10px 22px; white-space: nowrap; }
+  .subscribe-form .btn[disabled] { opacity: .6; cursor: default; transform: none; }
+  .subscribe-msg { margin-top: 12px; font-size: 13.5px; text-align: right; min-height: 20px; }
+  .subscribe-msg.ok { color: var(--accent-2); }
+  .subscribe-msg.err { color: #ff7a7a; }
+  @media (max-width: 720px) {
+    /* Багана чиглэлд flex-basis нь ӨНДРИЙГ заадаг тул auto болгоно */
+    .subscribe-bar { flex-direction: column; align-items: stretch; gap: 18px; padding: 20px; }
+    .subscribe-copy, .subscribe-form { flex: 0 0 auto; min-width: 0; }
+    .subscribe-form .btn { padding: 10px 16px; font-size: 14px; }
+    .subscribe-msg { text-align: left; }
+  }
   @media (max-width: 760px) { .nav-links { display: none; } }
 
   /* Hero */
@@ -551,6 +585,23 @@
     <div class="insights-foot" id="insightsFoot" style="display:none;">
       <a href="#" id="showAllBtn" class="btn btn-ghost more-articles" onclick="event.preventDefault(); showAllArticles();">Дэлгэрэнгүй <span class="arr">↓</span></a>
     </div>
+  </div>
+</section>
+
+<!-- ===== Мэдээллийн захиалга — зөвхөн и-мэйл ===== -->
+<section class="subscribe-sec" id="subscribe">
+  <div class="container">
+    <form class="subscribe-bar" onsubmit="submitSubscribe(event)" novalidate>
+      <div class="subscribe-copy">
+        <div class="subscribe-title">✏️ Үнэ цэнтэй, утга учиртай бас хүнд хэрэгтэй контентыг эндээс</div>
+        <div class="subscribe-sub">Шинэ нийтлэл, KPI-ийн зөвлөмжийг и-мэйлээр хүлээн авна уу. Хүссэн үедээ цуцалж болно.</div>
+      </div>
+      <div class="subscribe-form">
+        <input type="email" id="subEmail" placeholder="И-мэйл хаягаа оруулна уу" autocomplete="email" aria-label="И-мэйл хаяг">
+        <button class="btn btn-primary" type="submit" id="subBtn">Захиалах</button>
+      </div>
+    </form>
+    <div class="subscribe-msg" id="subMsg" role="status" aria-live="polite"></div>
   </div>
 </section>
 
@@ -1769,6 +1820,39 @@
     document.getElementById('pane1').classList.add('hidden');
     document.getElementById('pane3').classList.remove('hidden');
     document.getElementById('modalTitle').textContent = 'Баярлалаа';
+  }
+
+  // ---------- Мэдээллийн захиалга (и-мэйл) ----------
+  const SUBS_LOCAL = 'kpihub_subscribed';
+  function localSubscribed() {
+    try { return JSON.parse(localStorage.getItem(SUBS_LOCAL) || '[]'); } catch (e) { return []; }
+  }
+  function submitSubscribe(e) {
+    e.preventDefault();
+    const input = document.getElementById('subEmail');
+    const btn = document.getElementById('subBtn');
+    const msg = document.getElementById('subMsg');
+    const email = input.value.trim().toLowerCase();
+    const show = (text, cls) => { msg.textContent = text; msg.className = 'subscribe-msg ' + cls; };
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      show('И-мэйл хаягаа зөв оруулна уу.', 'err'); input.focus(); return;
+    }
+    // Энэ browser-оос давхар бүртгүүлэхээс сэргийлнэ
+    if (localSubscribed().indexOf(email) !== -1) {
+      show('Та энэ хаягаар аль хэдийн бүртгүүлсэн байна.', 'ok'); input.value = ''; return;
+    }
+
+    btn.disabled = true;
+    show('Илгээж байна…', '');
+    KPICloud.addSubmission('subscribe', { email: email })
+      .then(() => {
+        try { localStorage.setItem(SUBS_LOCAL, JSON.stringify(localSubscribed().concat(email))); } catch (err) {}
+        input.value = '';
+        show('Баярлалаа! Шинэ контентыг ' + email + ' хаягаар илгээх болно.', 'ok');
+      })
+      .catch(() => show('Илгээхэд алдаа гарлаа. Дахин оролдоно уу.', 'err'))
+      .then(() => { btn.disabled = false; });
   }
 
   // ---------- Template file generation & download ----------

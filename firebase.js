@@ -72,13 +72,25 @@
     return def;
   }
   // Админ засвар (нэвтэрсэн байх шаардлагатай)
+  // ЧУХАЛ: энэ функц синхроноор алдаа ШИДЭХГҮЙ. Firestore SDK нь баримт хэт том
+  // (1MiB-с их) үед .set()-ийг дуудмагц шууд throw хийдэг байсан тул дуудагч
+  // талын дараагийн мөрүүд (жишээ нь дэлгэц дахин зурах) алгасагдаж, устгасан
+  // мөр дэлгэц дээр үлдэж байв. Одоо бүх алдаа promise-ээр буцна.
   function set(key, value) {
     mirror(key, value);
     if (!online) return Promise.resolve(value);
-    return db.collection("content").doc(key)
-      .set({ value: value, updatedAt: firebase.firestore.FieldValue.serverTimestamp() })
-      .then(function () { return value; })
-      .catch(function (err) { console.error("[KPICloud] content хадгалж чадсангүй:", key, err); return value; });
+    function fail(err) {
+      console.error("[KPICloud] content хадгалж чадсангүй:", key, err);
+      return Promise.reject(err);
+    }
+    try {
+      return db.collection("content").doc(key)
+        .set({ value: value, updatedAt: firebase.firestore.FieldValue.serverTimestamp() })
+        .then(function () { return value; })
+        .catch(fail);
+    } catch (err) {
+      return fail(err);
+    }
   }
   function watch(key, cb) {
     if (!online) return noop;
