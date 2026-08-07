@@ -262,6 +262,27 @@
   .chip.active { color: #fff; background: var(--accent-soft); border-color: var(--accent); }
   .chip .count { opacity: .6; font-weight: 500; margin-left: 4px; }
 
+  /* Мэдээллийн хэсгийн дэвсгэр — hero дахь «гүйцэтгэлийг» үгтэй ЯГ ижил
+     accent градиент. Цайвар дэвсгэр болсон тул доторх текст, чип, товчийг
+     бараан өнгөөр эргүүлж уншигдахуйц болгов. */
+  #insights {
+    background: linear-gradient(135deg, var(--accent), var(--accent-2));
+    border-bottom: 1px solid var(--line);
+  }
+  #insights .section-head .eyebrow { color: #0e3a63; }
+  #insights .section-head h2 { color: #06213c; }
+  #insights .section-head p { color: #123a63; }
+  #insights .chip {
+    background: rgba(255,255,255,.72); border-color: rgba(6,33,60,.18); color: #123a63;
+  }
+  #insights .chip:hover { background: #fff; color: #06213c; border-color: rgba(6,33,60,.45); }
+  #insights .chip.active { background: var(--bg); border-color: var(--bg); color: #fff; }
+  #insights .insights-empty { color: #123a63; }
+  #insights .btn-ghost {
+    background: rgba(255,255,255,.82); border-color: rgba(6,33,60,.2); color: #06213c;
+  }
+  #insights .btn-ghost:hover { background: #fff; border-color: #06213c; }
+
   /* Хуваалцах цэс — карт нь overflow:hidden тул body-д залгагдаж, fixed байрлана */
   .share-menu {
     position: fixed; z-index: 200; min-width: 186px; padding: 8px; display: none;
@@ -601,7 +622,7 @@
   </div>
 </section>
 
-<section class="section" id="insights" style="background: var(--bg-soft); border-bottom:1px solid var(--line);">
+<section class="section" id="insights">
   <div class="container">
     <div class="section-head">
       <div class="eyebrow">Мэдээ мэдээлэл, судалгаа</div>
