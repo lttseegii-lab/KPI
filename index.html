@@ -215,12 +215,28 @@
     aspect-ratio: 16 / 10; display: grid; place-items: center; font-size: 68px; position: relative; overflow: hidden;
   }
   .article .thumb img { width: 100%; height: 100%; object-fit: cover; }
-  .article .body { padding: 22px 22px 18px; display: flex; flex-direction: column; flex: 1; }
-  .article .eyebrow { font-size: 13.5px; color: #6b6b6b; margin-bottom: 12px; font-weight: 400; }
-  .article h3 { font-size: 20px; font-weight: 800; line-height: 1.25; color: #111; letter-spacing: -.3px; margin-bottom: 12px; }
-  .article .byline { font-size: 14px; color: #6b6b6b; margin-bottom: 12px; }
+  .article .body { padding: 20px 22px 16px; display: flex; flex-direction: column; flex: 1; }
+  .article .eyebrow { font-size: 13.5px; color: #6b6b6b; margin-bottom: 10px; font-weight: 400; }
+  /* Гарчиг 2 мөр, товч тайлбар 3 мөрөөр таслагдана — ингэснээр урт текстээс болж
+     карт сунаж «зууван» болохгүй, бүх карт ижил өндөртэй эгнэнэ. */
+  .article h3 {
+    font-size: 20px; font-weight: 800; line-height: 1.25; color: #111; letter-spacing: -.3px; margin-bottom: 10px;
+    display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+    min-height: 2.5em;
+  }
+  .article .byline { font-size: 14px; color: #6b6b6b; margin-bottom: 10px; }
   .article .byline a { color: var(--accent); text-decoration: none; }
-  .article p { font-size: 14.5px; color: #333; line-height: 1.5; margin-bottom: 16px; }
+  .article p {
+    font-size: 14.5px; color: #333; line-height: 1.5; margin-bottom: 14px;
+    display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden;
+    min-height: 4.5em;
+  }
+  /* Нэг баганатай үед карт өргөн болж «зууван» асуудал арилдаг тул мөрийн
+     хязгаарыг сулруулж, урт гарчиг таслагдахаас сэргийлнэ. */
+  @media (max-width: 600px) {
+    .article h3 { -webkit-line-clamp: 4; min-height: 0; }
+    .article p { -webkit-line-clamp: 4; min-height: 0; }
+  }
   .article .meta-foot {
     margin-top: auto; padding-top: 14px; border-top: 1px solid #e6e6e6;
     display: flex; align-items: center; justify-content: space-between; gap: 10px;
