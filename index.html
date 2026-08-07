@@ -265,9 +265,27 @@
   /* Мэдээллийн хэсгийн дэвсгэр — hero дахь «гүйцэтгэлийг» үгтэй ЯГ ижил
      accent градиент. Цайвар дэвсгэр болсон тул доторх текст, чип, товчийг
      бараан өнгөөр эргүүлж уншигдахуйц болгов. */
+  /* ===== Хуудасны өнгөний хэмнэл =====
+     hero (гүн, туяатай) → insights (accent зурвас) → subscribe (accent-аас
+     гүн рүү уусна) → products (нэг зэрэг цайвар) → why (гүн + зөөлөн туяа)
+     → footer (хамгийн гүн). Зурвас бүр өөр өнгөтэй тул хооронд нь ялгарна. */
   #insights {
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
     border-bottom: 1px solid var(--line);
+  }
+  /* Тод зурвасаас огцом тасрахгүйн тулд дээрээсээ accent туяа бууна */
+  .subscribe-sec {
+    background:
+      linear-gradient(180deg, rgba(69,168,240,.20) 0%, rgba(69,168,240,0) 65%),
+      var(--bg);
+    border-bottom: 1px solid var(--line);
+  }
+  #products { background: var(--bg-soft); border-bottom: 1px solid var(--line); }
+  /* Hero-той эгнэж, хуудсыг хоёр талаас нь хааж өгнө */
+  #why {
+    background:
+      radial-gradient(900px 420px at 12% 0%, rgba(69,168,240,.13) 0%, transparent 62%),
+      var(--bg);
   }
   #insights .section-head .eyebrow { color: #0e3a63; }
   #insights .section-head h2 { color: #06213c; }
@@ -388,7 +406,7 @@
   .cta p { color: var(--muted); max-width: 500px; margin: 0 auto 28px; }
 
   /* ===== Footer — dark bar (brand theme) ===== */
-  footer { background: var(--bg); border-top: 1px solid var(--line); padding: 26px 0; color: var(--muted); font-size: 14px; }
+  footer { background: #070c3b; border-top: 1px solid var(--line); padding: 26px 0; color: var(--muted); font-size: 14px; }
   footer .container { max-width: none; padding: 0 26px; }
   .foot-bar { display: flex; align-items: center; justify-content: space-between; gap: 20px; flex-wrap: wrap; }
   .foot-left { display: flex; align-items: center; gap: 26px; flex-wrap: wrap; }
@@ -720,7 +738,7 @@
   </div>
 </section>
 
-<section class="section" id="why" style="background: var(--bg-soft); border-top:1px solid var(--line); border-bottom:1px solid var(--line);">
+<section class="section" id="why">
   <div class="container">
     <div class="section-head">
       <div class="eyebrow" id="whyEyebrow"></div>
