@@ -71,11 +71,45 @@
     try { var r = localStorage.getItem(key); if (r !== null && r !== undefined) return JSON.parse(r); } catch (e) {}
     return def;
   }
+  // Firestore нь ҮҮРЛЭСЭН массивыг (массив доторх массив) дэмждэггүй бөгөөд
+  // тэр тохиолдолд .set()-ийг дуудмагц СИНХРОНООР алдаа шиддэг:
+  //   "Nested arrays are not supported"
+  // Нийтлэлийн body (['h3','...'] хэлбэрийн блокуудын массив) болон темплэйтийн
+  // жагсаалт яг ийм бүтэцтэй тул контентыг JSON тэмдэгт мөр болгож хадгална.
+  // Ингэснээр аль ч бүтэц (үүрлэсэн массив, объект, null) алдаагүй хадгалагдана.
+  //
+  // Уншихдаа: шинэ баримт дээр 'json', хуучин баримт дээр 'value' талбарыг
+  // ашиглана — өмнө хадгалагдсан контент хэвээр ажиллана.
+  function decodeContent(snap) {
+    if (!snap || !snap.exists) return undefined;
+    var data = snap.data();
+    if (!data) return undefined;
+    if (typeof data.json === "string") {
+      try { return JSON.parse(data.json); }
+      catch (e) { console.error("[KPICloud] content задлаж чадсангүй:", e); return undefined; }
+    }
+    if (Object.prototype.hasOwnProperty.call(data, "value")) return data.value;
+    return undefined;
+  }
+  // Firestore-ийн хориглодог бүтэц: массивын элемент нь өөрөө массив байх.
+  // Объект дотор орох бүрд "массив дотор байна" төлөв тэглэгдэнэ.
+  function hasNestedArray(value, inArray) {
+    if (Array.isArray(value)) {
+      if (inArray) return true;
+      for (var i = 0; i < value.length; i++) if (hasNestedArray(value[i], true)) return true;
+      return false;
+    }
+    if (value && typeof value === "object") {
+      for (var k in value) {
+        if (Object.prototype.hasOwnProperty.call(value, k) && hasNestedArray(value[k], false)) return true;
+      }
+    }
+    return false;
+  }
   // Админ засвар (нэвтэрсэн байх шаардлагатай)
-  // ЧУХАЛ: энэ функц синхроноор алдаа ШИДЭХГҮЙ. Firestore SDK нь баримт хэт том
-  // (1MiB-с их) үед .set()-ийг дуудмагц шууд throw хийдэг байсан тул дуудагч
-  // талын дараагийн мөрүүд (жишээ нь дэлгэц дахин зурах) алгасагдаж, устгасан
-  // мөр дэлгэц дээр үлдэж байв. Одоо бүх алдаа promise-ээр буцна.
+  // ЧУХАЛ: энэ функц синхроноор алдаа ШИДЭХГҮЙ. Өмнө нь SDK throw хиймэгц
+  // дуудагч талын дараагийн мөрүүд (жишээ нь дэлгэц дахин зурах) алгасагдаж,
+  // устгасан мөр дэлгэц дээр үлдэж байв. Одоо бүх алдаа promise-ээр буцна.
   function set(key, value) {
     mirror(key, value);
     if (!online) return Promise.resolve(value);
@@ -84,8 +118,17 @@
       return Promise.reject(err);
     }
     try {
+      var payload = {
+        json: JSON.stringify(value),
+        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      };
+      // Хуучин хувилбарын firebase.js ачаалсан клиент (кэшлэгдсэн таб, хараахан
+      // шинэчлэгдээгүй хуулбар) 'value'-г уншдаг. Firestore зөвшөөрдөг бүтэцтэй
+      // үед давхар бичиж, тэдгээрийг эвдэхээс сэргийлнэ. Нийтлэл/темплэйт зэрэг
+      // үүрлэсэн массивтай өгөгдөл зөвхөн 'json'-оор хадгалагдана.
+      if (!hasNestedArray(value, false)) payload.value = value;
       return db.collection("content").doc(key)
-        .set({ value: value, updatedAt: firebase.firestore.FieldValue.serverTimestamp() })
+        .set(payload)
         .then(function () { return value; })
         .catch(fail);
     } catch (err) {
@@ -95,8 +138,9 @@
   function watch(key, cb) {
     if (!online) return noop;
     return db.collection("content").doc(key).onSnapshot(function (snap) {
-      if (snap.exists && snap.data() && Object.prototype.hasOwnProperty.call(snap.data(), "value")) {
-        mirror(key, snap.data().value);
+      var v = decodeContent(snap);
+      if (v !== undefined) {
+        mirror(key, v);
         if (cb) cb(cache[key]);
       }
     }, function (err) { console.error("[KPICloud] content watch алдаа:", key, err); });
@@ -283,7 +327,8 @@
     var jobs = CONTENT_KEYS.map(function (key) {
       return db.collection("content").doc(key).get()
         .then(function (snap) {
-          if (snap.exists && snap.data() && Object.prototype.hasOwnProperty.call(snap.data(), "value")) mirror(key, snap.data().value);
+          var v = decodeContent(snap);
+          if (v !== undefined) mirror(key, v);
         })
         .catch(function () { failed++; });
     });
