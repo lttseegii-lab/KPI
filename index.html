@@ -105,7 +105,7 @@
   .subscribe-sec { padding: 54px 0; }
   .subscribe-bar {
     display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap;
-    background: var(--card); border: 1px solid var(--line);
+    background: var(--card-hover); border: 1px solid var(--line);
     border-radius: var(--radius); padding: 22px 26px; box-shadow: var(--shadow);
   }
   .subscribe-copy { flex: 1 1 330px; min-width: 0; }
@@ -265,28 +265,18 @@
   /* Мэдээллийн хэсгийн дэвсгэр — hero дахь «гүйцэтгэлийг» үгтэй ЯГ ижил
      accent градиент. Цайвар дэвсгэр болсон тул доторх текст, чип, товчийг
      бараан өнгөөр эргүүлж уншигдахуйц болгов. */
-  /* ===== Хуудасны өнгөний хэмнэл =====
-     hero (гүн, туяатай) → insights (accent зурвас) → subscribe (accent-аас
-     гүн рүү уусна) → products (нэг зэрэг цайвар) → why (гүн + зөөлөн туяа)
-     → footer (хамгийн гүн). Зурвас бүр өөр өнгөтэй тул хооронд нь ялгарна. */
+  /* ===== Хуудасны өнгөний хэмнэл — «Тод шат» =====
+     Зурвас бүр тодорхой өөр өнгөтэй, хооронд нь нимгэн зааг. Зөөлөн уусал
+     байхгүй — accent зурвасаас хойш алхам алхмаар жигд гүнзгийрнэ:
+     #16227e → #0f1a6b → #0a1150 → #070c3b */
+  .hero { background: #070c3b; }
   #insights {
     background: linear-gradient(135deg, var(--accent), var(--accent-2));
-    border-bottom: 1px solid var(--line);
+    border-top: 1px solid var(--line); border-bottom: 1px solid var(--line);
   }
-  /* Тод зурвасаас огцом тасрахгүйн тулд дээрээсээ accent туяа бууна */
-  .subscribe-sec {
-    background:
-      linear-gradient(180deg, rgba(69,168,240,.20) 0%, rgba(69,168,240,0) 65%),
-      var(--bg);
-    border-bottom: 1px solid var(--line);
-  }
+  .subscribe-sec { background: var(--card); border-bottom: 1px solid var(--line); }
   #products { background: var(--bg-soft); border-bottom: 1px solid var(--line); }
-  /* Hero-той эгнэж, хуудсыг хоёр талаас нь хааж өгнө */
-  #why {
-    background:
-      radial-gradient(900px 420px at 12% 0%, rgba(69,168,240,.13) 0%, transparent 62%),
-      var(--bg);
-  }
+  #why { background: var(--bg); border-bottom: 1px solid var(--line); }
   #insights .section-head .eyebrow { color: #0e3a63; }
   #insights .section-head h2 { color: #06213c; }
   #insights .section-head p { color: #123a63; }
