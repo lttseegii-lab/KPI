@@ -51,6 +51,17 @@ service cloud.firestore {
              'product','productKey','answers','date','time','paid','role'
            ])
         && (!('answers' in request.resource.data) || request.resource.data.answers.size() <= 40);
+      // QPay худалдан авалтын бүртгэл — админд харагдах жагсаалт.
+      // АНХААР: жинхэнэ эх сурвалж нь QPay merchant portal; энд зочин бичдэг
+      // тул маргаантай тохиолдолд QPay дээрх гүйлгээгээр тулгаж шалгана.
+      allow create: if request.resource.data.kind == 'payment'
+        && request.resource.data.keys().hasOnly([
+             'kind','at','invoiceId','paymentId','amount','product',
+             'name','email','phone'
+           ])
+        && request.resource.data.invoiceId is string
+        && request.resource.data.invoiceId.size() <= 64
+        && request.resource.data.amount is number;
       // Мэдээллийн захиалга — зөвхөн и-мэйл хаяг (хамгийн бага өгөгдөл)
       allow create: if request.resource.data.kind == 'subscribe'
         && request.resource.data.keys().hasOnly(['kind','at','email'])

@@ -780,15 +780,19 @@
         <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Темплэйт, маягтуудыг татахын тулд гишүүнчлэлээ идэвхжүүлнэ үү.</p>
         <div class="pay-summary">
           <span>Гишүүнчлэл (нэг удаа)</span>
-          <span class="total">₮99,000</span>
+          <span class="total" id="payAmount">₮99,000</span>
         </div>
         <div class="qpay-box">
           <div class="qpay-logo"><span class="q">Q</span>QPay</div>
-          <div class="qpay-qr">QPay QR код<br>энд харагдана</div>
-          <div class="qpay-hint">QPay апп эсвэл банкны аппаараа уншуулна уу</div>
+          <div class="qpay-qr" id="payQr">QPay QR код<br>энд харагдана</div>
+          <a class="hidden" id="payAppLink" href="#" target="_blank" rel="noopener"
+             style="display:none; margin:0 auto 12px; font-size:13.5px; font-weight:600; color:var(--accent);">
+            📱 Банкны апп-аар нээх
+          </a>
+          <div class="qpay-hint" id="payHint">«QPay-р төлөх» товч дарахад QR код үүснэ</div>
         </div>
         <button class="btn btn-primary" id="payBtn" onclick="doPayment()">QPay-р төлөх</button>
-        <div class="note">🔒 QPay төлбөрийн холболт хийгдэж байна.</div>
+        <div class="note" id="payNote">🔒 Төлбөр QPay-ээр аюулгүй хийгдэнэ. Банкны апп QR-ыг уншина.</div>
       </div>
 
       <div class="center hidden" id="paySuccess">
@@ -1628,28 +1632,98 @@
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
 
   // ---------- Payment / membership modal (unlocks template downloads) ----------
+  // QPay v2: /api/qpay/invoice -> QR харуулна -> /api/qpay/status -оор
+  // payment/check хийж баталгаажтал 4с тутам асууна.
   const payModal = document.getElementById('payModal');
+  let payInvoiceId = '';
+  let payPollTimer = null;
+  let payBusy = false;
+  function payStopPolling() {
+    if (payPollTimer) { clearInterval(payPollTimer); payPollTimer = null; }
+  }
+  function payResetForm() {
+    payStopPolling();
+    payInvoiceId = '';
+    payBusy = false;
+    document.getElementById('payQr').innerHTML = 'QPay QR код<br>энд харагдана';
+    document.getElementById('payHint').textContent = '«QPay-р төлөх» товч дарахад QR код үүснэ';
+    const link = document.getElementById('payAppLink');
+    link.style.display = 'none'; link.href = '#';
+    const btn = document.getElementById('payBtn');
+    btn.textContent = 'QPay-р төлөх';
+    btn.style.opacity = ''; btn.style.pointerEvents = '';
+  }
   function openPayment(e) {
     if (e) e.preventDefault();
+    payResetForm();
     document.getElementById('payForm').classList.remove('hidden');
     document.getElementById('paySuccess').classList.add('hidden');
     payModal.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
-  function closePayment() { payModal.classList.remove('open'); document.body.style.overflow = ''; }
+  function closePayment() {
+    payStopPolling();
+    payModal.classList.remove('open');
+    document.body.style.overflow = '';
+  }
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closePayment(); });
-  // TODO: QPay интеграц — серверээс нэхэмжлэл үүсгэж, QR харуулаад callback-аар баталгаажуулна.
-  function doPayment() {
+
+  function paySucceeded(status) {
+    payStopPolling();
+    // Админд харагдах худалдан авалтын бүртгэл (эх сурвалж нь QPay merchant portal)
+    try {
+      const me = JSON.parse(localStorage.getItem('kpihub_current_user') || '{}');
+      KPICloud.addSubmission('payment', {
+        invoiceId: payInvoiceId,
+        paymentId: String(status.payment_id || ''),
+        amount: Number(status.amount || 0),
+        product: 'membership',
+        name: me.name || '', email: me.email || '', phone: me.phone || ''
+      });
+    } catch (e) {}
+    grantAccess();
+    document.getElementById('payForm').classList.add('hidden');
+    document.getElementById('paySuccess').classList.remove('hidden');
+  }
+  async function payCheckOnce(silent) {
+    if (!payInvoiceId) return;
+    try {
+      const r = await fetch('/api/qpay/status?invoice_id=' + encodeURIComponent(payInvoiceId));
+      const d = await r.json();
+      if (d.paid) { paySucceeded(d); return; }
+      if (!silent) document.getElementById('payHint').textContent = 'Төлбөр хараахан хийгдээгүй байна. Уншуулсны дараа хэсэг хүлээнэ үү.';
+    } catch (e) { /* сүлжээний түр саатал — дараагийн шалгалтад дахин оролдоно */ }
+  }
+  async function doPayment() {
     const btn = document.getElementById('payBtn');
-    btn.textContent = 'Төлбөр шалгаж байна…';
+    const hint = document.getElementById('payHint');
+    // QR аль хэдийн үүссэн бол товч нь гараар шалгах үүрэгтэй
+    if (payInvoiceId) { payCheckOnce(false); return; }
+    if (payBusy) return;
+    payBusy = true;
+    btn.textContent = 'Нэхэмжлэл үүсгэж байна…';
     btn.style.opacity = '.7'; btn.style.pointerEvents = 'none';
-    setTimeout(() => {
-      grantAccess(); // татах эрх олгож, нээлттэй байгаа бүтээгдэхүүний цонхыг шинэчилнэ
-      document.getElementById('payForm').classList.add('hidden');
-      document.getElementById('paySuccess').classList.remove('hidden');
+    try {
+      const r = await fetch('/api/qpay/invoice', { method: 'POST' });
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.invoice_id) throw new Error(d.error || 'Нэхэмжлэл үүсгэж чадсангүй');
+      payInvoiceId = d.invoice_id;
+      if (d.amount) document.getElementById('payAmount').textContent = '₮' + Number(d.amount).toLocaleString('en-US');
+      document.getElementById('payQr').innerHTML = d.qr_image
+        ? '<img src="data:image/png;base64,' + d.qr_image + '" alt="QPay QR" style="width:100%; height:100%; object-fit:contain;">'
+        : 'QR үүссэн — банкны апп-аар нээнэ үү';
+      const link = document.getElementById('payAppLink');
+      if (d.short_url) { link.href = d.short_url; link.style.display = 'block'; }
+      hint.textContent = 'Банкны апп эсвэл QPay-ээр QR-ыг уншуулна уу. Төлөгдмөгц автоматаар баталгаажна.';
+      btn.textContent = 'Төлбөр шалгах';
+      btn.style.opacity = ''; btn.style.pointerEvents = '';
+      payPollTimer = setInterval(() => payCheckOnce(true), 4000);
+    } catch (err) {
+      hint.textContent = (err && err.message) ? err.message : 'Төлбөрийн сервертэй холбогдож чадсангүй. Дараа дахин оролдоно уу.';
       btn.textContent = 'QPay-р төлөх';
       btn.style.opacity = ''; btn.style.pointerEvents = '';
-    }, 1100);
+    }
+    payBusy = false;
   }
 
   // ---------- Contact modal ----------

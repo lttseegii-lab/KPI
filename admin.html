@@ -1023,11 +1023,12 @@
       statCard('💰', 'Үнийн санал', quoteReqs.length, week(countSince(quoteReqs, 7))),
       statCard('📅', 'Ойрын цаг товлолт', upcoming.length, { text: 'Нийт ' + bookingsList.length }),
       statCard('📝', 'Нийтлэл', articles.length, { text: 'Сайт дээр нийтлэгдсэн' }),
-      statCard('📄', 'Темплэйт', templates.length, { text: 'Blueprints багцад' })
+      statCard('📄', 'Темплэйт', templates.length, { text: 'Blueprints багцад' }),
+      statCard('💳', 'Төлбөр', paymentsList.length, { text: 'Нийт ₮' + paymentsList.reduce((a, p) => a + (Number(p.amount) || 0), 0).toLocaleString('en-US') })
     ].join('');
 
     // --- 14 хоногийн ирсэн хүсэлтийн багана ---
-    const all = usersList.concat(subsList, quoteReqs, bookingsList);
+    const all = usersList.concat(subsList, quoteReqs, bookingsList, paymentsList);
     const days = [];
     for (let i = 13; i >= 0; i--) days.push(localDay(new Date(Date.now() - i * DAY_MS)));
     const counts = days.map(d => all.filter(x => localDay(x.at) === d).length);
@@ -1058,6 +1059,7 @@
       .concat(subsList.map(s => ({ at: s.at, ic: '✉️', t: s.email || '', m: 'Мэдээллийн захиалга' })))
       .concat(quoteReqs.map(q => ({ at: q.at, ic: '💰', t: q.name || 'Зочин', m: 'Үнийн санал хүссэн — ' + (q.product || '') })))
       .concat(bookingsList.map(b => ({ at: b.at, ic: '🗓️', t: b.name || 'Зочин', m: 'Цаг товлосон — ' + (b.date || '') + ' ' + (b.time || '') })))
+      .concat(paymentsList.map(p => ({ at: p.at, ic: '💳', t: p.name || p.email || 'Худалдан авалт', m: 'Гишүүнчлэл — ₮' + (Number(p.amount) || 0).toLocaleString('en-US') })))
       .filter(x => x.at)
       .sort((a, b) => String(b.at).localeCompare(String(a.at)))
       .slice(0, 8);
@@ -2038,9 +2040,11 @@
   }
 
   // ---------- Init ----------
-  let unsubQuote = null, unsubBooking = null, unsubUser = null, unsubCrm = null, unsubAdmins = null, unsubSubs = null;
+  let unsubQuote = null, unsubBooking = null, unsubUser = null, unsubCrm = null, unsubAdmins = null, unsubSubs = null, unsubPay = null;
+  let paymentsList = [];
   function startAdminWatches() {
     if (!unsubSubs)    unsubSubs    = KPICloud.watchSubmissions('subscribe', arr => { subsList = visibleSubmissions(arr); if (appShown) { renderSubs(); renderHome(); } });
+    if (!unsubPay)     unsubPay     = KPICloud.watchSubmissions('payment',   arr => { paymentsList = visibleSubmissions(arr); if (appShown) renderHome(); });
     if (!unsubQuote)   unsubQuote   = KPICloud.watchSubmissions('quote',   arr => { quoteReqs = visibleSubmissions(arr);    if (appShown) { renderQuoteRequests(); renderHome(); if (selectedCrmUserId) renderCrmDetail(); } });
     if (!unsubBooking) unsubBooking = KPICloud.watchSubmissions('booking', arr => { bookingsList = visibleSubmissions(arr); if (appShown) { renderBookings(); renderHome(); if (selectedCrmUserId) renderCrmDetail(); } });
     if (!unsubUser)    unsubUser    = KPICloud.watchSubmissions('user',    arr => { usersList = visibleSubmissions(arr);    if (appShown) { renderUsers(); renderHome(); } });
@@ -2054,7 +2058,8 @@
     if (unsubCrm)     { try { unsubCrm(); } catch(e){}     unsubCrm = null; }
     if (unsubAdmins)  { try { unsubAdmins(); } catch(e){}  unsubAdmins = null; }
     if (unsubSubs)    { try { unsubSubs(); } catch(e){}    unsubSubs = null; }
-    quoteReqs = []; bookingsList = []; usersList = []; crmActivities = []; adminsList = []; subsList = [];
+    if (unsubPay)     { try { unsubPay(); } catch(e){}     unsubPay = null; }
+    quoteReqs = []; bookingsList = []; usersList = []; crmActivities = []; adminsList = []; subsList = []; paymentsList = [];
     selectedCrmUserId = '';
   }
 
