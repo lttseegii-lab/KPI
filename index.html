@@ -550,10 +550,6 @@
     font-size: 22px; cursor: pointer; line-height: 1; transition: background .2s;
   }
   .pd-close:hover { background: #e9eaf0; }
-  .pd-hero .pd-icon {
-    width: 60px; height: 60px; border-radius: 15px; display: grid; place-items: center; font-size: 30px;
-    background: rgba(69,168,240,.12); border: 1px solid rgba(69,168,240,.3); margin-bottom: 18px;
-  }
   .pd-hero .tag { font-size: 12.5px; font-weight: 700; letter-spacing: .5px; color: var(--accent); text-transform: uppercase; }
   .pd-hero h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 800; letter-spacing: -.5px; margin: 8px 0 14px; color: #111; }
   .pd-hero .lead { color: #555; font-size: clamp(15.5px, 1.6vw, 18px); max-width: 720px; }
@@ -928,7 +924,6 @@
   <div class="pd-panel">
     <div class="pd-hero">
       <button class="pd-close" onclick="closeProduct()" aria-label="Хаах">×</button>
-      <div class="pd-icon" id="pdIcon">📘</div>
       <div class="tag" id="pdTag">Blueprints</div>
       <h2 id="pdTitle">Гарчиг</h2>
       <div class="lead" id="pdLead">Тайлбар</div>
@@ -1333,7 +1328,7 @@
   // ---------- Product detail data ----------
   const PRODUCTS = {
     blueprints: {
-      icon: '📘', tag: 'Blueprints · DIY framework',
+      tag: 'Blueprints · DIY framework',
       title: 'KPI нэвтрүүлэх аргачлал, гарын авлага, темплэйт',
       lead: 'Чиг үүрэг тус бүрд тохирсон, бэлэн багцалсан KPI гарын авлагууд. Зөвлөхгүйгээр өөрөө дагаад хэрэгжүүлчихэхээр алхам алхмын заавартай.',
       meta: [ ['Хэлбэр', '10+ темплэйт'] ],
@@ -1367,7 +1362,7 @@
       ],
     },
     diagnostics: {
-      icon: '🩺', tag: 'Diagnostics',
+      tag: 'Diagnostics',
       title: 'KPI удирдлагын аудит, төлөвшлийн үнэлгээ',
       lead: 'Богино дижитал судалгаа, аудитаар танай байгууллагын одоогийн хэмжилтийн практикийг төлөвшлийн загвартай харьцуулан үнэлж, цаашид юунд анхаарахыг тодорхой зааж өгнө.',
       meta: [ ['Хугацаа', '~30 минут'], ['Үр дүн', 'Оноо + зөвлөмж'] ],
@@ -1389,7 +1384,7 @@
       ],
     },
     guided: {
-      icon: '🤝', tag: 'Guided implementation',
+      tag: 'Guided implementation',
       title: 'Зөвлөгөөний цаг',
       lead: 'Гишүүнчлэлийн багцад багтсан тодорхой тооны зөвлөгөөний цаг. Зөвлөх таны бизнест блюпринтийг хэрхэн буулгахыг алхам алхмаар чиглүүлнэ.',
       meta: [ ['Багц', '10 цаг / төсөл'], ['Хэлбэр', 'Онлайн уулзалт'] ],
@@ -1411,7 +1406,7 @@
       ],
     },
     benchmarking: {
-      icon: '📊', tag: 'Benchmarking · KPI library',
+      tag: 'Benchmarking · KPI library',
       title: 'KPI-ийн сан',
       lead: 'Үйлчлүүлэгчдийн нэрээ нууцалсан KPI өгөгдлийг нэгтгэн (цикл хугацаа, хөрвүүлэлт, зардлын харьцаа) "бид өрсөлдөгчдөөсөө хэрхэн ялгарч байна вэ" гэсэн харьцуулсан тайланг хүргэнэ.',
       meta: [ ['Шинэчлэл', 'Улирал бүр'], ['Хамрах хүрээ', 'Салбар бүрээр'] ],
@@ -1433,7 +1428,7 @@
       ],
     },
     workshops: {
-      icon: '🎓', tag: 'Workshops · Training',
+      tag: 'Workshops · Training',
       title: 'Сургалт, воркшоп',
       lead: '"Зөв North Star метрик сонгох нь", "KPI соёл бүтээх нь" зэрэг сэдвээр шууд болон бичлэгээр явагдах хичээлүүд. Бие даасан болон гишүүнчлэлийн багцтай.',
       meta: [ ['Хэлбэр', 'Шууд + бичлэг'], ['Түвшин', 'Эхлэн – ахисан'] ],
@@ -1455,7 +1450,7 @@
       ],
     },
     advisory: {
-      icon: '♟️', tag: 'Executive · strategic advisory',
+      tag: 'Executive · strategic advisory',
       title: 'Зөвлөх үйлчилгээ',
       lead: 'Дээд түвшний гишүүнчлэлийн багц — ахлах зөвлөхүүдтэй өндөр давтамжтай хандах эрх. Стандарт блюпринтээс гадуурх онцгой ажлуудад зориулагдсан.',
       meta: [ ['Түвшин', 'Гүйцэтгэх удирдлага'], ['Хандалт', 'Ахлах зөвлөх'] ],
@@ -1510,7 +1505,6 @@
     const p = PRODUCTS[key];
     if (!p) return;
     currentProduct = key;
-    document.getElementById('pdIcon').textContent = p.icon;
     document.getElementById('pdTag').textContent = p.tag;
     document.getElementById('pdTitle').textContent = p.title;
     document.getElementById('pdLead').textContent = p.lead;
