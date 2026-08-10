@@ -609,7 +609,7 @@
         <a href="#why">Бидний тухай</a>
       </div>
       <div class="nav-cta">
-        <a href="#" class="btn btn-primary" onclick="openModal(event)">Эхлэх</a>
+        <a href="#" class="btn btn-primary" id="navAuthBtn" onclick="openModal(event)">Эхлэх</a>
         <a href="#" class="btn btn-ghost" onclick="openContact(event)">Холбоо барих</a>
         <a href="#" class="btn btn-ghost" onclick="openBooking(event)">Цаг товлох</a>
       </div>
@@ -754,6 +754,9 @@
         </div>
         <button class="btn btn-primary" onclick="submitRegistration()">Бүртгэл үүсгэх</button>
       </div>
+
+      <!-- Profile (registered users) -->
+      <div class="hidden" id="pane2"></div>
 
       <!-- Success -->
       <div class="center hidden" id="pane3">
@@ -972,7 +975,7 @@
     <div class="reader-body" id="arContent"></div>
 
     <div class="reader-cta">
-      <a href="#" class="btn btn-primary" onclick="closeArticle(); openModal(event);">Бүртгүүлэх</a>
+      <a href="#" class="btn btn-primary" id="arRegBtn" onclick="closeArticle(); openModal(event);">Бүртгүүлэх</a>
       <a href="#insights" class="btn btn-ghost" onclick="closeArticle()">Бусад нийтлэл</a>
     </div>
   </div>
@@ -1282,6 +1285,7 @@
   renderFilters();
   renderArticles();
   openArticleFromHash();
+  renderAuthState();
 
   // ---------- Бүтээгдэхүүний өгөгдөл ----------
   // Анхны төлөв. Админаас засвал kpihub_products түлхүүрээр Firestore-д
@@ -1618,13 +1622,54 @@
     ['f-name','f-phone','f-email','f-org','f-role'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('invalid'); });
   }
   function isRegistered() { try { return localStorage.getItem('kpihub_registered') === '1'; } catch (e) { return false; } }
+  function currentUser() {
+    try { return JSON.parse(localStorage.getItem('kpihub_current_user') || '{}') || {}; } catch (e) { return {}; }
+  }
+  // Нэвтэрсэн төлвийг nav болон уншигчийн CTA дээр тусгана
+  function renderAuthState() {
+    const btn = document.getElementById('navAuthBtn');
+    if (btn) {
+      const me = currentUser();
+      btn.textContent = isRegistered() ? ('👤 ' + (me.name ? String(me.name).split(' ')[0] : 'Миний бүртгэл')) : 'Эхлэх';
+    }
+    const ar = document.getElementById('arRegBtn');
+    if (ar) ar.style.display = isRegistered() ? 'none' : '';
+  }
+  function renderProfilePane() {
+    const me = currentUser();
+    const paid = hasAccess();
+    const row = (k, v) => v ? '<div style="display:flex; justify-content:space-between; gap:14px; padding:10px 0; border-bottom:1px solid var(--line); font-size:14px;"><span style="color:var(--muted);">' + k + '</span><span style="font-weight:600; text-align:right;">' + esc(v) + '</span></div>' : '';
+    document.getElementById('pane2').innerHTML =
+      row('Нэр', me.name) + row('И-мэйл', me.email) + row('Утас', me.phone)
+      + row('Байгууллага', me.org) + row('Албан тушаал', me.role)
+      + '<div style="display:flex; justify-content:space-between; gap:14px; padding:10px 0; font-size:14px;"><span style="color:var(--muted);">Гишүүнчлэл</span>'
+      + (paid
+          ? '<span style="font-weight:700; color:#7ee2a8;">Идэвхтэй ✓</span>'
+          : '<a href="#" style="font-weight:600; color:var(--accent);" onclick="event.preventDefault(); closeModal(); openPayment();">Идэвхжүүлэх →</a>')
+      + '</div>'
+      + '<div style="display:flex; gap:10px; margin-top:18px;">'
+      + '<button class="btn btn-primary" style="flex:1;" onclick="closeModal();">Хаах</button>'
+      + '<button class="btn btn-ghost" onclick="logoutUser()">Гарах</button>'
+      + '</div>';
+  }
+  function logoutUser() {
+    if (!confirm('Бүртгэлээс гарах уу? (Гишүүнчлэлийн эрх энэ төхөөрөмж дээр хадгалагдана)')) return;
+    try {
+      localStorage.removeItem('kpihub_registered');
+      localStorage.removeItem('kpihub_current_user');
+    } catch (e) {}
+    renderAuthState();
+    closeModal();
+  }
   function openModal(e) {
     if (e) e.preventDefault();
     const done = isRegistered();
-    if (!done) resetRegForm();
+    if (done) renderProfilePane();
+    else resetRegForm();
     document.getElementById('pane1').classList.toggle('hidden', done);
-    document.getElementById('pane3').classList.toggle('hidden', !done);
-    document.getElementById('modalTitle').textContent = done ? 'Баярлалаа' : 'Бүртгэл үүсгэх';
+    document.getElementById('pane2').classList.toggle('hidden', !done);
+    document.getElementById('pane3').classList.add('hidden');
+    document.getElementById('modalTitle').textContent = done ? 'Миний бүртгэл' : 'Бүртгэл үүсгэх';
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -2011,6 +2056,7 @@
     document.getElementById('pane1').classList.add('hidden');
     document.getElementById('pane3').classList.remove('hidden');
     document.getElementById('modalTitle').textContent = 'Баярлалаа';
+    renderAuthState();
   }
 
   // ---------- Мэдээллийн захиалга (и-мэйл) ----------
