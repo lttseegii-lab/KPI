@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="KPI consulting">
+  <rect width="100" height="100" rx="22" fill="#0a1150"/>
+  <g transform="translate(50 50) scale(0.8462) translate(-54.28 -47)">
+    <g transform="skewX(-15)">
+      <rect x="38" y="22" width="21" height="50" rx="7" fill="#4faeee"/>
+      <rect x="72" y="8" width="20" height="34" rx="7" fill="#ffffff"/>
+      <rect x="64" y="46" width="20" height="40" rx="7" fill="#4faeee"/>
+    </g>
+  </g>
+</svg>
