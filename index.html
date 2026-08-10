@@ -669,52 +669,7 @@
       <p>Бие даан хэрэгжүүлэхээс эхлээд стратегийн түвшний зөвлөгөө хүртэл — өсөлтийн шат бүрд тохирсон шийдэл.</p>
     </div>
 
-    <div class="grid">
-
-      <article class="card clickable" onclick="openProduct('blueprints')">
-        <div class="tag">Blueprints · DIY</div>
-        <h3>KPI нэвтрүүлэх аргачлал, гарын авлага, темплэйт</h3>
-        <p>Чиг үүрэг тус бүрд тохирсон, бэлэн багцалсан KPI гарын авлагууд. Өөрөө дагаж хэрэгжүүлэхэд бэлэн.</p>
-        <span class="more">Дэлгэрэнгүй →</span>
-      </article>
-
-      <article class="card clickable" onclick="openProduct('diagnostics')">
-        <div class="tag">Diagnostics</div>
-        <h3>KPI удирдлагын аудит, төлөвшлийн үнэлгээ</h3>
-        <p>Богино хэмжээний дижитал судалгаа, аудитаар байгууллагын одоогийн хэмжилтийн практикийг төлөвшлийн загвартай харьцуулан үнэлнэ.</p>
-        <span class="more">Дэлгэрэнгүй →</span>
-      </article>
-
-      <article class="card clickable" onclick="openProduct('guided')">
-        <div class="tag">Guided implementation</div>
-        <h3>Зөвлөгөөний цаг</h3>
-        <p>Гишүүнчлэлийн багцад багтсан тодорхой тооны зөвлөгөөний цаг (төсөл тус бүр 10 удаа). Зөвлөх таны бизнест блюпринтийг хэрхэн буулгахыг алхам алхмаар чиглүүлнэ.</p>
-        <span class="more">Дэлгэрэнгүй →</span>
-      </article>
-
-      <article class="card clickable" onclick="openProduct('benchmarking')">
-        <span class="badge-best">Хамгийн үнэ цэнэтэй</span>
-        <div class="tag">Benchmarking · KPI library</div>
-        <h3>KPI-ийн сан</h3>
-        <p>Үйлчлүүлэгчдийн нэрээ нууцалсан KPI өгөгдлийг нэгтгэж (цикл хугацаа, хөрвүүлэлт, зардлын харьцаа), "бид өрсөлдөгчдөөсөө хэрхэн ялгарч байна вэ" гэсэн харьцуулсан тайланг хүргэнэ.</p>
-        <span class="more">Дэлгэрэнгүй →</span>
-      </article>
-
-      <article class="card clickable" onclick="openProduct('workshops')">
-        <div class="tag">Workshops · Training</div>
-        <h3>Сургалт, воркшоп</h3>
-        <p>"Зөв North Star метрик сонгох нь", "KPI соёл бүтээх нь" зэрэг сэдвээр шууд болон бичлэгээр явагдах хичээлүүд. Бие даасан болон багцтай.</p>
-        <span class="more">Дэлгэрэнгүй →</span>
-      </article>
-
-      <article class="card clickable" onclick="openProduct('advisory')">
-        <div class="tag">Executive advisory</div>
-        <h3>Зөвлөх үйлчилгээ</h3>
-        <p>Дээд түвшний багц — ахлах зөвлөхүүдтэй хязгааргүй хандах эрх. Захиалгат скоркард, удирдлагын зөвлөлийн тайлан, M&A метрик нэгтгэл зэрэг онцгой ажлууд.</p>
-        <span class="more">Дэлгэрэнгүй →</span>
-      </article>
-
-    </div>
+    <div class="grid" id="productsGrid"></div>
   </div>
 </section>
 
@@ -1022,7 +977,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
-<script src="firebase.js?v=4"></script>
+<script src="firebase.js?v=5"></script>
 
 <script>
   // ---------- Insights / articles ----------
@@ -1320,10 +1275,14 @@
   renderArticles();
   openArticleFromHash();
 
-  // ---------- Product detail data ----------
-  const PRODUCTS = {
+  // ---------- Бүтээгдэхүүний өгөгдөл ----------
+  // Анхны төлөв. Админаас засвал kpihub_products түлхүүрээр Firestore-д
+  // хадгалагдаж, applyCloudContent() дотор PRODUCTS-ыг дарж бичнэ.
+  const DEFAULT_PRODUCTS = {
     blueprints: {
       tag: 'Blueprints · DIY framework',
+      cardTag: 'Blueprints · DIY',
+      excerpt: 'Чиг үүрэг тус бүрд тохирсон, бэлэн багцалсан KPI гарын авлагууд. Өөрөө дагаж хэрэгжүүлэхэд бэлэн.',
       title: 'KPI нэвтрүүлэх аргачлал, гарын авлага, темплэйт',
       lead: 'Чиг үүрэг тус бүрд тохирсон, бэлэн багцалсан KPI гарын авлагууд. Зөвлөхгүйгээр өөрөө дагаад хэрэгжүүлчихэхээр алхам алхмын заавартай.',
       forWho: [
@@ -1357,6 +1316,8 @@
     },
     diagnostics: {
       tag: 'Diagnostics',
+      cardTag: 'Diagnostics',
+      excerpt: 'Богино хэмжээний дижитал судалгаа, аудитаар байгууллагын одоогийн хэмжилтийн практикийг төлөвшлийн загвартай харьцуулан үнэлнэ.',
       title: 'KPI удирдлагын аудит, төлөвшлийн үнэлгээ',
       lead: 'Богино дижитал судалгаа, аудитаар танай байгууллагын одоогийн хэмжилтийн практикийг төлөвшлийн загвартай харьцуулан үнэлж, цаашид юунд анхаарахыг тодорхой зааж өгнө.',
       forWho: [
@@ -1378,6 +1339,8 @@
     },
     guided: {
       tag: 'Guided implementation',
+      cardTag: 'Guided implementation',
+      excerpt: 'Гишүүнчлэлийн багцад багтсан тодорхой тооны зөвлөгөөний цаг (төсөл тус бүр 10 удаа). Зөвлөх таны бизнест блюпринтийг хэрхэн буулгахыг алхам алхмаар чиглүүлнэ.',
       title: 'Зөвлөгөөний цаг',
       lead: 'Гишүүнчлэлийн багцад багтсан тодорхой тооны зөвлөгөөний цаг. Зөвлөх таны бизнест блюпринтийг хэрхэн буулгахыг алхам алхмаар чиглүүлнэ.',
       forWho: [
@@ -1399,6 +1362,9 @@
     },
     benchmarking: {
       tag: 'Benchmarking · KPI library',
+      cardTag: 'Benchmarking · KPI library',
+      excerpt: 'Үйлчлүүлэгчдийн нэрээ нууцалсан KPI өгөгдлийг нэгтгэж (цикл хугацаа, хөрвүүлэлт, зардлын харьцаа), "бид өрсөлдөгчдөөсөө хэрхэн ялгарч байна вэ" гэсэн харьцуулсан тайланг хүргэнэ.',
+      best: true,
       title: 'KPI-ийн сан',
       lead: 'Үйлчлүүлэгчдийн нэрээ нууцалсан KPI өгөгдлийг нэгтгэн (цикл хугацаа, хөрвүүлэлт, зардлын харьцаа) "бид өрсөлдөгчдөөсөө хэрхэн ялгарч байна вэ" гэсэн харьцуулсан тайланг хүргэнэ.',
       forWho: [
@@ -1420,6 +1386,8 @@
     },
     workshops: {
       tag: 'Workshops · Training',
+      cardTag: 'Workshops · Training',
+      excerpt: '"Зөв North Star метрик сонгох нь", "KPI соёл бүтээх нь" зэрэг сэдвээр шууд болон бичлэгээр явагдах хичээлүүд. Бие даасан болон багцтай.',
       title: 'Сургалт, воркшоп',
       lead: '"Зөв North Star метрик сонгох нь", "KPI соёл бүтээх нь" зэрэг сэдвээр шууд болон бичлэгээр явагдах хичээлүүд. Бие даасан болон гишүүнчлэлийн багцтай.',
       forWho: [
@@ -1441,6 +1409,8 @@
     },
     advisory: {
       tag: 'Executive · strategic advisory',
+      cardTag: 'Executive advisory',
+      excerpt: 'Дээд түвшний багц — ахлах зөвлөхүүдтэй хязгааргүй хандах эрх. Захиалгат скоркард, удирдлагын зөвлөлийн тайлан, M&A метрик нэгтгэл зэрэг онцгой ажлууд.',
       title: 'Зөвлөх үйлчилгээ',
       lead: 'Дээд түвшний гишүүнчлэлийн багц — ахлах зөвлөхүүдтэй өндөр давтамжтай хандах эрх. Стандарт блюпринтээс гадуурх онцгой ажлуудад зориулагдсан.',
       forWho: [
@@ -1462,14 +1432,52 @@
     },
   };
 
-  // Apply admin template overrides (from localStorage)
-  try {
-    const rawT = localStorage.getItem('kpihub_templates');
-    if (rawT) {
-      const arr = JSON.parse(rawT);
-      if (Array.isArray(arr)) PRODUCTS.blueprints.templates = arr;
-    }
-  } catch (e) {}
+  // Ажиллаж буй хувилбар. Админаас засварласан бол applyCloudContent() дарж бичнэ.
+  let PRODUCTS = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
+
+  // Темплэйтийн жагсаалт нь тусдаа түлхүүрээр (kpihub_templates) удирдагддаг тул
+  // PRODUCTS шинэчлэгдэх бүрд дахин холбож өгнө.
+  function attachTemplates() {
+    try {
+      const arr = JSON.parse(localStorage.getItem('kpihub_templates') || 'null');
+      if (Array.isArray(arr) && PRODUCTS.blueprints) PRODUCTS.blueprints.templates = arr;
+    } catch (e) {}
+  }
+  attachTemplates();
+
+  // Админаас ирсэн бүтээгдэхүүнийг анхны төлөв дээр давхарлана — шинэ талбар
+  // нэмэгдсэн үед хуучин хадгалсан өгөгдөл дутуу байсан ч эвдрэхгүй.
+  function mergeProducts(saved) {
+    if (!saved || typeof saved !== 'object') return;
+    const merged = {};
+    Object.keys(saved).forEach(k => {
+      merged[k] = Object.assign({}, DEFAULT_PRODUCTS[k] || {}, saved[k]);
+    });
+    if (Object.keys(merged).length) PRODUCTS = merged;
+    attachTemplates();
+  }
+
+  // Админаас ирсэн текстийг HTML болгон оруулахаас өмнө цэвэрлэнэ
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  }
+
+  function renderProducts() {
+    const grid = document.getElementById('productsGrid');
+    if (!grid) return;
+    grid.innerHTML = Object.keys(PRODUCTS).map(k => {
+      const p = PRODUCTS[k];
+      return '<article class="card clickable" onclick="openProduct(\'' + k + '\')">'
+        + (p.best ? '<span class="badge-best">Хамгийн үнэ цэнэтэй</span>' : '')
+        + '<div class="tag">' + esc(p.cardTag || p.tag || '') + '</div>'
+        + '<h3>' + esc(p.title || '') + '</h3>'
+        + '<p>' + esc(p.excerpt || p.lead || '') + '</p>'
+        + '<span class="more">Дэлгэрэнгүй →</span>'
+        + '</article>';
+    }).join('');
+  }
+  renderProducts();
 
   // ---------- Үнийн саналын асуулга (админаас удирдана) ----------
   const DEFAULT_QUESTIONS = [
@@ -1994,8 +2002,12 @@
     CATS = ['Бүгд', ...Array.from(new Set(ARTICLES.map(a => a.cat)))];
     if (!CATS.includes(activeFilter)) activeFilter = 'Бүгд';
     try {
+      const pr = JSON.parse(localStorage.getItem('kpihub_products') || 'null');
+      if (pr) mergeProducts(pr);
+    } catch (e) {}
+    try {
       const t = JSON.parse(localStorage.getItem('kpihub_templates') || 'null');
-      if (Array.isArray(t)) PRODUCTS.blueprints.templates = t;
+      if (Array.isArray(t) && PRODUCTS.blueprints) PRODUCTS.blueprints.templates = t;
     } catch (e) {}
     try {
       const q = JSON.parse(localStorage.getItem('kpihub_quote_questions') || 'null');
@@ -2011,6 +2023,7 @@
     } catch (e) {}
     renderFilters();
     renderArticles();
+    renderProducts();
     renderContact();
     renderFooterSocial();
     renderWhy();

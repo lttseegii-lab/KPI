@@ -35,6 +35,7 @@
   var CONTENT_KEYS = [
     "kpihub_templates",
     "kpihub_articles",
+    "kpihub_products",
     "kpihub_contact",
     "kpihub_why",
     "kpihub_availability",
