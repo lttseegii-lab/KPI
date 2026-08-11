@@ -346,8 +346,6 @@
   .reader-topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 30px; }
   .reader-back { display: inline-flex; align-items: center; gap: 8px; color: #444; text-decoration: none; font-size: 15px; font-weight: 500; }
   .reader-back:hover { color: var(--accent); }
-  .reader-x { width: 40px; height: 40px; border-radius: 10px; border: 1px solid #dfe1e8; background: #fff; color: #333; font-size: 22px; cursor: pointer; line-height: 1; }
-  .reader-x:hover { background: #e9eaf0; }
 
   .reader-cat { text-align: center; color: #6b6b6b; font-size: 15px; margin-bottom: 18px; }
   .reader-title {
@@ -970,7 +968,6 @@
   <div class="reader-page">
     <div class="reader-topbar">
       <a class="reader-back" href="#" onclick="event.preventDefault(); closeArticle()">‹ Буцах</a>
-      <button class="reader-x" onclick="closeArticle()" aria-label="Хаах">×</button>
     </div>
 
     <div class="reader-cat"><span id="arCat"></span> | KPI consulting</div>
