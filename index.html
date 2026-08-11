@@ -574,6 +574,11 @@
     font-size: 22px; cursor: pointer; line-height: 1; transition: background .2s;
   }
   .pd-close:hover { background: #e9eaf0; }
+  .pd-back {
+    display: inline-flex; align-items: center; gap: 8px; margin-bottom: 22px;
+    color: #444; text-decoration: none; font-size: 15px; font-weight: 500;
+  }
+  .pd-back:hover { color: var(--accent); }
   .pd-hero .tag { font-size: 12.5px; font-weight: 700; letter-spacing: .5px; color: var(--accent); text-transform: uppercase; }
   .pd-hero h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 800; letter-spacing: -.5px; margin: 8px 0 14px; color: #111; }
   .pd-hero .lead { color: #555; font-size: clamp(15.5px, 1.6vw, 18px); max-width: 720px; }
@@ -906,6 +911,7 @@
   <div class="pd-panel">
     <div class="pd-hero">
       <button class="pd-close" onclick="closeProduct()" aria-label="Хаах">×</button>
+      <a class="pd-back" href="#" onclick="event.preventDefault(); closeProduct()">‹ Бүтээгдэхүүн рүү буцах</a>
       <div class="tag" id="pdTag">Blueprints</div>
       <h2 id="pdTitle">Гарчиг</h2>
       <div class="lead" id="pdLead">Тайлбар</div>
