@@ -568,12 +568,6 @@
   .pd-hero {
     position: relative; padding: 44px 40px 34px; border-bottom: 1px solid #e2e4ea; background: transparent;
   }
-  .pd-close {
-    position: fixed; top: 20px; right: 26px; z-index: 5; width: 42px; height: 42px; border-radius: 11px;
-    background: #fff; border: 1px solid #dfe1e8; color: #333;
-    font-size: 22px; cursor: pointer; line-height: 1; transition: background .2s;
-  }
-  .pd-close:hover { background: #e9eaf0; }
   .pd-back {
     display: inline-flex; align-items: center; gap: 8px; margin-bottom: 22px;
     color: #444; text-decoration: none; font-size: 15px; font-weight: 500;
@@ -910,7 +904,6 @@
 <div class="pd-overlay" id="pdOverlay" onclick="if(event.target===this) closeProduct()">
   <div class="pd-panel">
     <div class="pd-hero">
-      <button class="pd-close" onclick="closeProduct()" aria-label="Хаах">×</button>
       <a class="pd-back" href="#" onclick="event.preventDefault(); closeProduct()">‹ Буцах</a>
       <div class="tag" id="pdTag">Blueprints</div>
       <h2 id="pdTitle">Гарчиг</h2>
