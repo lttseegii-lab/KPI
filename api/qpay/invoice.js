@@ -1,16 +1,41 @@
-/* Гишүүнчлэлийн төлбөрийн нэхэмжлэл үүсгэнэ — QR болон холбоосыг буцаана. */
+/* Төлбөрийн нэхэмжлэл үүсгэнэ — QR болон холбоосыг буцаана.
+   Хоёр төрөл: membership (гишүүнчлэл) ба booking (зөвлөгөөний цаг). */
 "use strict";
 
 const { qpayFetch, sendJson, sendError } = require("./_lib.js");
+
+const PURPOSES = {
+  membership: {
+    envAmount: "QPAY_AMOUNT",
+    fallback: 99000,
+    prefix: "KPI-M",
+    description: "KPI consulting — гишүүнчлэл (темплэйт татах эрх)",
+  },
+  booking: {
+    envAmount: "QPAY_BOOKING_AMOUNT",
+    fallback: 50000,
+    prefix: "KPI-B",
+    description: "KPI consulting — зөвлөгөөний цаг",
+  },
+};
+
+function readBody(req) {
+  if (req.body == null) return {};
+  if (typeof req.body === "object") return req.body;
+  try { return JSON.parse(req.body); } catch (e) { return {}; }
+}
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return sendJson(res, 405, { error: "POST хүсэлт илгээнэ үү" });
   }
   try {
-    const amount = Math.max(1, Number(process.env.QPAY_AMOUNT || 99000));
+    const body = readBody(req);
+    const purpose = PURPOSES[body.purpose] ? body.purpose : "membership";
+    const cfg = PURPOSES[purpose];
+    const amount = Math.max(1, Number(process.env[cfg.envAmount] || cfg.fallback));
     const senderInvoiceNo =
-      "KPI-" + Date.now() + "-" + Math.floor(Math.random() * 1e6);
+      cfg.prefix + "-" + Date.now() + "-" + Math.floor(Math.random() * 1e6);
     const host = req.headers["x-forwarded-host"] || req.headers.host;
     const callbackUrl =
       "https://" + host + "/api/qpay/callback?sender_invoice_no=" + senderInvoiceNo;
@@ -21,8 +46,7 @@ module.exports = async (req, res) => {
         invoice_code: process.env.QPAY_INVOICE_CODE,
         sender_invoice_no: senderInvoiceNo,
         invoice_receiver_code: "terminal",
-        invoice_description:
-          "KPI consulting — гишүүнчлэл (темплэйт татах эрх) " + senderInvoiceNo,
+        invoice_description: cfg.description + " " + senderInvoiceNo,
         amount: amount,
         callback_url: callbackUrl,
       },

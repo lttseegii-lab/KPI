@@ -873,16 +873,20 @@
         <p style="font-size:13.5px;color:var(--muted);margin-bottom:14px;">Зөвлөгөөний цагаа баталгаажуулахын тулд төлбөрөө төлнө үү.</p>
         <div class="pay-summary" style="flex-direction:column; align-items:stretch; gap:8px;">
           <div style="display:flex; justify-content:space-between;"><span id="bookPaySlot" style="color:var(--muted);"></span></div>
-          <div style="display:flex; justify-content:space-between; align-items:center;"><span>Зөвлөгөөний төлбөр</span><span class="total">₮50,000</span></div>
+          <div style="display:flex; justify-content:space-between; align-items:center;"><span>Зөвлөгөөний төлбөр</span><span class="total" id="bookAmount">₮50,000</span></div>
         </div>
         <div class="qpay-box">
           <div class="qpay-logo"><span class="q">Q</span>QPay</div>
-          <div class="qpay-qr">QPay QR код<br>энд харагдана</div>
-          <div class="qpay-hint">QPay апп эсвэл банкны аппаараа уншуулна уу</div>
+          <div class="qpay-qr" id="bookQr">QPay QR код<br>энд харагдана</div>
+          <a id="bookAppLink" href="#" target="_blank" rel="noopener"
+             style="display:none; margin:0 auto 12px; font-size:13.5px; font-weight:600; color:var(--accent-2);">
+            📱 Банкны апп-аар нээх
+          </a>
+          <div class="qpay-hint" id="bookHint">«QPay-р төлөх» товч дарахад QR код үүснэ</div>
         </div>
         <button class="btn btn-primary" id="bookPayBtn" onclick="doBookingPay()" style="width:100%;">QPay-р төлөх</button>
         <button class="btn btn-ghost" onclick="backToBookForm()" style="width:100%; margin-top:10px;">Буцах</button>
-        <div class="note">🔒 QPay төлбөрийн холболт хийгдэж байна.</div>
+        <div class="note">🔒 Төлбөр QPay-ээр аюулгүй хийгдэнэ. Банкны апп QR-ыг уншина.</div>
       </div>
 
       <!-- Success -->
@@ -1925,12 +1929,15 @@
 
   function openBooking(e) {
     if (e) e.preventDefault();
-    const done = hasAccess();
+    // Цаг товлоход үнэгүй бүртгэл хангалттай — гишүүнчлэл шаардахгүй.
+    // Зөвлөгөөний төлбөр нь дараагийн алхамд QPay-ээр тусдаа төлөгдөнө.
+    const done = isRegistered();
     document.getElementById('bookNeedReg').classList.toggle('hidden', done);
     document.getElementById('bookForm').classList.toggle('hidden', !done);
     document.getElementById('bookPay').classList.add('hidden');
     document.getElementById('bookSuccess').classList.add('hidden');
     document.getElementById('bookingTitle').textContent = 'Цаг товлох';
+    bkResetPay();
     if (done) {
       const u = currentUser();
       document.getElementById('bookGreeting').textContent =
@@ -1941,7 +1948,7 @@
     bookingModal.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
-  function closeBooking() { bookingModal.classList.remove('open'); document.body.style.overflow = ''; }
+  function closeBooking() { bkStopPolling(); bookingModal.classList.remove('open'); document.body.style.overflow = ''; }
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeBooking(); });
 
   function renderBookDays() {
@@ -2018,28 +2025,94 @@
     document.getElementById('bookForm').classList.remove('hidden');
     document.getElementById('bookingTitle').textContent = 'Цаг товлох';
   }
-  // QPay төлбөр → амжилттай бол товлолт хадгалагдана
-  // TODO: QPay интеграц — серверээс нэхэмжлэл үүсгэж, QR харуулаад callback-аар баталгаажуулна.
-  function doBookingPay() {
+
+  // ---- Зөвлөгөөний төлбөр — бодит QPay (гишүүнчлэлийн урсгалтай ижил) ----
+  let bkInvoiceId = '';
+  let bkPollTimer = null;
+  let bkBusy = false;
+  function bkStopPolling() {
+    if (bkPollTimer) { clearInterval(bkPollTimer); bkPollTimer = null; }
+  }
+  function bkResetPay() {
+    bkStopPolling();
+    bkInvoiceId = '';
+    bkBusy = false;
+    document.getElementById('bookQr').innerHTML = 'QPay QR код<br>энд харагдана';
+    document.getElementById('bookHint').textContent = '«QPay-р төлөх» товч дарахад QR код үүснэ';
+    const link = document.getElementById('bookAppLink');
+    link.style.display = 'none'; link.href = '#';
+    const btn = document.getElementById('bookPayBtn');
+    btn.textContent = 'QPay-р төлөх'; btn.style.opacity = ''; btn.style.pointerEvents = '';
+  }
+  function bookingPaid(status) {
+    bkStopPolling();
+    const u = currentUser() || {};
+    const name = u.name || 'Хэрэглэгч';
+    KPICloud.addSubmission('booking', {
+      name, phone: u.phone || '', email: u.email || '', org: u.org || '',
+      date: bkSelDate, time: bkSelTime, paid: true
+    });
+    // Худалдан авалтын бүртгэл — админ дашбоардад харагдана
+    try {
+      KPICloud.addSubmission('payment', {
+        invoiceId: bkInvoiceId,
+        paymentId: String(status.payment_id || ''),
+        amount: Number(status.amount || 0),
+        product: 'booking',
+        name: name, email: u.email || '', phone: u.phone || ''
+      });
+    } catch (e) {}
+    KPICloud.addTakenSlot(bkSelDate, bkSelTime); // тухайн цагийг "завгүй" болгох
+    document.getElementById('bookSuccessMsg').textContent =
+      name + ', төлбөр амжилттай. Таны ' + bkSelDate + ' ' + bkSelTime + '-ийн зөвлөгөөний цаг товлогдлоо.';
+    document.getElementById('gcalLink').href = gcalUrl(bkSelDate, bkSelTime, name);
+    document.getElementById('bookPay').classList.add('hidden');
+    document.getElementById('bookSuccess').classList.remove('hidden');
+    document.getElementById('bookingTitle').textContent = 'Бэлэн боллоо';
+    bkResetPay();
+  }
+  async function bkCheckOnce(silent) {
+    if (!bkInvoiceId) return;
+    try {
+      const r = await fetch('/api/qpay/status?invoice_id=' + encodeURIComponent(bkInvoiceId));
+      const d = await r.json();
+      if (d.paid) { bookingPaid(d); return; }
+      if (!silent) document.getElementById('bookHint').textContent = 'Төлбөр хараахан хийгдээгүй байна. Уншуулсны дараа хэсэг хүлээнэ үү.';
+    } catch (e) { /* сүлжээний түр саатал — дараагийн шалгалтад дахин оролдоно */ }
+  }
+  async function doBookingPay() {
     if (!bkSelDate || !bkSelTime) return;
     const btn = document.getElementById('bookPayBtn');
-    btn.textContent = 'Төлбөр шалгаж байна…'; btn.style.opacity = '.7'; btn.style.pointerEvents = 'none';
-    setTimeout(() => {
-      const u = currentUser() || {};
-      const name = u.name || 'Хэрэглэгч';
-      KPICloud.addSubmission('booking', {
-        name, phone: u.phone || '', email: u.email || '', org: u.org || '',
-        date: bkSelDate, time: bkSelTime, paid: true
+    const hint = document.getElementById('bookHint');
+    if (bkInvoiceId) { bkCheckOnce(false); return; }
+    if (bkBusy) return;
+    bkBusy = true;
+    btn.textContent = 'Нэхэмжлэл үүсгэж байна…'; btn.style.opacity = '.7'; btn.style.pointerEvents = 'none';
+    try {
+      const r = await fetch('/api/qpay/invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ purpose: 'booking' })
       });
-      KPICloud.addTakenSlot(bkSelDate, bkSelTime); // тухайн цагийг "завгүй" болгох
-      document.getElementById('bookSuccessMsg').textContent =
-        name + ', төлбөр амжилттай. Таны ' + bkSelDate + ' ' + bkSelTime + '-ийн зөвлөгөөний цаг товлогдлоо.';
-      document.getElementById('gcalLink').href = gcalUrl(bkSelDate, bkSelTime, name);
-      document.getElementById('bookPay').classList.add('hidden');
-      document.getElementById('bookSuccess').classList.remove('hidden');
-      document.getElementById('bookingTitle').textContent = 'Бэлэн боллоо';
-      btn.textContent = 'QPay-р төлөх'; btn.style.opacity = ''; btn.style.pointerEvents = '';
-    }, 1100);
+      const d = await r.json().catch(() => ({}));
+      if (!r.ok || !d.invoice_id) throw new Error(d.error || 'Нэхэмжлэл үүсгэж чадсангүй');
+      bkInvoiceId = d.invoice_id;
+      if (d.amount) document.getElementById('bookAmount').textContent = '₮' + Number(d.amount).toLocaleString('en-US');
+      document.getElementById('bookQr').innerHTML = d.qr_image
+        ? '<img src="data:image/png;base64,' + d.qr_image + '" alt="QPay QR" style="width:100%; height:100%; object-fit:contain;">'
+        : 'QR үүссэн — банкны апп-аар нээнэ үү';
+      const link = document.getElementById('bookAppLink');
+      if (d.short_url) { link.href = d.short_url; link.style.display = 'block'; }
+      hint.textContent = 'Банкны апп эсвэл QPay-ээр QR-ыг уншуулна уу. Төлөгдмөгц автоматаар баталгаажна.';
+      btn.textContent = 'Төлбөр шалгах';
+      btn.style.opacity = ''; btn.style.pointerEvents = '';
+      bkPollTimer = setInterval(() => bkCheckOnce(true), 4000);
+    } catch (err) {
+      hint.textContent = (err && err.message) ? err.message : 'Төлбөрийн сервертэй холбогдож чадсангүй. Дараа дахин оролдоно уу.';
+      btn.textContent = 'QPay-р төлөх';
+      btn.style.opacity = ''; btn.style.pointerEvents = '';
+    }
+    bkBusy = false;
   }
 
   // ---------- Validation helpers ----------
