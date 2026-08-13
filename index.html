@@ -139,6 +139,16 @@
     .subscribe-msg { text-align: left; }
   }
   .nav-cta .btn { white-space: nowrap; }
+  /* Нэвтрэлтийн товч — бүтэн нэр урт болж навигацтай давхарладаг байсан тул
+     тогтмол хэмжээтэй дугуй болгов: зочинд хүний дүрс, нэвтэрсэн үед нэрний
+     эхний үсэг. */
+  .nav-avatar {
+    width: 40px; height: 40px; padding: 0; border-radius: 50%;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0; font-size: 16px; font-weight: 700; line-height: 1;
+    text-transform: uppercase;
+  }
+  .nav-avatar svg { width: 20px; height: 20px; display: block; }
   @media (max-width: 760px) {
     .nav-links { display: none; }
     /* Гурван том товч 375px-д багтахгүй, бичиг нь 2-3 мөр болж эвдэрдэг байв.
@@ -626,7 +636,7 @@
         <a href="#why">Бидний тухай</a>
       </div>
       <div class="nav-cta">
-        <a href="#" class="btn btn-primary" id="navAuthBtn" onclick="openModal(event)">Эхлэх</a>
+        <a href="#" class="btn btn-primary nav-avatar" id="navAuthBtn" onclick="openModal(event)" aria-label="Бүртгэл"></a>
         <a href="#" class="btn btn-ghost nav-contact" onclick="openContact(event)">Холбоо барих</a>
         <a href="#" class="btn btn-ghost" onclick="openBooking(event)">Цаг товлох</a>
       </div>
@@ -1626,10 +1636,19 @@
   }
   // Нэвтэрсэн төлвийг nav болон уншигчийн CTA дээр тусгана
   function renderAuthState() {
+    // Дүрсийг функц дотор байлгав: renderAuthState нь эхлүүлэлтийн үед,
+    // модулийн доод хэсэг ажиллахаас өмнө дуудагддаг тул гадна const байвал
+    // temporal dead zone-д унана.
+    const GUEST_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20v-1.4a5.2 5.2 0 0 1 5.2-5.2h4a5.2 5.2 0 0 1 5.2 5.2V20"/></svg>';
     const btn = document.getElementById('navAuthBtn');
     if (btn) {
       const me = currentUser();
-      btn.textContent = isRegistered() ? ('👤 ' + (me.name ? String(me.name).split(' ')[0] : 'Миний бүртгэл')) : 'Эхлэх';
+      const reg = isRegistered();
+      // Нэрний эхний үсэг (кирилл ч ажиллана); нэргүй бол дүрсээ хэвээр
+      const initial = reg && me.name ? String(me.name).trim().charAt(0) : '';
+      btn.innerHTML = initial ? esc(initial) : GUEST_ICON;
+      btn.setAttribute('aria-label', reg ? 'Миний бүртгэл' : 'Бүртгэл үүсгэх');
+      btn.setAttribute('title', reg ? (me.name || 'Миний бүртгэл') : 'Бүртгэл үүсгэх');
     }
     const ar = document.getElementById('arRegBtn');
     if (ar) ar.style.display = isRegistered() ? 'none' : '';
