@@ -947,18 +947,41 @@
     },
   };
 
-  // Темплэйтүүд нь бүтээгдэхүүн бүрд ТУСДАА түлхүүрт хадгалагдана (Firestore-ийн
-  // 1MB баримтын хязгаараас болж бүтээгдэхүүний үндсэн өгөгдлөөс салгасан).
+  // Бүтээгдэхүүн бүрийн ХЭРЭГСЛҮҮД нь ҮЕ ШАТ-аар бүлэглэгдэж, ТУСДАА түлхүүрт
+  // хадгалагдана (Firestore-ийн 1MB баримтын хязгаараас болж үндсэн өгөгдлөөс салгав).
+  //   [{ title, desc, tools:[{ name, type, file }] }]
   const TEMPLATE_PRODUCT_KEYS = {
     blueprints:   'kpihub_templates',                 // KPI нэвтрүүлэх аргачлал
-    benchmarking: 'kpihub_templates_benchmarking'     // KPI-ийн сан
+    diagnostics:  'kpihub_templates_diagnostics',     // KPI аудит
+    guided:       'kpihub_templates_guided',          // Зөвлөгөөний цаг
+    benchmarking: 'kpihub_templates_benchmarking',    // KPI-ийн сан
+    workshops:    'kpihub_templates_workshops',       // Сургалт
+    advisory:     'kpihub_templates_advisory'         // Зөвлөх үйлчилгээ
   };
+  // Хуучин хавтгай хэлбэр ([[icon,name,type,file],...]) байвал нэг үе шат руу хөрвүүлнэ.
+  function normPhases(raw) {
+    if (!Array.isArray(raw)) return [];
+    if (raw.length && Array.isArray(raw[0])) {
+      return [{ title: '', desc: '', tools: raw.map(function (t) {
+        return { name: t[1] || '', type: t[2] || '', file: t[3] || null };
+      }) }];
+    }
+    return raw.map(function (ph) {
+      ph = ph || {};
+      return {
+        title: ph.title || '', desc: ph.desc || '',
+        tools: Array.isArray(ph.tools) ? ph.tools.map(function (t) {
+          t = t || {};
+          return { name: t.name || '', type: t.type || '', file: t.file || null };
+        }) : []
+      };
+    });
+  }
   const productTemplates = {};
-  function tplDefault(pk) { return pk === 'blueprints' ? DEFAULT_TEMPLATES.map(t => t.slice()) : []; }
+  function tplDefault(pk) { return pk === 'blueprints' ? normPhases(DEFAULT_TEMPLATES.map(t => t.slice())) : []; }
   function loadProductTemplates() {
     Object.keys(TEMPLATE_PRODUCT_KEYS).forEach(function (pk) {
-      const arr = load(TEMPLATE_PRODUCT_KEYS[pk], tplDefault(pk));
-      productTemplates[pk] = Array.isArray(arr) ? arr : tplDefault(pk);
+      productTemplates[pk] = normPhases(load(TEMPLATE_PRODUCT_KEYS[pk], tplDefault(pk)));
     });
   }
   loadProductTemplates();
@@ -1119,7 +1142,7 @@
       statCard('💰', 'Үнийн санал', quoteReqs.length, week(countSince(quoteReqs, 7))),
       statCard('📅', 'Ойрын цаг товлолт', upcoming.length, { text: 'Нийт ' + bookingsList.length }),
       statCard('📝', 'Нийтлэл', articles.length, { text: 'Сайт дээр нийтлэгдсэн' }),
-      statCard('📄', 'Темплэйт', Object.keys(TEMPLATE_PRODUCT_KEYS).reduce((n, pk) => n + ((productTemplates[pk] || []).length), 0), { text: 'Бүтээгдэхүүн доторх' }),
+      statCard('📄', 'Хэрэгсэл', Object.keys(TEMPLATE_PRODUCT_KEYS).reduce((n, pk) => n + (productTemplates[pk] || []).reduce((m, ph) => m + ((ph.tools || []).length), 0), 0), { text: 'Бүтээгдэхүүн доторх' }),
       statCard('💳', 'Төлбөр', paymentsList.length, { text: 'Нийт ₮' + paymentsList.reduce((a, p) => a + (Number(p.amount) || 0), 0).toLocaleString('en-US') })
     ].join('');
 
@@ -1971,64 +1994,80 @@
     contact = Object.assign({}, DEFAULT_CONTACT); save('kpihub_contact', contact); renderContactForm();
   }
 
-  // ---------- Templates ----------
+  // ---------- Үе шат + хэрэгсэл (бүтээгдэхүүн бүрд) ----------
+  const MAX_FILE = MAX_UPLOAD;
+  function curPhases() { return productTemplates[prodSelected] || (productTemplates[prodSelected] = []); }
   function renderTemplates() {
     const wrap = document.getElementById('tplList');
-    if (!wrap) return; // Темплэйт засварлагч нь «Бүтээгдэхүүн» доторх темплэйттэй бүтээгдэхүүн дээр л харагдана
-    const list = productTemplates[prodSelected] || [];
-    wrap.innerHTML = list.map((t, i) => {
-      const file = t[3];
-      const fileInfo = (file && file.name)
-        ? '<span class="file-name has">' + esc(file.name) + '</span><button class="file-rm" onclick="removeTplFile(' + i + ')">Устгах</button>'
-        : '<span class="file-name">Файл хавсаргаагүй</span>';
-      return '<div class="tpl-card">'
-        + '<div class="tpl-top">'
-        + '<input class="nm" value="' + esc(t[1]) + '" oninput="productTemplates[prodSelected][' + i + '][1]=this.value" placeholder="Нэр">'
-        + '<input class="ty" value="' + esc(t[2]) + '" oninput="productTemplates[prodSelected][' + i + '][2]=this.value" placeholder="Төрөл">'
-        + '<button class="btn btn-danger btn-sm" onclick="delTemplate(' + i + ')">Устгах</button>'
+    if (!wrap) return; // Засварлагч нь «Бүтээгдэхүүн» доторх сонгосон бүтээгдэхүүн дээр л харагдана
+    const phases = productTemplates[prodSelected] || [];
+    if (!phases.length) { wrap.innerHTML = '<div class="empty">Үе шат алга. «+ Үе шат нэмэх» дарна уу.</div>'; return; }
+    wrap.innerHTML = phases.map(function (ph, pi) {
+      const tools = (ph.tools || []).map(function (t, ti) {
+        const file = t.file;
+        const fileInfo = (file && file.name)
+          ? '<span class="file-name has">' + esc(file.name) + '</span><button class="file-rm" onclick="removeToolFile(' + pi + ',' + ti + ')">Файл устгах</button>'
+          : '<span class="file-name">Файл хавсаргаагүй (заавал биш)</span>';
+        return '<div class="tpl-card" style="margin-top:8px;">'
+          + '<div class="tpl-top">'
+          + '<input class="nm" value="' + esc(t.name) + '" oninput="curPhases()[' + pi + '].tools[' + ti + '].name=this.value" placeholder="Хэрэгслийн нэр">'
+          + '<input class="ty" value="' + esc(t.type) + '" oninput="curPhases()[' + pi + '].tools[' + ti + '].type=this.value" placeholder="Төрөл (жишээ: Excel/CSV)">'
+          + '<button class="btn btn-danger btn-sm" onclick="delTool(' + pi + ',' + ti + ')">Устгах</button>'
+          + '</div>'
+          + '<div class="tpl-file">'
+          + '<label class="file-btn">Файл сонгох<input type="file" hidden onchange="onToolFile(' + pi + ',' + ti + ',this)"></label>'
+          + fileInfo
+          + '</div></div>';
+      }).join('');
+      return '<div class="editor" style="margin-top:14px;">'
+        + '<div style="display:flex; gap:10px; align-items:center;">'
+        + '<input value="' + esc(ph.title) + '" oninput="curPhases()[' + pi + '].title=this.value" placeholder="Үе шатны гарчиг (хоосон бол дугааргүй энгийн жагсаалт болно)" style="flex:1; font-weight:600;">'
+        + '<button class="btn btn-danger btn-sm" onclick="delPhase(' + pi + ')">Үе шат устгах</button>'
         + '</div>'
-        + '<div class="tpl-file">'
-        + '<label class="file-btn">Файл сонгох<input type="file" hidden onchange="onTplFile(' + i + ', this)"></label>'
-        + fileInfo
-        + '</div>'
+        + '<textarea style="min-height:46px; margin-top:8px;" oninput="curPhases()[' + pi + '].desc=this.value" placeholder="Үе шатны тайлбар (заавал биш)">' + esc(ph.desc) + '</textarea>'
+        + tools
+        + '<div style="margin-top:10px;"><button class="btn btn-sm" onclick="addTool(' + pi + ')">+ Хэрэгсэл нэмэх</button></div>'
         + '</div>';
-    }).join('') || '<div class="empty">Темплэйт алга. «+ Темплэйт нэмэх» дарна уу.</div>';
+    }).join('');
   }
-  const MAX_FILE = MAX_UPLOAD;
-  function onTplFile(i, input) {
+  function addPhase() {
+    curPhases().push({ title: '', desc: '', tools: [] });
+    renderTemplates();
+    const cards = document.querySelectorAll('#tplList > .editor');
+    const last = cards[cards.length - 1];
+    if (last) { last.scrollIntoView({ behavior: 'smooth', block: 'center' }); const inp = last.querySelector('input'); if (inp) inp.focus(); }
+  }
+  function delPhase(pi) {
+    if (!confirmDelete('Энэ үе шатыг доторх хэрэгслүүдтэй нь устгах уу?')) return;
+    curPhases().splice(pi, 1); renderTemplates();
+  }
+  function addTool(pi) {
+    curPhases()[pi].tools.push({ name: 'Шинэ хэрэгсэл', type: '', file: null });
+    renderTemplates();
+  }
+  function delTool(pi, ti) {
+    if (!confirmDelete()) return;
+    curPhases()[pi].tools.splice(ti, 1); renderTemplates();
+  }
+  function onToolFile(pi, ti, input) {
     const f = input.files && input.files[0];
     if (!f) return;
-    if (f.size > MAX_FILE) { alert('Файл хэт том байна (дээд тал нь 5MB). Жижиг файл сонгоно уу.'); input.value=''; return; }
+    if (f.size > MAX_FILE) { alert('Файл хэт том байна (дээд тал нь 5MB). Жижиг файл сонгоно уу.'); input.value = ''; return; }
     const pk = prodSelected;
     const reader = new FileReader();
-    reader.onload = () => { productTemplates[pk][i][3] = { name: f.name, data: reader.result }; renderTemplates(); };
+    reader.onload = () => { productTemplates[pk][pi].tools[ti].file = { name: f.name, data: reader.result }; renderTemplates(); };
     reader.readAsDataURL(f);
   }
-  function removeTplFile(i) {
-    if (!confirmDelete('Та энэ файлыг устгахдаа итгэлтэй байна уу?')) return;
-    productTemplates[prodSelected][i][3] = null; renderTemplates();
-  }
-  function addTemplate() {
-    (productTemplates[prodSelected] || (productTemplates[prodSelected] = [])).push(['📄', 'Шинэ темплэйт', 'Төрөл', null]);
-    renderTemplates();
-    const cards = document.querySelectorAll('#tplList .tpl-card');
-    const last = cards[cards.length - 1];
-    if (last) {
-      last.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      const inp = last.querySelector('input.nm');
-      if (inp) { inp.focus(); inp.select(); }
-    }
-  }
-  function delTemplate(i) {
-    if (!confirmDelete()) return;
-    productTemplates[prodSelected].splice(i, 1); renderTemplates();
+  function removeToolFile(pi, ti) {
+    if (!confirmDelete('Энэ файлыг устгах уу?')) return;
+    curPhases()[pi].tools[ti].file = null; renderTemplates();
   }
   function saveTemplates() {
     const pk = prodSelected;
     save(TEMPLATE_PRODUCT_KEYS[pk], productTemplates[pk]).then(ok => { if (ok) flash('tplSaved'); });
   }
   function resetTemplates() {
-    if (!confirm('Темплэйтүүдийг анхны төлөвт буцаах уу?')) return;
+    if (!confirm('Энэ бүтээгдэхүүний үе шат/хэрэгслийг анхны төлөвт буцаах уу?')) return;
     const pk = prodSelected;
     productTemplates[pk] = tplDefault(pk);
     save(TEMPLATE_PRODUCT_KEYS[pk], productTemplates[pk]); renderTemplates();
@@ -2104,15 +2143,15 @@
   function templatesEditorHtml() {
     return '<div class="editor" style="margin-top:18px;">'
       + '<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">'
-      + '<label style="font-weight:600; margin:0;">Багц дахь темплэйтүүд</label>'
+      + '<label style="font-weight:600; margin:0;">Үе шат, хэрэгслүүд</label>'
       + '<div class="actions">'
-      + '<button class="btn btn-sm" onclick="addTemplate()">+ Темплэйт нэмэх</button>'
+      + '<button class="btn btn-sm" onclick="addPhase()">+ Үе шат нэмэх</button>'
       + '<button class="btn btn-sm" onclick="resetTemplates()">Анхны төлөвт</button>'
       + '</div></div>'
-      + '<div class="hint">Нэр, төрлийг оруулаад темплэйт бүрд файл хавсаргана (дээд тал нь 5MB). Хавсаргасан файл сайт дээр «Татах» товчоор татагдана.</div>'
+      + '<div class="hint">Үе шат бүрд хэрэгсэл (нэр, төрөл) нэмнэ. Хэрэгсэлд <b>файл хавсаргах нь заавал биш</b> — файлтай бол сайт дээр «Татах» товч гарч, доор нь «Татан авах файлууд» хэсэгт орно; файлгүй бол зүгээр жагсаалтад харагдана. Үе шатны гарчиг хоосон бол дугааргүй энгийн жагсаалт болно. (Файл ≤5MB)</div>'
       + '<div class="list" id="tplList"></div>'
       + '<div class="save-bar">'
-      + '<button class="btn btn-primary" onclick="saveTemplates()">Темплэйт хадгалах</button>'
+      + '<button class="btn btn-primary" onclick="saveTemplates()">Хэрэгсэл хадгалах</button>'
       + '<span class="saved-msg" id="tplSaved">Хадгалагдлаа</span>'
       + '</div></div>';
   }

@@ -677,6 +677,29 @@
   .pd-list li::before { content: "✓"; color: var(--accent); font-weight: 800; flex-shrink: 0; }
   .pd-list.dash li::before { content: "→"; color: var(--accent); }
 
+  /* Үе шат бүр — дугаар, гарчиг, тайлбар, хэрэгслийн тор */
+  .pd-phases { display: flex; flex-direction: column; }
+  .pd-phase { display: grid; grid-template-columns: 52px 1fr; gap: 16px; padding: 22px 0; border-bottom: 1px solid #eceef2; }
+  .pd-phase:first-child { padding-top: 4px; }
+  .pd-phase:last-child { border-bottom: none; }
+  .pd-phase-num { font-size: 30px; font-weight: 800; color: #d6dae2; line-height: 1; font-variant-numeric: tabular-nums; }
+  .pd-phase h4 { font-size: 17px; font-weight: 700; color: #111; margin-bottom: 5px; }
+  .pd-phase .pd-phase-desc { color: #666; font-size: 14px; line-height: 1.55; margin-bottom: 14px; max-width: 62ch; }
+  .pd-tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; }
+  .pd-tool { display: flex; align-items: center; gap: 9px; background: #fff; border: 1px solid #e3e5ec; border-radius: 8px; padding: 10px 12px; font-size: 13.5px; color: #222; line-height: 1.35; }
+  .pd-tool .pd-dot { width: 6px; height: 6px; border-radius: 50%; background: #aeb4c0; flex: none; }
+  .pd-tool.file { border-color: rgba(69,168,240,.5); background: rgba(69,168,240,.07); }
+  .pd-tool.file .pd-dot { background: var(--accent); }
+  .pd-tool-tag { margin-left: auto; font-size: 10px; font-weight: 700; letter-spacing: .04em; text-transform: uppercase; color: var(--accent); border: 1px solid rgba(69,168,240,.5); background: #fff; border-radius: 999px; padding: 2px 8px; white-space: nowrap; }
+  /* Татан авах файлын картууд */
+  .pd-dl-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  @media (max-width: 680px) { .pd-dl-grid { grid-template-columns: 1fr; } }
+  .pd-dl-card { border: 1px solid #e3e5ec; border-radius: 10px; padding: 18px; display: flex; flex-direction: column; gap: 8px; background: #fff; }
+  .pd-dl-card .ext { font-size: 11px; font-weight: 700; letter-spacing: .05em; text-transform: uppercase; color: var(--accent); }
+  .pd-dl-card .nm { font-size: 15px; font-weight: 700; color: #111; }
+  .pd-dl-card .ty { font-size: 12.5px; color: #777; flex: 1; }
+  .pd-dl-card .badge.dl { align-self: flex-start; margin-top: 4px; }
+
   .pd-tpl { display: flex; flex-direction: column; gap: 9px; }
   .pd-tpl .row {
     display: flex; align-items: center; gap: 13px; padding: 12px 14px;
@@ -1004,22 +1027,27 @@
     </div>
     <div class="pd-body">
 
-      <div class="pd-section">
+      <div class="pd-section" id="pdForWrap">
         <h3>Хэнд тохирох вэ</h3>
         <ul class="pd-list dash" id="pdFor"></ul>
       </div>
 
-      <div class="pd-section" id="pdTemplatesWrap" style="display:none;">
-        <h3 id="pdTemplatesTitle">Багц дахь темплэйтүүд</h3>
-        <div class="pd-tpl" id="pdTemplates"></div>
-      </div>
-
-      <div class="pd-section">
+      <div class="pd-section" id="pdIncludesWrap">
         <h3>Багтсан зүйлс</h3>
         <ul class="pd-list" id="pdIncludes"></ul>
       </div>
 
-      <div class="pd-section">
+      <div class="pd-section" id="pdPhasesWrap" style="display:none;">
+        <h3 id="pdPhasesTitle">Үе шат, хэрэгслүүд</h3>
+        <div class="pd-phases" id="pdPhases"></div>
+      </div>
+
+      <div class="pd-section" id="pdDownloadsWrap" style="display:none;">
+        <h3>Татан авах файлууд</h3>
+        <div class="pd-dl-grid" id="pdDownloads"></div>
+      </div>
+
+      <div class="pd-section" id="pdOutcomesWrap">
         <h3>Хүртэх үр дүн</h3>
         <ul class="pd-list" id="pdOutcomes"></ul>
       </div>
@@ -1864,14 +1892,40 @@
   // PRODUCTS шинэчлэгдэх бүрд дахин холбож өгнө. (Firestore-ийн 1MB баримтын
   // хязгаараас болж бүтээгдэхүүний үндсэн өгөгдлөөс салгасан.)
   const TEMPLATE_PRODUCT_KEYS = {
-    blueprints: 'kpihub_templates',
-    benchmarking: 'kpihub_templates_benchmarking'
+    blueprints:   'kpihub_templates',
+    diagnostics:  'kpihub_templates_diagnostics',
+    guided:       'kpihub_templates_guided',
+    benchmarking: 'kpihub_templates_benchmarking',
+    workshops:    'kpihub_templates_workshops',
+    advisory:     'kpihub_templates_advisory'
   };
+  // Бүтээгдэхүүний хэрэгслүүд нь ҮЕ ШАТ-аар бүлэглэгдэнэ:
+  //   [{ title, desc, tools:[{ name, type, file }] }]
+  // Хуучин хавтгай хэлбэр ([[icon,name,type,file],...]) байвал нэг үе шат руу хөрвүүлнэ.
+  function normPhases(raw) {
+    if (!Array.isArray(raw)) return [];
+    if (raw.length && Array.isArray(raw[0])) {
+      return [{ title: '', desc: '', tools: raw.map(function (t) {
+        return { name: t[1] || '', type: t[2] || '', file: t[3] || null };
+      }) }];
+    }
+    return raw.map(function (ph) {
+      ph = ph || {};
+      return {
+        title: ph.title || '',
+        desc: ph.desc || '',
+        tools: Array.isArray(ph.tools) ? ph.tools.map(function (t) {
+          t = t || {};
+          return { name: t.name || '', type: t.type || '', file: t.file || null };
+        }) : []
+      };
+    });
+  }
   function attachTemplates() {
     Object.keys(TEMPLATE_PRODUCT_KEYS).forEach(function (pk) {
       try {
         const arr = JSON.parse(localStorage.getItem(TEMPLATE_PRODUCT_KEYS[pk]) || 'null');
-        if (Array.isArray(arr) && PRODUCTS[pk]) PRODUCTS[pk].templates = arr;
+        if (Array.isArray(arr) && PRODUCTS[pk]) PRODUCTS[pk].phases = normPhases(arr);
       } catch (e) {}
     });
   }
@@ -1936,40 +1990,85 @@
     document.getElementById(id).innerHTML = items.map(t => '<li>' + esc(t) + '</li>').join('');
   }
   let currentProduct = null;
+  function toggleSection(id, show) {
+    const el = document.getElementById(id);
+    if (el) el.style.display = show ? '' : 'none';
+  }
+  function fileExt(name) {
+    const m = /\.([a-z0-9]+)$/i.exec(String(name || ''));
+    return m ? m[1] : '';
+  }
   function openProduct(key) {
     const p = PRODUCTS[key];
     if (!p) return;
     currentProduct = key;
-    document.getElementById('pdTag').textContent = p.tag;
-    document.getElementById('pdTitle').textContent = p.title;
-    document.getElementById('pdLead').textContent = p.lead;
-    fillList('pdFor', p.forWho);
-    const twrap = document.getElementById('pdTemplatesWrap');
-    if (p.templates && p.templates.length) {
-      document.getElementById('pdTemplatesTitle').textContent = 'Багц дахь темплэйтүүд (' + p.templates.length + ')';
-      document.getElementById('pdTemplates').innerHTML = p.templates.map(t => {
-        const file = t[3];
-        let right;
-        if (file && file.data) {
-          right = hasAccess()
-            ? '<a class="badge dl" href="' + safeUrl(file.data) + '" download="' + esc(file.name || 'template') + '" onclick="event.stopPropagation()">⬇ Татах</a>'
-            : '<a class="badge dl locked" href="#" onclick="event.preventDefault(); event.stopPropagation(); openPayment(event)">🔒 Татах</a>';
-        } else {
-          right = '<span class="badge">Багцад багтсан</span>';
-        }
-        return '<div class="row"><span class="ic">' + esc(t[0]) + '</span>'
-          + '<div><div class="nm">' + esc(t[1]) + '</div><div class="ty">' + esc(t[2]) + (file && file.name ? ' · ' + esc(file.name) : '') + '</div></div>'
-          + right + '</div>';
-      }).join('');
-      twrap.style.display = '';
-    } else {
-      twrap.style.display = 'none';
-    }
-    fillList('pdIncludes', p.includes);
-    fillList('pdOutcomes', p.outcomes);
+    document.getElementById('pdTag').textContent = p.tag || '';
+    document.getElementById('pdTitle').textContent = p.title || '';
+    document.getElementById('pdLead').textContent = p.lead || '';
+    fillList('pdFor', p.forWho || []);
+    fillList('pdIncludes', p.includes || []);
+    fillList('pdOutcomes', p.outcomes || []);
+    toggleSection('pdForWrap', (p.forWho || []).length);
+    toggleSection('pdIncludesWrap', (p.includes || []).length);
+    toggleSection('pdOutcomesWrap', (p.outcomes || []).length);
+    renderPhases(p);
     pdOverlay.scrollTop = 0; window.scrollTo(0, 0);
     pdOverlay.classList.add('open');
     document.body.style.overflow = 'hidden';
+  }
+  // Үе шат + хэрэгсэл + доор нь татан авах файлын картуудыг зурна
+  function renderPhases(p) {
+    const phases = (p.phases || []).filter(function (ph) {
+      return (ph.tools && ph.tools.length) || (ph.title && ph.title.trim()) || (ph.desc && ph.desc.trim());
+    });
+    const files = [];
+    (p.phases || []).forEach(function (ph) {
+      (ph.tools || []).forEach(function (t) { if (t.file && t.file.data) files.push(t); });
+    });
+    // ---- Үе шатууд ----
+    const wrap = document.getElementById('pdPhasesWrap');
+    if (phases.length) {
+      // Ганц гарчиггүй үе шат бол дугаар харуулахгүй (энгийн хэрэгслийн жагсаалт шиг)
+      const single = phases.length === 1 && !phases[0].title.trim();
+      document.getElementById('pdPhasesTitle').textContent = single ? 'Багц дахь хэрэгслүүд' : 'Үе шат, хэрэгслүүд';
+      document.getElementById('pdPhases').innerHTML = phases.map(function (ph, i) {
+        const tools = (ph.tools || []).map(function (t) {
+          const hasFile = !!(t.file && t.file.data);
+          const tag = hasFile ? '<span class="pd-tool-tag">' + esc((fileExt(t.file.name) || t.type || 'файл')) + '</span>' : '';
+          return '<div class="pd-tool' + (hasFile ? ' file' : '') + '"><span class="pd-dot"></span>'
+            + '<span>' + esc(t.name || '') + '</span>' + tag + '</div>';
+        }).join('');
+        const grid = tools ? '<div class="pd-tool-grid">' + tools + '</div>' : '';
+        const num = single ? '' : '<div class="pd-phase-num">' + ('0' + (i + 1)).slice(-2) + '</div>';
+        const head = (ph.title && ph.title.trim())
+          ? '<h4>' + esc(ph.title) + '</h4>' + (ph.desc ? '<div class="pd-phase-desc">' + esc(ph.desc) + '</div>' : '')
+          : '';
+        return '<div class="pd-phase"' + (single ? ' style="grid-template-columns:1fr;"' : '') + '>'
+          + num + '<div>' + head + grid + '</div></div>';
+      }).join('');
+      wrap.style.display = '';
+    } else {
+      wrap.style.display = 'none';
+    }
+    // ---- Татан авах файлууд ----
+    const dwrap = document.getElementById('pdDownloadsWrap');
+    if (files.length) {
+      const paid = hasAccess();
+      document.getElementById('pdDownloads').innerHTML = files.map(function (t) {
+        const ext = fileExt(t.file.name) || t.type || 'файл';
+        const dl = paid
+          ? '<a class="badge dl" href="' + safeUrl(t.file.data) + '" download="' + esc(t.file.name || 'file') + '" onclick="event.stopPropagation()">⬇ Татах</a>'
+          : '<a class="badge dl locked" href="#" onclick="event.preventDefault(); event.stopPropagation(); openPayment(event)">🔒 Татах</a>';
+        return '<div class="pd-dl-card">'
+          + '<span class="ext">' + esc(ext) + '</span>'
+          + '<div class="nm">' + esc(t.name || t.file.name || 'Файл') + '</div>'
+          + (t.type ? '<div class="ty">' + esc(t.type) + '</div>' : '<div class="ty"></div>')
+          + dl + '</div>';
+      }).join('');
+      dwrap.style.display = '';
+    } else {
+      dwrap.style.display = 'none';
+    }
   }
   function closeProduct() { pdOverlay.classList.remove('open'); document.body.style.overflow = ''; }
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeProduct(); });
@@ -2766,7 +2865,8 @@
 
   KPICloud.ready.then(applyCloudContent);
   // Админаас засвар хийвэл нийтийн сайтад бодит цагт тусгагдана
-  ['kpihub_articles','kpihub_templates','kpihub_templates_benchmarking','kpihub_quote_questions','kpihub_contact','kpihub_why','kpihub_availability']
+  ['kpihub_articles','kpihub_quote_questions','kpihub_contact','kpihub_why','kpihub_availability']
+    .concat(Object.keys(TEMPLATE_PRODUCT_KEYS).map(k => TEMPLATE_PRODUCT_KEYS[k]))
     .forEach(k => KPICloud.watch(k, applyCloudContent));
   // Захиалагдсан цаг өөрчлөгдвөл захиалгын цонхыг шинэчилнэ
   KPICloud.watchTaken(applyCloudContent);
