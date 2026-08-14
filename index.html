@@ -1551,7 +1551,9 @@
     document.getElementById('arAuthorAvatar').style.cursor = author ? 'pointer' : 'default';
     const fb = document.getElementById('arFollowBtn');
     const done = followedAlready();
-    fb.textContent = done ? '✓ Following' : '+ Follow';
+    // «Дагах» ба доорх «Захиалах» нэг л зүйл — и-мэйлээр шинэ контент авах —
+    // тул ижил үг, ижил төлөвтэй байлгав.
+    fb.textContent = done ? '✓ Захиалсан' : '+ Захиалах';
     fb.classList.toggle('done', done);
   }
 
@@ -2681,6 +2683,8 @@
         try { localStorage.setItem(SUBS_LOCAL, JSON.stringify(localSubscribed().concat(email))); } catch (err) {}
         input.value = '';
         show('Баярлалаа! Шинэ контентыг ' + email + ' хаягаар илгээх болно.', 'ok');
+        // «Дагах»/«Захиалах» нэг төлөвтэй — уншигч нээлттэй бол товчийг шинэчилнэ
+        if (arOverlay && arOverlay.classList.contains('open')) renderByline();
       })
       .catch(() => show('Илгээхэд алдаа гарлаа. Дахин оролдоно уу.', 'err'))
       .then(() => { btn.disabled = false; });
