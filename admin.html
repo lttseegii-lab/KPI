@@ -219,7 +219,7 @@
       <div class="tab" data-tab="schedule" onclick="switchTab('schedule')">Цаг товлолт</div>
       <div class="tab" data-tab="users" onclick="switchTab('users')">Хэрэглэгч</div>
       <div class="tab" data-tab="subs" onclick="switchTab('subs')">Захиалагчид</div>
-      <div class="tab" data-tab="authors" onclick="switchTab('authors')">Зохиогчид</div>
+      <div class="tab" data-tab="authors" onclick="switchTab('authors')">Нийтлэл бичсэн</div>
       <div class="tab" data-tab="register" onclick="switchTab('register')">Бүртгэлийн текст</div>
       <div class="tab" data-tab="admins" onclick="switchTab('admins')">Админууд</div>
       <div class="tab" data-tab="contact" onclick="switchTab('contact')">Холбоо барих</div>
@@ -312,7 +312,7 @@
           <div class="field"><label>Огноо</label><input type="date" id="e-date"></div>
         </div>
         <div class="field"><label>Унших хугацаа</label><input id="e-read" placeholder="5 мин"></div>
-        <div class="field"><label>Зохиогч (By ...)</label><input id="e-author" placeholder="Жишээ: Бат Болд"></div>
+        <div class="field"><label>Нийтлэл бичсэн (By ...)</label><input id="e-author" placeholder="Жишээ: Бат Болд"></div>
         <div class="field"><label>Гарчиг</label><input id="e-title" placeholder="Нийтлэлийн гарчиг"></div>
         <div class="field">
           <label>Нүүр зураг</label>
@@ -520,14 +520,14 @@
     <!-- ===== Authors panel ===== -->
     <section id="tab-authors" class="hidden">
       <div class="panel-head">
-        <h2>Зохиогчид</h2>
+        <h2>Нийтлэл бичсэн хүмүүс</h2>
         <div class="actions">
-          <button class="btn btn-sm" onclick="addAuthor()">+ Зохиогч нэмэх</button>
+          <button class="btn btn-sm" onclick="addAuthor()">+ Хүн нэмэх</button>
           <button class="btn btn-primary" onclick="saveAuthors()">Хадгалах</button>
           <span class="saved-msg" id="authSaved">✓ Хадгалагдлаа</span>
         </div>
       </div>
-      <div class="hint">Нийтлэлийн «Зохиогч (By ...)» талбарт бичсэн НЭРТЭЙ яг таарсан бүртгэл эндээс олдвол уншигчид зураг нь харагдаж, дарахад дэлгэрэнгүй гарна. Төслүүдийг мөр тус бүрд нэгээр бичнэ.</div>
+      <div class="hint">Нийтлэлийн «Нийтлэл бичсэн (By ...)» талбарт бичсэн НЭРТЭЙ яг таарсан бүртгэл эндээс олдвол уншигчид зураг нь харагдаж, дарахад дэлгэрэнгүй гарна. Төслүүдийг мөр тус бүрд нэгээр бичнэ.</div>
       <div id="authList"></div>
     </section>
 
@@ -1800,7 +1800,7 @@
         + '<div>' + photo + '</div>'
         + '<div style="flex:1; min-width:0;">'
         + '<div class="row2">'
-        + '<div class="field" style="margin-bottom:10px;"><label>Нэр (нийтлэлийн «Зохиогч» талбартай яг таарна)</label><input value="' + esc(a.name || '') + '" oninput="authors[' + i + '].name = this.value"></div>'
+        + '<div class="field" style="margin-bottom:10px;"><label>Нэр (нийтлэлийн «Нийтлэл бичсэн» талбартай яг таарна)</label><input value="' + esc(a.name || '') + '" oninput="authors[' + i + '].name = this.value"></div>'
         + '<div class="field" style="margin-bottom:10px;"><label>Албан тушаал</label><input value="' + esc(a.role || '') + '" oninput="authors[' + i + '].role = this.value"></div>'
         + '</div>'
         + '<div class="tpl-file" style="border-top:none; padding-top:0;">'
@@ -1812,7 +1812,7 @@
         + '<div class="field"><label>Ажилласан төслүүд — мөр тус бүр нэг төсөл</label><textarea rows="4" oninput="authors[' + i + '].projects = linesToList(this.value)">' + esc((a.projects || []).join('\n')) + '</textarea></div>'
         + '<div class="save-bar"><button class="btn btn-danger btn-sm" onclick="delAuthor(' + i + ')">Устгах</button></div>'
         + '</div>';
-    }).join('') || '<div class="empty">Зохиогч алга. «+ Зохиогч нэмэх» дарна уу.</div>';
+    }).join('') || '<div class="empty">Бүртгэл алга. «+ Хүн нэмэх» дарна уу.</div>';
   }
   function addAuthor() {
     authors.push({ name: '', role: '', bio: '', photo: '', projects: [] });
