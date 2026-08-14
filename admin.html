@@ -2090,16 +2090,28 @@
 
   let editImage = '';
   let editIcon = '';
+  // Хадгалсан огноог <input type="date">-ийн утга руу буцаана.
+  // Одоогийн бичлэгүүд «2026.08.06», хуучид нь «2026 оны 8-р сар» хэлбэртэй
+  // байж болох тул хоёуланг нь таньна.
   function monthDateValue(label) {
-    const m = String(label || '').match(/(\d{4})\s*оны\s*(\d{1,2})-р\s*сар/);
-    if (!m) return '';
-    return m[1] + '-' + String(m[2]).padStart(2, '0') + '-01';
+    const v = String(label || '').trim();
+    let m = v.match(/^(\d{4})[.\-\/](\d{1,2})(?:[.\-\/](\d{1,2}))?$/);
+    if (m) return m[1] + '-' + String(m[2]).padStart(2, '0') + '-' + String(m[3] || '01').padStart(2, '0');
+    m = v.match(/(\d{4})\s*оны\s*(\d{1,2})-р\s*сар/);
+    if (m) return m[1] + '-' + String(m[2]).padStart(2, '0') + '-01';
+    return '';
   }
   function formatArticleDate(value) {
     if (!value) return '';
-    const parts = value.split('-').map(Number);
-    if (parts.length < 2 || !parts[0] || !parts[1]) return value;
-    return parts[0] + ' оны ' + parts[1] + '-р сар';
+    const p = String(value).split('-');
+    if (p.length < 3) return value;
+    return p[0] + '.' + p[1] + '.' + p[2];
+  }
+  // Огноо хоосон үлдээвэл нийтлэл огноогүй хадгалагдаж, уншигч дээр хоосон
+  // харагддаг байсан тул өнөөдрийн огноогоор нөхнө.
+  function todayDateValue() {
+    const d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
   function fillEditor(a) {
     editIcon = a.icon || '';
@@ -2183,7 +2195,7 @@
       id: editIndex >= 0 ? articles[editIndex].id : 'x' + Date.now(),
       icon: editIcon || '📄',
       cat: document.getElementById('e-cat').value.trim() || 'Бусад',
-      date: formatArticleDate(document.getElementById('e-date').value.trim()),
+      date: formatArticleDate(document.getElementById('e-date').value.trim() || todayDateValue()),
       read: document.getElementById('e-read').value.trim() || '5 мин',
       author: document.getElementById('e-author').value.trim(),
       image: editImage || '',

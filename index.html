@@ -1000,7 +1000,7 @@
         <span>By <b id="arAuthorName"></b></span>
         <button class="rb-follow" id="arFollowBtn" onclick="openFollow()">+ Follow</button>
       </div>
-      <div class="rb-date"><span id="arDate"></span> · <span id="arRead"></span></div>
+      <div class="rb-date"><span id="arDate"></span><span id="arDot"> · </span><span id="arRead"></span></div>
       <div class="rb-acts">
         <button id="arShareBtn" onclick="event.stopPropagation(); openReaderShare(this)" aria-label="Хуваалцах" title="Хуваалцах">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 15V3"/><path d="M7.5 7.5 12 3l4.5 4.5"/></svg>
@@ -1246,7 +1246,7 @@
         + '<div class="byline">By <a onclick="event.stopPropagation()">' + author + '</a></div>'
         + '<p>' + a.excerpt + '</p>'
         + '<div class="meta-foot">'
-        + '<span class="info">' + a.date + ' | ' + (a.read || '') + '</span>'
+        + '<span class="info">' + [a.date, a.read].filter(Boolean).join(' | ') + '</span>'
         + '<span class="acts">'
         + '<button class="' + (saved.has(a.id) ? 'saved' : '') + '" title="Хадгалах" onclick="event.stopPropagation(); toggleSaveArticle(\'' + a.id + '\', this)">' + BM + '</button>'
         + '<button title="Хуваалцах" onclick="event.stopPropagation(); shareArticle(\'' + a.id + '\', this)">' + SH + '</button>'
@@ -1351,8 +1351,10 @@
     if (!a) return;
     currentArticleId = id;
     document.getElementById('arCat').textContent = a.cat;
-    document.getElementById('arDate').textContent = a.date;
-    document.getElementById('arRead').textContent = a.read;
+    document.getElementById('arDate').textContent = a.date || '';
+    document.getElementById('arRead').textContent = a.read || '';
+    // Огноо эсвэл унших хугацааны аль нэг нь дутуу бол тусгаарлагч цэг илүүц
+    document.getElementById('arDot').style.display = (a.date && a.read) ? '' : 'none';
     document.getElementById('arTitle').textContent = a.title;
     renderByline();
     const cover = document.getElementById('arCover');
