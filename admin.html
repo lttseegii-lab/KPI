@@ -105,6 +105,16 @@
   .fmt-table td:first-child { width:46%; padding-right:14px; }
   .fmt-help code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; background:var(--card); border:1px solid var(--line); border-radius:5px; padding:2px 6px; color:var(--text); }
   .fmt-tip { margin-top:12px; padding-top:10px; border-top:1px dashed var(--line); font-size:12px; }
+  /* Панел доторх дэд цэс (бүтээгдэхүүн сонгох) */
+  .sub-tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:4px; padding-bottom:16px; border-bottom:1px solid var(--line); }
+  .sub-tab {
+    padding:8px 14px; border-radius:999px; font-size:13.5px; font-weight:600; cursor:pointer;
+    background:var(--card); border:1px solid var(--line); color:var(--muted);
+    transition:color .15s, border-color .15s, background .15s; max-width:260px;
+    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
+  }
+  .sub-tab:hover { color:var(--text); border-color:var(--accent); }
+  .sub-tab.active { background:var(--accent); border-color:var(--accent); color:#fff; }
   .empty { color:var(--muted); text-align:center; padding:30px; border:1px dashed var(--line); border-radius:12px; }
   .book-label { font-size:13px; font-weight:600; color:var(--muted); }
   .av-toggles { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:18px; max-width:420px; }
@@ -300,7 +310,8 @@
           <span class="saved-msg" id="prodSaved">✓ Хадгалагдлаа</span>
         </div>
       </div>
-      <div class="hint">Нүүр хуудасны «Бүтээгдэхүүн, үйлчилгээ» хэсгийн карт болон дэлгэрэнгүй цонхны агуулга. Жагсаалтын мөр бүрийг тусад нь мөрөнд бичнэ.</div>
+      <div class="hint">Нүүр хуудасны «Бүтээгдэхүүн, үйлчилгээ» хэсгийн карт болон дэлгэрэнгүй цонхны агуулга. Доорх цэснээс бүтээгдэхүүнээ сонгож тохируулна. Жагсаалтын мөр бүрийг тусад нь мөрөнд бичнэ.</div>
+      <div class="sub-tabs" id="prodTabs"></div>
       <div id="prodList"></div>
     </section>
 
@@ -2032,31 +2043,56 @@
   function linesToList(v) {
     return String(v || '').split('\n').map(x => x.trim()).filter(Boolean);
   }
+  // Аль бүтээгдэхүүнийг засварлаж байгаа нь. Түлхүүр нь тогтвортой (blueprints,
+  // diagnostics...) тул ГАРЧГИЙГ нь өөрчилсөн ч дотоод холбоос эвдрэхгүй.
+  let prodSelected = '';
+  function selectProduct(k) { prodSelected = k; renderProductsAdmin(); }
+  // Гарчиг бичиж байхад дэд цэсний шошго шууд дагаж өөрчлөгдөнө
+  function onProductTitle(k, value) {
+    products[k].title = value;
+    const tab = document.querySelector('.sub-tab[data-key="' + k + '"]');
+    if (tab) tab.textContent = value.trim() || k;
+  }
   function renderProductsAdmin() {
+    const tabs = document.getElementById('prodTabs');
     const el = document.getElementById('prodList');
-    if (!el) return;
-    el.innerHTML = Object.keys(products).map(k => {
-      const p = products[k] || {};
-      const lists = PROD_LISTS.map(f =>
-        '<div class="field"><label>' + f[1] + ' — мөр тус бүр нэг зүйл</label>'
-        + '<textarea rows="4" oninput="products[\'' + k + '\'].' + f[0] + ' = linesToList(this.value)">'
-        + esc((p[f[0]] || []).join('\n')) + '</textarea></div>'
-      ).join('');
-      return '<div class="editor" style="margin-top:16px;">'
-        + '<h3>' + esc(p.title || k) + ' <span style="font-weight:400; color:var(--muted); font-size:12.5px;">' + esc(k) + '</span></h3>'
-        + '<div class="row2">'
-        + '<div class="field"><label>Карт дээрх шошго</label><input value="' + esc(p.cardTag || '') + '" oninput="products[\'' + k + '\'].cardTag = this.value"></div>'
-        + '<div class="field"><label>Дэлгэрэнгүй цонхны шошго</label><input value="' + esc(p.tag || '') + '" oninput="products[\'' + k + '\'].tag = this.value"></div>'
-        + '</div>'
-        + '<div class="field"><label>Гарчиг</label><input value="' + esc(p.title || '') + '" oninput="products[\'' + k + '\'].title = this.value"></div>'
-        + '<div class="field"><label>Карт дээрх товч тайлбар</label><textarea rows="2" oninput="products[\'' + k + '\'].excerpt = this.value">' + esc(p.excerpt || '') + '</textarea></div>'
-        + '<div class="field"><label>Дэлгэрэнгүй тайлбар</label><textarea rows="3" oninput="products[\'' + k + '\'].lead = this.value">' + esc(p.lead || '') + '</textarea></div>'
-        + lists
-        + '<label style="display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--text); cursor:pointer; margin:0;">'
-        + '<input type="checkbox" style="width:auto;" ' + (p.best ? 'checked' : '')
-        + ' onchange="products[\'' + k + '\'].best = this.checked">«Хамгийн үнэ цэнэтэй» тэмдэг харуулах</label>'
-        + '</div>';
-    }).join('') || '<div class="empty">Бүтээгдэхүүн алга.</div>';
+    if (!tabs || !el) return;
+    const keys = Object.keys(products);
+    if (!keys.length) {
+      tabs.innerHTML = '';
+      el.innerHTML = '<div class="empty">Бүтээгдэхүүн алга.</div>';
+      return;
+    }
+    if (!products[prodSelected]) prodSelected = keys[0];
+
+    tabs.innerHTML = keys.map(k =>
+      '<div class="sub-tab' + (k === prodSelected ? ' active' : '') + '" data-key="' + esc(k) + '"'
+      + ' title="' + esc(products[k].title || k) + '"'
+      + ' onclick="selectProduct(\'' + esc(k) + '\')">' + esc(products[k].title || k) + '</div>'
+    ).join('');
+
+    const k = prodSelected;
+    const p = products[k] || {};
+    const lists = PROD_LISTS.map(f =>
+      '<div class="field"><label>' + f[1] + ' — мөр тус бүр нэг зүйл</label>'
+      + '<textarea rows="4" oninput="products[\'' + k + '\'].' + f[0] + ' = linesToList(this.value)">'
+      + esc((p[f[0]] || []).join('\n')) + '</textarea></div>'
+    ).join('');
+    el.innerHTML = '<div class="editor" style="margin-top:16px;">'
+      + '<div class="field"><label>Гарчиг — карт болон дэлгэрэнгүй цонх хоёуланд харагдана</label>'
+      + '<input value="' + esc(p.title || '') + '" oninput="onProductTitle(\'' + k + '\', this.value)"></div>'
+      + '<div class="row2">'
+      + '<div class="field"><label>Карт дээрх шошго</label><input value="' + esc(p.cardTag || '') + '" oninput="products[\'' + k + '\'].cardTag = this.value"></div>'
+      + '<div class="field"><label>Дэлгэрэнгүй цонхны шошго</label><input value="' + esc(p.tag || '') + '" oninput="products[\'' + k + '\'].tag = this.value"></div>'
+      + '</div>'
+      + '<div class="field"><label>Карт дээрх товч тайлбар</label><textarea rows="2" oninput="products[\'' + k + '\'].excerpt = this.value">' + esc(p.excerpt || '') + '</textarea></div>'
+      + '<div class="field"><label>Дэлгэрэнгүй тайлбар</label><textarea rows="3" oninput="products[\'' + k + '\'].lead = this.value">' + esc(p.lead || '') + '</textarea></div>'
+      + lists
+      + '<label style="display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--text); cursor:pointer; margin:0;">'
+      + '<input type="checkbox" style="width:auto;" ' + (p.best ? 'checked' : '')
+      + ' onchange="products[\'' + k + '\'].best = this.checked">«Хамгийн үнэ цэнэтэй» тэмдэг харуулах</label>'
+      + '<div class="code-note" style="margin-top:16px;">Дотоод түлхүүр: <b>' + esc(k) + '</b> — гарчгийг өөрчилсөн ч энэ хэвээр үлдэх тул үнийн санал, холбоосууд эвдрэхгүй.</div>'
+      + '</div>';
   }
   function saveProducts() {
     // Темплэйтийн жагсаалт нь kpihub_templates түлхүүрээр тусад нь удирдагддаг
