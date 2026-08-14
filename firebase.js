@@ -157,6 +157,38 @@
   function dropLocalSub(lid) { writeLocalSubs(localSubs().filter(function (s) { return s._lid !== lid; })); }
   function makeLid() { return Date.now() + "-" + Math.floor(Math.random() * 1e9); }
 
+  // ============ Бүртгэлийн давхардлын индекс (reg_index/{хэш}) ============
+  // Зочид submissions-ыг УНШИЖ ЧАДАХГҮЙ (хувийн мэдээлэл) тул и-мэйл/утас
+  // давхардсан эсэхийг шалгах боломжгүй. Иймд зөвхөн SHA-256 хэш агуулсан
+  // тусдаа коллекц үүсгэв: нэг баримтыг НЭРЭЭР нь шалгаж болох ч жагсаах
+  // (list) эрхгүй тул бүртгэлтэй хаягуудыг цуглуулж авах боломжгүй.
+  function regHash(value) {
+    var s = String(value || '').trim().toLowerCase();
+    if (!s || !window.crypto || !crypto.subtle) return Promise.resolve('');
+    return crypto.subtle
+      .digest('SHA-256', new TextEncoder().encode(s))
+      .then(function (buf) {
+        return Array.prototype.map
+          .call(new Uint8Array(buf), function (b) { return ('0' + b.toString(16)).slice(-2); })
+          .join('');
+      })
+      .catch(function () { return ''; });
+  }
+  // Аль нэг нь бүртгэлтэй эсэхийг буцаана. Сүлжээ/эрхийн алдаа гарвал
+  // бүртгэлийг ХААХГҮЙ (false) — хэрэглэгчийг гацаахаас сэргийлнэ.
+  function regIndexTaken(hash) {
+    if (!online || !hash) return Promise.resolve(false);
+    return db.collection('reg_index').doc(hash).get()
+      .then(function (snap) { return snap.exists; })
+      .catch(function () { return false; });
+  }
+  function regIndexAdd(hash, kind) {
+    if (!online || !hash) return Promise.resolve();
+    return db.collection('reg_index').doc(hash)
+      .set({ kind: kind, at: new Date().toISOString() })
+      .catch(function () {});
+  }
+
   // Илгээлтийг ЭХЛЭЭД локал буферт хадгална (алдагдахгүй), дараа нь Firestore-д.
   // Амжилттай бол буфероос хасна. Офлайн/алдаа гарвал буферт үлдэж, дараагийн
   // ачаалалд flushLocalSubs() автоматаар дахин илгээнэ. Ингэснээр сүлжээ тасарсан
@@ -365,6 +397,8 @@
     // submissions
     addSubmission: addSubmission, watchSubmissions: watchSubmissions, deleteSubmission: deleteSubmission,
     addCrmActivity: addCrmActivity,
+    // бүртгэлийн давхардал
+    regHash: regHash, regIndexTaken: regIndexTaken, regIndexAdd: regIndexAdd,
     // taken slots
     isTaken: isTaken, takenList: takenList, addTakenSlot: addTakenSlot, removeTakenSlot: removeTakenSlot, watchTaken: watchTaken,
     // auth

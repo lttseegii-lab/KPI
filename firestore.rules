@@ -89,6 +89,20 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    // Бүртгэлийн давхардлын индекс — и-мэйл/утасны SHA-256 хэш л агуулна.
+    //   • get: тодорхой ХЭШИЙГ мэдэж байж л шалгана (жагсаах эрхгүй тул
+    //     бүртгэлтэй хаягуудыг цуглуулж авах боломжгүй).
+    //   • create: зөвхөн kind + at, хэш нь 64 тэмдэгт. Байгаа баримтыг
+    //     дарж бичих боломжгүй (update/delete зөвхөн админд).
+    match /reg_index/{hash} {
+      allow get: if true;
+      allow list: if isAdmin();
+      allow create: if hash.size() == 64
+        && request.resource.data.keys().hasOnly(['kind','at'])
+        && request.resource.data.kind in ['email','phone'];
+      allow update, delete: if isAdmin();
+    }
+
     // Захиалагдсан цаг (PII биш) — нийтэд харагдах, зөвхөн энэ нэг баримт.
     // Зөвхөн 'slots' массивыг зөвшөөрч, хэмжээг хязгаарлана.
     match /public/taken_slots {

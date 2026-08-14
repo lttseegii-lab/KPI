@@ -789,8 +789,8 @@
         </div>
         <div class="field" id="f-phone">
           <label>Утасны дугаар</label>
-          <input type="tel" id="in-phone" inputmode="tel" placeholder="8800-1234">
-          <div class="field-err">Утасны дугаараа оруулна уу.</div>
+          <input type="tel" id="in-phone" inputmode="tel" placeholder="8800-1234 (8–15 орон)">
+          <div class="field-err">Утасны дугаар 8–15 оронтой байх ёстой.</div>
         </div>
         <div class="field" id="f-email">
           <label>Мэйл хаяг</label>
@@ -807,7 +807,7 @@
           <input type="text" id="in-role" placeholder="Жишээ: Гүйцэтгэх захирал">
           <div class="field-err">Албан тушаалаа оруулна уу.</div>
         </div>
-        <button class="btn btn-primary" onclick="submitRegistration()">Бүртгэл үүсгэх</button>
+        <button class="btn btn-primary" id="regSubmitBtn" onclick="submitRegistration()">Бүртгэл үүсгэх</button>
       </div>
 
       <!-- Profile (registered users) -->
@@ -1104,7 +1104,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
-<script src="firebase.js?v=7"></script>
+<script src="firebase.js?v=8"></script>
 
 <script>
   // ---------- Insights / articles ----------
@@ -2338,24 +2338,64 @@
   function setInvalid(id, bad) { document.getElementById(id).classList.toggle('invalid', bad); }
 
   // ---------- Registration (no payment) ----------
-  function submitRegistration() {
+  // Талбарын алдааны бичгийг тухайн тохиолдолд тааруулж солино
+  function setFieldErr(id, text) {
+    const el = document.querySelector('#' + id + ' .field-err');
+    if (el && text) el.textContent = text;
+  }
+  const phoneDigits = v => String(v || '').replace(/\D/g, '');
+
+  async function submitRegistration() {
+    const btn = document.getElementById('regSubmitBtn');
     const name = document.getElementById('in-name').value.trim();
     const phone = document.getElementById('in-phone').value.trim();
-    const email = document.getElementById('in-email').value.trim();
+    const email = document.getElementById('in-email').value.trim().toLowerCase();
     const org = document.getElementById('in-org').value.trim();
     const role = document.getElementById('in-role').value.trim();
+
     const okEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    const digits = phoneDigits(phone);
+    const okPhone = digits.length >= 8 && digits.length <= 15;
+
+    setFieldErr('f-phone', !phone ? 'Утасны дугаараа оруулна уу.' : 'Утасны дугаар 8–15 оронтой байх ёстой.');
+    setFieldErr('f-email', 'Зөв мэйл хаяг оруулна уу.');
     setInvalid('f-name', !name);
-    setInvalid('f-phone', !phone);
+    setInvalid('f-phone', !okPhone);
     setInvalid('f-email', !okEmail);
     setInvalid('f-org', !org);
     setInvalid('f-role', !role);
-    if (!name || !phone || !okEmail || !org || !role) return;
+    if (!name || !okPhone || !okEmail || !org || !role) return;
+
+    // Давхардал шалгах — и-мэйл, утас тус бүр НЭГ л удаа бүртгүүлнэ.
+    // Сүлжээ/эрхийн алдаа гарвал шалгалт false буцаадаг тул хэрэглэгч гацахгүй.
+    btn.disabled = true;
+    const prevLabel = btn.textContent;
+    btn.textContent = 'Шалгаж байна…';
+    let emailHash = '', phoneHash = '';
+    try {
+      [emailHash, phoneHash] = await Promise.all([
+        KPICloud.regHash('email:' + email),
+        KPICloud.regHash('phone:' + digits)
+      ]);
+      const [emailTaken, phoneTaken] = await Promise.all([
+        KPICloud.regIndexTaken(emailHash),
+        KPICloud.regIndexTaken(phoneHash)
+      ]);
+      if (emailTaken || phoneTaken) {
+        if (emailTaken) { setFieldErr('f-email', 'Энэ и-мэйл хаягаар аль хэдийн бүртгүүлсэн байна.'); setInvalid('f-email', true); }
+        if (phoneTaken) { setFieldErr('f-phone', 'Энэ утасны дугаараар аль хэдийн бүртгүүлсэн байна.'); setInvalid('f-phone', true); }
+        btn.disabled = false; btn.textContent = prevLabel;
+        return;
+      }
+    } catch (e) { /* шалгаж чадсангүй — бүртгэлийг үргэлжлүүлнэ */ }
+    btn.disabled = false; btn.textContent = prevLabel;
 
     // Бүртгэлийн мэдээллийг Firestore-д хадгална (админд бүх төхөөрөмжөөс харагдана).
     // ЧУХАЛ: бүртгэл нь темплэйт татах эрх ОЛГОХГҮЙ — grantAccess() дуудахгүй.
     const me = { name, phone, email, org, role, at: new Date().toISOString() };
     KPICloud.addSubmission('user', me);
+    KPICloud.regIndexAdd(emailHash, 'email');
+    KPICloud.regIndexAdd(phoneHash, 'phone');
     try {
       localStorage.setItem('kpihub_registered', '1');       // нэвтрэлт нь тухайн browser-т
       localStorage.setItem('kpihub_current_user', JSON.stringify(me)); // энэ browser-ийн хэрэглэгч
