@@ -2,11 +2,13 @@
    Клиент QR харуулж байх хугацаандаа энэ эцсийн цэгийг тогтмол асууна. */
 "use strict";
 
-const { qpayFetch, sendJson, sendError } = require("./_lib.js");
+const { qpayFetch, sendJson, sendError, guard } = require("./_lib.js");
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 module.exports = async (req, res) => {
+  // Клиент 4 секунд тутам асуудаг тул хязгаар өгөөмөр
+  if (guard(req, res, 90, 60 * 1000)) return;
   try {
     const url = new URL(req.url, "http://x");
     const invoiceId = url.searchParams.get("invoice_id") || "";

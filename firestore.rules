@@ -50,11 +50,21 @@ service cloud.firestore {
              'kind','at','name','email','phone','org',
              'product','productKey','answers','date','time','paid','role'
            ])
-        && (!('answers' in request.resource.data) || request.resource.data.answers.size() <= 40);
-      // QPay худалдан авалтын бүртгэл — админд харагдах жагсаалт.
-      // АНХААР: жинхэнэ эх сурвалж нь QPay merchant portal; энд зочин бичдэг
-      // тул маргаантай тохиолдолд QPay дээрх гүйлгээгээр тулгаж шалгана.
-      allow create: if request.resource.data.kind == 'payment'
+        && (!('answers' in request.resource.data) || request.resource.data.answers.size() <= 40)
+        // Талбар бүрд уртын хязгаар — хязгааргүй том өгөгдөл бичихээс сэргийлнэ
+        && (!('name' in request.resource.data) || request.resource.data.name.size() <= 120)
+        && (!('email' in request.resource.data) || request.resource.data.email.size() <= 200)
+        && (!('phone' in request.resource.data) || request.resource.data.phone.size() <= 40)
+        && (!('org' in request.resource.data) || request.resource.data.org.size() <= 200)
+        && (!('role' in request.resource.data) || request.resource.data.role.size() <= 120)
+        // Бүртгэл нь ямар ч тохиолдолд төлбөртэй эрх ОЛГОХГҮЙ
+        && (!('paid' in request.resource.data) || request.resource.data.kind == 'booking');
+      // QPay худалдан авалтын бүртгэл — ЗӨВХӨН АДМИН бичнэ.
+      // Өмнө нь зочин бичдэг байсан тул хэн ч дурын дүнтэй хуурамч
+      // "худалдан авалт" үүсгэж, орлогын тайланг бохирдуулж чаддаг байв.
+      // Жинхэнэ эх сурвалж нь QPay merchant portal.
+      allow create: if isAdmin()
+        && request.resource.data.kind == 'payment'
         && request.resource.data.keys().hasOnly([
              'kind','at','invoiceId','paymentId','amount','product',
              'name','email','phone'
@@ -69,7 +79,10 @@ service cloud.firestore {
            ])
         && request.resource.data.message is string
         && request.resource.data.message.size() > 2
-        && request.resource.data.message.size() <= 2000;
+        && request.resource.data.message.size() <= 2000
+        && (!('name' in request.resource.data) || request.resource.data.name.size() <= 120)
+        && (!('email' in request.resource.data) || request.resource.data.email.size() <= 200)
+        && (!('product' in request.resource.data) || request.resource.data.product.size() <= 300);
       // Мэдээллийн захиалга — зөвхөн и-мэйл хаяг (хамгийн бага өгөгдөл)
       allow create: if request.resource.data.kind == 'subscribe'
         && request.resource.data.keys().hasOnly(['kind','at','email'])

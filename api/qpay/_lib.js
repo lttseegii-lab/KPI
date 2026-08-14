@@ -78,6 +78,45 @@ async function qpayFetch(path, options) {
   }
 }
 
+// ---- Зөвхөн өөрийн сайтаас дуудагдана ----
+// Хөтөч Origin толгойг хуурч чадахгүй тул энэ нь бусад сайтаас
+// нэхэмжлэл үүсгэхийг зогсооно. (curl-ийг зогсоохгүй — түүнд хурдны
+// хязгаар хариуцна.)
+function originAllowed(req) {
+  var origin = req.headers.origin;
+  if (!origin) return true; // хөтөч биш дуудлага — хурдны хязгаар шүүнэ
+  var host = req.headers["x-forwarded-host"] || req.headers.host || "";
+  try {
+    var h = new URL(origin).host;
+    return h === host || h === "www." + host || "www." + h === host;
+  } catch (e) { return false; }
+}
+
+// ---- Энгийн хурдны хязгаар ----
+// Warm instance доторх санах ойд хадгална. Vercel олон instance ажиллуулж
+// болох тул энэ нь үнэмлэхүй биш — автомат хэрэгслээр мянгаар нь нэхэмжлэл
+// үүсгэхийг удаашруулах зорилготой.
+var hits = new Map();
+function rateLimited(req, limit, windowMs) {
+  var ip = String(req.headers["x-forwarded-for"] || "").split(",")[0].trim() || "unknown";
+  var now = Date.now();
+  var rec = hits.get(ip);
+  if (!rec || now > rec.reset) { rec = { n: 0, reset: now + windowMs }; }
+  rec.n++;
+  hits.set(ip, rec);
+  if (hits.size > 5000) { // санах ой хэт өсөхөөс сэргийлж хугацаа нь дууссаныг цэвэрлэнэ
+    hits.forEach(function (v, k) { if (now > v.reset) hits.delete(k); });
+  }
+  return rec.n > limit;
+}
+
+// Хамгаалалтын шалгалтуудыг нэг дор. Дамжвал null, эс бөгөөс хариу бичээд true.
+function guard(req, res, limit, windowMs) {
+  if (!originAllowed(req)) { sendJson(res, 403, { error: "Зөвшөөрөгдөөгүй эх сурвалж" }); return true; }
+  if (rateLimited(req, limit, windowMs)) { sendJson(res, 429, { error: "Хэт олон хүсэлт. Хэсэг хүлээнэ үү." }); return true; }
+  return false;
+}
+
 function sendJson(res, status, obj) {
   res.statusCode = status;
   res.setHeader("Content-Type", "application/json; charset=utf-8");
@@ -93,4 +132,4 @@ function sendError(res, err) {
   });
 }
 
-module.exports = { qpayFetch, sendJson, sendError };
+module.exports = { qpayFetch, sendJson, sendError, guard };

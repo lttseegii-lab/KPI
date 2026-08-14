@@ -5,12 +5,14 @@
    хүсэлтээр явж, и-мэйлээр үнэ хүргэдэг тул энд орохгүй. */
 "use strict";
 
-const { qpayFetch, sendJson, sendError } = require("./_lib.js");
+const { qpayFetch, sendJson, sendError, guard } = require("./_lib.js");
 
 module.exports = async (req, res) => {
   if (req.method !== "POST") {
     return sendJson(res, 405, { error: "POST хүсэлт илгээнэ үү" });
   }
+  // Нэхэмжлэл үүсгэх нь QPay дээр бодит бичлэг үлдээдэг тул чанга хязгаар
+  if (guard(req, res, 10, 60 * 1000)) return;
   try {
     const amount = Math.max(1, Number(process.env.QPAY_AMOUNT || 99000));
     const senderInvoiceNo =

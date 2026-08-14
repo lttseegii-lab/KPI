@@ -1205,8 +1205,8 @@
   function renderFilters() {
     document.getElementById('filterBar').innerHTML = CATS.map(c => {
       const n = c === 'Бүгд' ? ARTICLES.length : ARTICLES.filter(a => a.cat === c).length;
-      return '<button class="chip' + (c === activeFilter ? ' active' : '') + '" onclick="setFilter(\'' + c + '\')">'
-        + c + '<span class="count">' + n + '</span></button>';
+      return '<button class="chip' + (c === activeFilter ? ' active' : '') + '" onclick="setFilter(\'' + esc(c) + '\')">'
+        + esc(c) + '<span class="count">' + n + '</span></button>';
     }).join('');
   }
 
@@ -1236,15 +1236,15 @@
       const isFeature = a.feature && activeFilter === 'Бүгд';
       const author = a.author || 'KPI consulting';
       const media = a.image
-        ? '<img src="' + a.image + '" alt="">'
-        : '<span style="filter:drop-shadow(0 10px 24px rgba(0,0,0,.35))">' + a.icon + '</span>';
-      return '<div class="article' + (isFeature ? ' feature' : '') + '" onclick="openArticle(\'' + a.id + '\')">'
+        ? '<img src="' + safeUrl(a.image) + '" alt="">'
+        : '<span style="filter:drop-shadow(0 10px 24px rgba(0,0,0,.35))">' + esc(a.icon) + '</span>';
+      return '<div class="article' + (isFeature ? ' feature' : '') + '" onclick="openArticle(\'' + esc(a.id) + '\')">'
         + '<div class="thumb" style="background:' + t.bg + '">' + media + '</div>'
         + '<div class="body">'
-        + '<div class="eyebrow">' + a.cat + ' | KPI consulting</div>'
-        + '<h3>' + a.title + '</h3>'
-        + '<div class="byline">By <a onclick="event.stopPropagation()">' + author + '</a></div>'
-        + '<p>' + a.excerpt + '</p>'
+        + '<div class="eyebrow">' + esc(a.cat) + ' | KPI consulting</div>'
+        + '<h3>' + esc(a.title) + '</h3>'
+        + '<div class="byline">By <a onclick="event.stopPropagation()">' + esc(author) + '</a></div>'
+        + '<p>' + esc(a.excerpt) + '</p>'
         + '<div class="meta-foot">'
         + '<span class="info">' + [a.date, a.read].filter(Boolean).join(' | ') + '</span>'
         + '<span class="acts">'
@@ -1337,11 +1337,11 @@
   const arOverlay = document.getElementById('arOverlay');
   function renderBody(blocks) {
     return blocks.map(b => {
-      if (b[0] === 'p') return '<p>' + b[1] + '</p>';
-      if (b[0] === 'h3') return '<h3>' + b[1] + '</h3>';
-      if (b[0] === 'blockquote') return '<blockquote>' + b[1] + '</blockquote>';
-      if (b[0] === 'ul') return '<ul>' + b[1].map(li => '<li>' + li + '</li>').join('') + '</ul>';
-      if (b[0] === 'img') return '<figure><img src="' + b[1] + '" alt="' + (b[2] || '') + '"><figcaption>' + (b[2] || '') + '</figcaption></figure>';
+      if (b[0] === 'p') return '<p>' + esc(b[1]) + '</p>';
+      if (b[0] === 'h3') return '<h3>' + esc(b[1]) + '</h3>';
+      if (b[0] === 'blockquote') return '<blockquote>' + esc(b[1]) + '</blockquote>';
+      if (b[0] === 'ul') return '<ul>' + b[1].map(li => '<li>' + esc(li) + '</li>').join('') + '</ul>';
+      if (b[0] === 'img') return '<figure><img src="' + safeUrl(b[1]) + '" alt="' + esc(b[2] || '') + '"><figcaption>' + esc(b[2] || '') + '</figcaption></figure>';
       return '';
     }).join('');
   }
@@ -1358,7 +1358,7 @@
     document.getElementById('arTitle').textContent = a.title;
     renderByline();
     const cover = document.getElementById('arCover');
-    if (a.image) { cover.innerHTML = '<img src="' + a.image + '" alt="">'; cover.style.background = '#eee'; }
+    if (a.image) { cover.innerHTML = '<img src="' + safeUrl(a.image) + '" alt="">'; cover.style.background = '#eee'; }
     else { cover.textContent = a.icon; cover.style.background = (THEMES[a.cat] || THEMES._default).bg; }
     document.getElementById('arContent').innerHTML = renderBody(a.body);
     document.getElementById('arSaveBtn').classList.toggle('saved', getSaved().has(id));
@@ -1766,7 +1766,13 @@
   // Админаас ирсэн текстийг HTML болгон оруулахаас өмнө цэвэрлэнэ
   function esc(s) {
     return String(s == null ? '' : s)
-      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+  // href/src-д зөвхөн аюулгүй схем зөвшөөрнө — javascript: зэргийг таслана
+  function safeUrl(u) {
+    const v = String(u == null ? '' : u).trim();
+    return /^(https?:|data:image\/|mailto:|tel:|#|\/)/i.test(v) ? esc(v) : '';
   }
 
   function renderProducts() {
@@ -1801,7 +1807,7 @@
 
   const pdOverlay = document.getElementById('pdOverlay');
   function fillList(id, items) {
-    document.getElementById(id).innerHTML = items.map(t => '<li>' + t + '</li>').join('');
+    document.getElementById(id).innerHTML = items.map(t => '<li>' + esc(t) + '</li>').join('');
   }
   let currentProduct = null;
   function openProduct(key) {
@@ -1820,13 +1826,13 @@
         let right;
         if (file && file.data) {
           right = hasAccess()
-            ? '<a class="badge dl" href="' + file.data + '" download="' + (file.name || 'template') + '" onclick="event.stopPropagation()">⬇ Татах</a>'
+            ? '<a class="badge dl" href="' + safeUrl(file.data) + '" download="' + esc(file.name || 'template') + '" onclick="event.stopPropagation()">⬇ Татах</a>'
             : '<a class="badge dl locked" href="#" onclick="event.preventDefault(); event.stopPropagation(); openPayment(event)">🔒 Татах</a>';
         } else {
           right = '<span class="badge">Багцад багтсан</span>';
         }
-        return '<div class="row"><span class="ic">' + t[0] + '</span>'
-          + '<div><div class="nm">' + t[1] + '</div><div class="ty">' + t[2] + (file && file.name ? ' · ' + file.name : '') + '</div></div>'
+        return '<div class="row"><span class="ic">' + esc(t[0]) + '</span>'
+          + '<div><div class="nm">' + esc(t[1]) + '</div><div class="ty">' + esc(t[2]) + (file && file.name ? ' · ' + esc(file.name) : '') + '</div></div>'
           + right + '</div>';
       }).join('');
       twrap.style.display = '';
@@ -1860,7 +1866,7 @@
       const input = q.type === 'textarea'
         ? '<textarea id="qa-' + i + '" style="min-height:70px" placeholder="Хариулт"></textarea>'
         : '<input id="qa-' + i + '" type="text" placeholder="Хариулт">';
-      return '<div class="field"><label>' + q.q + '</label>' + input + '</div>';
+      return '<div class="field"><label>' + esc(q.q) + '</label>' + input + '</div>';
     }).join('');
     document.getElementById('quoteForm').classList.remove('hidden');
     document.getElementById('quoteSuccess').classList.add('hidden');
@@ -2018,17 +2024,9 @@
 
   function paySucceeded(status) {
     payStopPolling();
-    // Админд харагдах худалдан авалтын бүртгэл (эх сурвалж нь QPay merchant portal)
-    try {
-      const me = JSON.parse(localStorage.getItem('kpihub_current_user') || '{}');
-      KPICloud.addSubmission('payment', {
-        invoiceId: payInvoiceId,
-        paymentId: String(status.payment_id || ''),
-        amount: Number(status.amount || 0),
-        product: 'templates',
-        name: me.name || '', email: me.email || '', phone: me.phone || ''
-      });
-    } catch (e) {}
+    // Худалдан авалтын бүртгэлийг ЭНДЭЭС бичихээ болив: зочны бичсэн бичлэгийг
+    // хуурамчаар үүсгэж, орлогын тайланг бохирдуулах боломжтой байсан.
+    // Жинхэнэ эх сурвалж нь QPay merchant portal.
     grantAccess();
     document.getElementById('payForm').classList.add('hidden');
     document.getElementById('paySuccess').classList.remove('hidden');
@@ -2119,12 +2117,12 @@
     if (CONTACT.address)  rows.push(['📍', 'Хаяг', CONTACT.address, null]);
     if (CONTACT.hours)    rows.push(['🕒', 'Ажиллах цаг', CONTACT.hours, null]);
     document.getElementById('contactList').innerHTML = rows.map(r => {
-      const val = r[3] ? '<a href="' + r[3] + '" class="cv">' + r[2] + '</a>' : '<span class="cv">' + r[2] + '</span>';
-      return '<li><span class="ci">' + r[0] + '</span><div><div class="ck">' + r[1] + '</div>' + val + '</div></li>';
+      const val = r[3] ? '<a href="' + safeUrl(r[3]) + '" class="cv">' + esc(r[2]) + '</a>' : '<span class="cv">' + esc(r[2]) + '</span>';
+      return '<li><span class="ci">' + esc(r[0]) + '</span><div><div class="ck">' + esc(r[1]) + '</div>' + val + '</div></li>';
     }).join('');
     const acts = [];
-    if (CONTACT.email) acts.push('<a href="mailto:' + CONTACT.email + '" class="btn btn-primary" style="flex:1; text-align:center;">И-мэйл бичих</a>');
-    if (CONTACT.phone) acts.push('<a href="tel:' + CONTACT.phone.replace(/[^\d+]/g, '') + '" class="btn btn-ghost" style="flex:1; text-align:center;">Залгах</a>');
+    if (CONTACT.email) acts.push('<a href="mailto:' + esc(CONTACT.email) + '" class="btn btn-primary" style="flex:1; text-align:center;">И-мэйл бичих</a>');
+    if (CONTACT.phone) acts.push('<a href="tel:' + esc(CONTACT.phone.replace(/[^\d+]/g, '')) + '" class="btn btn-ghost" style="flex:1; text-align:center;">Залгах</a>');
     document.getElementById('contactActions').innerHTML = acts.join('');
   }
   renderContact();
@@ -2172,12 +2170,12 @@
     else {
       about.style.display = '';
       about.className = 'about-row' + (hasImg ? '' : ' no-img');
-      const img = hasImg ? '<img class="about-img" src="' + WHY.image + '" alt="Бидний тухай">' : '';
-      const txt = hasIntro ? '<div class="about-text">' + WHY.intro.split(/\n\s*\n/).map(p => '<p>' + p + '</p>').join('') + '</div>' : '';
+      const img = hasImg ? '<img class="about-img" src="' + safeUrl(WHY.image) + '" alt="Бидний тухай">' : '';
+      const txt = hasIntro ? '<div class="about-text">' + WHY.intro.split(/\n\s*\n/).map(p => '<p>' + esc(p) + '</p>').join('') + '</div>' : '';
       about.innerHTML = img + txt;
     }
     document.getElementById('whyGrid').innerHTML = (WHY.features || []).map(f =>
-      '<article class="card"><div class="icon">' + f[0] + '</div><h3>' + f[1] + '</h3><p>' + f[2] + '</p></article>'
+      '<article class="card"><div class="icon">' + esc(f[0]) + '</div><h3>' + esc(f[1]) + '</h3><p>' + esc(f[2]) + '</p></article>'
     ).join('');
   }
   renderWhy();
