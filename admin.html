@@ -97,6 +97,14 @@
   .form-msg.ok { display:inline; color:var(--accent-2); }
   .form-msg.err { display:inline; color:var(--danger); }
   .code-note { font-size:12px; color:var(--muted); background:var(--bg-soft); border:1px solid var(--line); border-radius:8px; padding:10px 12px; margin-top:8px; line-height:1.6; }
+  .fmt-help { padding:14px 16px; }
+  .fmt-title { font-size:12.5px; font-weight:700; color:var(--text); margin-bottom:10px; }
+  .fmt-table { width:100%; border-collapse:collapse; }
+  .fmt-table td { padding:7px 0; border-bottom:1px solid var(--line); vertical-align:top; font-size:12.5px; }
+  .fmt-table tr:last-child td { border-bottom:none; }
+  .fmt-table td:first-child { width:46%; padding-right:14px; }
+  .fmt-help code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; background:var(--card); border:1px solid var(--line); border-radius:5px; padding:2px 6px; color:var(--text); }
+  .fmt-tip { margin-top:12px; padding-top:10px; border-top:1px dashed var(--line); font-size:12px; }
   .empty { color:var(--muted); text-align:center; padding:30px; border:1px dashed var(--line); border-radius:12px; }
   .book-label { font-size:13px; font-weight:600; color:var(--muted); }
   .av-toggles { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:18px; max-width:420px; }
@@ -332,12 +340,20 @@
             <label class="file-btn">Агуулгад зураг нэмэх<input type="file" accept="image/*" hidden onchange="onBodyImage(this)"></label>
             <span class="file-name">Курсор байрласан хэсэгт зураг нэмэгдэнэ</span>
           </div>
-          <div class="code-note">
-            Форматлах тэмдэглэгээ:<br>
-            • Ердийн мөр → догол мөр&nbsp;&nbsp; • <b>## Гарчиг</b> → дэд гарчиг<br>
-            • <b>- зүйл</b> → жагсаалт&nbsp;&nbsp; • <b>&gt; эшлэл</b> → эшлэл (blockquote)<br>
-            • <b>![Тайлбар](зураг)</b> → агуулга доторх зураг<br>
-            Хэсгүүдийг хоосон мөрөөр тусгаарлана.
+          <div class="code-note fmt-help">
+            <div class="fmt-title">Хэрхэн бичих вэ</div>
+            <table class="fmt-table">
+              <tr><td><code>Энгийн текст</code></td><td>Догол мөр</td></tr>
+              <tr><td><code>## Гарчиг</code></td><td>Дэд гарчиг</td></tr>
+              <tr><td><code>- Жагсаалтын мөр</code></td><td>Жагсаалт (дараалсан мөрүүд нэг жагсаалт болно)</td></tr>
+              <tr><td><code>&gt; Эшлэл</code></td><td>Онцолсон эшлэл</td></tr>
+              <tr><td><code>![Тайлбар](зураг)</code></td><td>Агуулга доторх зураг — дээрх товчоор автоматаар нэмэгдэнэ</td></tr>
+            </table>
+            <div class="fmt-tip">
+              Тэмдэглэгээний ард зай тавьсан ч, тавиагүй ч ажиллана (<code>##Гарчиг</code> = <code>## Гарчиг</code>).
+              Жагсаалтад <code>-</code>, <code>*</code>, <code>•</code> гурвуулаа тохирно.
+              Догол мөр хооронд <b>хоосон мөр</b> үлдээвэл тусдаа хэсэг болно.
+            </div>
           </div>
         </div>
         <div class="save-bar">
@@ -2194,31 +2210,30 @@
       return b[1];
     }).join('\n\n');
   }
+  // Форматлагдсан текстийг блок болгож задлана.
+  // Тэмдэглэгээний ард зай ЗААВАЛ биш: «##Гарчиг» ба «## Гарчиг» хоёулаа
+  // ажиллана. Мөн жагсаалтад -, *, • гурвуулаа тохирно.
   function textToBlocks(text) {
+    const HEAD  = /^#{1,3}\s*(.+)$/;
+    const QUOTE = /^>\s*(.+)$/;
+    const ITEM  = /^[-*•]\s*(.+)$/;
+    const IMG   = /^!\[([^\]]*)\]\((.+)\)$/;
+
     const blocks = [];
-    const chunks = text.split(/\n\s*\n/).map(c => c.trim()).filter(Boolean);
-    chunks.forEach(chunk => {
+    String(text || '').split(/\n\s*\n/).forEach(chunk => {
       const lines = chunk.split('\n').map(l => l.trim()).filter(Boolean);
-      if (lines.every(l => l.startsWith('- '))) {
-        blocks.push(['ul', lines.map(l => l.slice(2).trim())]);
-      } else if (lines.length === 1 && lines[0].startsWith('## ')) {
-        blocks.push(['h3', lines[0].slice(3).trim()]);
-      } else if (lines.length === 1 && lines[0].startsWith('> ')) {
-        blocks.push(['blockquote', lines[0].slice(2).trim()]);
-      } else if (lines.length === 1 && /^!\[[^\]]*\]\(.+\)$/.test(lines[0])) {
-        const m = lines[0].match(/^!\[([^\]]*)\]\((.+)\)$/);
-        blocks.push(['img', m[2], m[1] || 'Зураг']);
-      } else {
-        lines.forEach(l => {
-          if (l.startsWith('## ')) blocks.push(['h3', l.slice(3).trim()]);
-          else if (l.startsWith('> ')) blocks.push(['blockquote', l.slice(2).trim()]);
-          else if (/^!\[[^\]]*\]\(.+\)$/.test(l)) {
-            const m = l.match(/^!\[([^\]]*)\]\((.+)\)$/);
-            blocks.push(['img', m[2], m[1] || 'Зураг']);
-          }
-          else blocks.push(['p', l]);
-        });
-      }
+      let list = null; // дараалсан жагсаалтын мөрүүдийг нэг блок болгож цуглуулна
+      const flush = () => { if (list && list.length) blocks.push(['ul', list]); list = null; };
+      lines.forEach(l => {
+        let m;
+        if ((m = l.match(IMG))) { flush(); blocks.push(['img', m[2].trim(), (m[1] || 'Зураг').trim()]); return; }
+        if ((m = l.match(ITEM))) { (list = list || []).push(m[1].trim()); return; }
+        flush();
+        if ((m = l.match(HEAD))) blocks.push(['h3', m[1].trim()]);
+        else if ((m = l.match(QUOTE))) blocks.push(['blockquote', m[1].trim()]);
+        else blocks.push(['p', l]);
+      });
+      flush();
     });
     return blocks;
   }
