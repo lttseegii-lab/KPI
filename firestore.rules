@@ -62,6 +62,14 @@ service cloud.firestore {
         && request.resource.data.invoiceId is string
         && request.resource.data.invoiceId.size() <= 64
         && request.resource.data.amount is number;
+      // Уншигчийн санал хүсэлт — нийтлэлийн доорх шууд мессеж
+      allow create: if request.resource.data.kind == 'feedback'
+        && request.resource.data.keys().hasOnly([
+             'kind','at','name','email','message','product'
+           ])
+        && request.resource.data.message is string
+        && request.resource.data.message.size() > 2
+        && request.resource.data.message.size() <= 2000;
       // Мэдээллийн захиалга — зөвхөн и-мэйл хаяг (хамгийн бага өгөгдөл)
       allow create: if request.resource.data.kind == 'subscribe'
         && request.resource.data.keys().hasOnly(['kind','at','email'])

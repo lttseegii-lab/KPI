@@ -219,6 +219,7 @@
       <div class="tab" data-tab="schedule" onclick="switchTab('schedule')">Цаг товлолт</div>
       <div class="tab" data-tab="users" onclick="switchTab('users')">Хэрэглэгч</div>
       <div class="tab" data-tab="subs" onclick="switchTab('subs')">Захиалагчид</div>
+      <div class="tab" data-tab="feedback" onclick="switchTab('feedback')">Санал хүсэлт</div>
       <div class="tab" data-tab="authors" onclick="switchTab('authors')">Нийтлэл бичсэн</div>
       <div class="tab" data-tab="register" onclick="switchTab('register')">Бүртгэлийн текст</div>
       <div class="tab" data-tab="admins" onclick="switchTab('admins')">Админууд</div>
@@ -517,6 +518,16 @@
     </section>
 
     <!-- ===== Admin users panel ===== -->
+    <!-- ===== Feedback panel ===== -->
+    <section id="tab-feedback" class="hidden">
+      <div class="panel-head">
+        <h2>Санал хүсэлт</h2>
+        <div class="actions"><span id="fbCount" style="font-size:13px; color:var(--muted);"></span></div>
+      </div>
+      <div class="hint">Уншигчид нийтлэлийн доорх мессежийн товчоор илгээсэн санал хүсэлт. И-мэйл үлдээсэн бол шууд хариу бичиж болно.</div>
+      <div class="list" id="fbList"></div>
+    </section>
+
     <!-- ===== Authors panel ===== -->
     <section id="tab-authors" class="hidden">
       <div class="panel-head">
@@ -990,6 +1001,7 @@
     renderProductsAdmin();
     renderRegisterForm();
     renderAuthors();
+    renderFeedback();
     renderArticles();
     renderContactForm();
     renderWhyForm();
@@ -1011,7 +1023,7 @@
     document.getElementById('pw').value = '';
     appShown = false;
     // Гарсны дараа хувийн мэдээллийг DOM-оос цэвэрлэх (хуваалцсан компьютерээс сэргийлэх)
-    ['qrList', 'bookingList', 'usrList', 'subList', 'admList', 'homeFeed', 'homeBookings', 'homeStats'].forEach(id => {
+    ['qrList', 'bookingList', 'usrList', 'subList', 'fbList', 'admList', 'homeFeed', 'homeBookings', 'homeStats'].forEach(id => {
       const el = document.getElementById(id); if (el) el.innerHTML = '';
     });
   }
@@ -1019,7 +1031,7 @@
   // ---------- Tabs ----------
   function switchTab(t) {
     document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.dataset.tab === t));
-    ['home','templates','products','articles','why','pricing','schedule','users','subs','authors','register','admins','contact'].forEach(name =>
+    ['home','templates','products','articles','why','pricing','schedule','users','subs','feedback','authors','register','admins','contact'].forEach(name =>
       document.getElementById('tab-' + name).classList.toggle('hidden', name !== t));
     if (t === 'home') renderHome();
     if (t === 'products') renderProductsAdmin();
@@ -1029,6 +1041,7 @@
     if (t === 'subs') renderSubs();
     if (t === 'register') renderRegisterForm();
     if (t === 'authors') renderAuthors();
+    if (t === 'feedback') renderFeedback();
     if (t === 'admins') { renderAdmins(); clearAdminMsg(); }
   }
   function confirmDelete(message) {
@@ -1088,7 +1101,7 @@
     ].join('');
 
     // --- 14 хоногийн ирсэн хүсэлтийн багана ---
-    const all = usersList.concat(subsList, quoteReqs, bookingsList, paymentsList);
+    const all = usersList.concat(subsList, quoteReqs, bookingsList, paymentsList, feedbackList);
     const days = [];
     for (let i = 13; i >= 0; i--) days.push(localDay(new Date(Date.now() - i * DAY_MS)));
     const counts = days.map(d => all.filter(x => localDay(x.at) === d).length);
@@ -1119,7 +1132,8 @@
       .concat(subsList.map(s => ({ at: s.at, ic: '✉️', t: s.email || '', m: 'Мэдээллийн захиалга' })))
       .concat(quoteReqs.map(q => ({ at: q.at, ic: '💰', t: q.name || 'Зочин', m: 'Үнийн санал хүссэн — ' + (q.product || '') })))
       .concat(bookingsList.map(b => ({ at: b.at, ic: '🗓️', t: b.name || 'Зочин', m: 'Цаг товлосон — ' + (b.date || '') + ' ' + (b.time || '') })))
-      .concat(paymentsList.map(p => ({ at: p.at, ic: '💳', t: p.name || p.email || 'Худалдан авалт', m: 'Гишүүнчлэл — ₮' + (Number(p.amount) || 0).toLocaleString('en-US') })))
+      .concat(paymentsList.map(p => ({ at: p.at, ic: '💳', t: p.name || p.email || 'Худалдан авалт', m: 'Темплэйт багц — ₮' + (Number(p.amount) || 0).toLocaleString('en-US') })))
+      .concat(feedbackList.map(f => ({ at: f.at, ic: '💬', t: f.name || f.email || 'Зочин', m: 'Санал хүсэлт — ' + String(f.message || '').slice(0, 50) })))
       .filter(x => x.at)
       .sort((a, b) => String(b.at).localeCompare(String(a.at)))
       .slice(0, 8);
@@ -1786,8 +1800,48 @@
     why = JSON.parse(JSON.stringify(DEFAULT_WHY)); save('kpihub_why', why); renderWhyForm();
   }
 
-  // ---------- Contact ----------
-  // ---------- Зохиогчид ----------
+  // ---------- Санал хүсэлт ----------
+  function renderFeedback() {
+    const el = document.getElementById('fbList');
+    if (!el) return;
+    const rows = feedbackList.slice().reverse(); // шинэ нь эхэнд
+    const cnt = document.getElementById('fbCount');
+    if (cnt) cnt.textContent = rows.length ? rows.length + ' мессеж' : '';
+    el.innerHTML = rows.length
+      ? rows.map(f => {
+          const who = [f.name, f.email].filter(Boolean).join(' \u00b7 ') || 'Нэрээ үлдээгээгүй';
+          const reply = f.email
+            ? '<a class="btn btn-sm" href="mailto:' + esc(f.email) + '?subject=' + encodeURIComponent('KPI consulting — таны санал хүсэлтэд') + '">Хариу бичих</a>'
+            : '';
+          return '<div class="tpl-card">'
+            + '<div style="display:flex; justify-content:space-between; align-items:flex-start; gap:10px; flex-wrap:wrap;">'
+            + '<div><b>' + esc(who) + '</b>'
+            + '<div class="ct" style="font-size:12.5px; color:var(--muted); margin-top:2px;">'
+            + esc(String(f.at || '').slice(0, 10)) + (f.product ? ' \u00b7 ' + esc(f.product) : '') + '</div></div>'
+            + '<div class="actions">' + reply
+            + '<button class="btn btn-danger btn-sm" onclick="delFeedback(\'' + f.id + '\')">Устгах</button></div>'
+            + '</div>'
+            + '<div style="margin-top:10px; padding-top:10px; border-top:1px dashed var(--line); font-size:13.5px; white-space:pre-wrap;">'
+            + esc(f.message || '') + '</div>'
+            + '</div>';
+        }).join('')
+      : '<div class="empty">Санал хүсэлт алга.</div>';
+  }
+  function delFeedback(id) {
+    if (!confirmDelete()) return;
+    const prev = feedbackList.slice();
+    pendingDeletedSubmissions.add(id);
+    feedbackList = feedbackList.filter(f => f.id !== id);
+    renderFeedback(); renderHome();
+    KPICloud.deleteSubmission(id).catch(err => {
+      pendingDeletedSubmissions.delete(id);
+      feedbackList = prev;
+      renderFeedback(); renderHome();
+      alert((err && err.message) ? err.message : 'Мэдээлэл устгах үед алдаа гарлаа.');
+    });
+  }
+
+  // ---------- Нийтлэл бичсэн хүмүүс ----------
   function renderAuthors() {
     const el = document.getElementById('authList');
     if (!el) return;
@@ -1862,6 +1916,7 @@
     save('kpihub_register', register);
   }
 
+  // ---------- Contact ----------
   function renderContactForm() {
     document.getElementById('c-intro').value = contact.intro || '';
     document.getElementById('c-email').value = contact.email || '';
@@ -2175,11 +2230,13 @@
   }
 
   // ---------- Init ----------
-  let unsubQuote = null, unsubBooking = null, unsubUser = null, unsubCrm = null, unsubAdmins = null, unsubSubs = null, unsubPay = null;
+  let unsubQuote = null, unsubBooking = null, unsubUser = null, unsubCrm = null, unsubAdmins = null, unsubSubs = null, unsubPay = null, unsubFb = null;
   let paymentsList = [];
+  let feedbackList = [];
   function startAdminWatches() {
     if (!unsubSubs)    unsubSubs    = KPICloud.watchSubmissions('subscribe', arr => { subsList = visibleSubmissions(arr); if (appShown) { renderSubs(); renderHome(); } });
     if (!unsubPay)     unsubPay     = KPICloud.watchSubmissions('payment',   arr => { paymentsList = visibleSubmissions(arr); if (appShown) renderHome(); });
+    if (!unsubFb)      unsubFb      = KPICloud.watchSubmissions('feedback',  arr => { feedbackList = visibleSubmissions(arr); if (appShown) { renderFeedback(); renderHome(); } });
     if (!unsubQuote)   unsubQuote   = KPICloud.watchSubmissions('quote',   arr => { quoteReqs = visibleSubmissions(arr);    if (appShown) { renderQuoteRequests(); renderHome(); if (selectedCrmUserId) renderCrmDetail(); } });
     if (!unsubBooking) unsubBooking = KPICloud.watchSubmissions('booking', arr => { bookingsList = visibleSubmissions(arr); if (appShown) { renderBookings(); renderHome(); if (selectedCrmUserId) renderCrmDetail(); } });
     if (!unsubUser)    unsubUser    = KPICloud.watchSubmissions('user',    arr => { usersList = visibleSubmissions(arr);    if (appShown) { renderUsers(); renderHome(); } });
@@ -2194,7 +2251,8 @@
     if (unsubAdmins)  { try { unsubAdmins(); } catch(e){}  unsubAdmins = null; }
     if (unsubSubs)    { try { unsubSubs(); } catch(e){}    unsubSubs = null; }
     if (unsubPay)     { try { unsubPay(); } catch(e){}     unsubPay = null; }
-    quoteReqs = []; bookingsList = []; usersList = []; crmActivities = []; adminsList = []; subsList = []; paymentsList = [];
+    if (unsubFb)      { try { unsubFb(); } catch(e){}      unsubFb = null; }
+    quoteReqs = []; bookingsList = []; usersList = []; crmActivities = []; adminsList = []; subsList = []; paymentsList = []; feedbackList = [];
     selectedCrmUserId = '';
   }
 

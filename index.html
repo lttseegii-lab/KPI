@@ -1008,7 +1008,7 @@
         <button id="arSaveBtn" onclick="toggleReaderSave()" aria-label="Хадгалах" title="Хадгалах">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>
         </button>
-        <button onclick="closeArticle(); openContact(event)" aria-label="Бидэнтэй чатлах" title="Бидэнтэй чатлах">
+        <button onclick="openFeedback()" aria-label="Санал хүсэлт бичих" title="Санал хүсэлт бичих">
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         </button>
       </div>
@@ -1032,6 +1032,41 @@
       <button class="modal-close" onclick="closeAuthor()" aria-label="Хаах">×</button>
     </div>
     <div class="modal-body" id="authorBody"></div>
+  </div>
+</div>
+
+<!-- ===== Санал хүсэлт (шууд чат) ===== -->
+<div class="modal-overlay" id="feedbackModal" style="z-index:145;" onclick="if(event.target===this) closeFeedback()">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Санал хүсэлт</h3>
+      <button class="modal-close" onclick="closeFeedback()" aria-label="Хаах">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="fbForm">
+        <p style="font-size:13.5px; color:var(--muted); margin-bottom:16px;" id="fbIntro"></p>
+        <div class="field" id="fbNameWrap">
+          <label>Нэр</label>
+          <input type="text" id="fbName" placeholder="Таны нэр">
+        </div>
+        <div class="field" id="fbEmailWrap">
+          <label>И-мэйл (хариу авах)</label>
+          <input type="email" id="fbEmail" placeholder="name@company.mn">
+        </div>
+        <div class="field">
+          <label>Таны мессеж</label>
+          <textarea id="fbText" rows="5" placeholder="Санал, хүсэлт, асуултаа бичнэ үү..."></textarea>
+        </div>
+        <div id="fbMsg" style="font-size:13px; min-height:18px; margin-bottom:10px;"></div>
+        <button class="btn btn-primary" id="fbBtn" style="width:100%;" onclick="submitFeedback()">Илгээх</button>
+      </div>
+      <div class="center hidden" id="fbSuccess">
+        <div class="success-icon">✓</div>
+        <h3 style="font-size:20px; margin-bottom:8px;">Илгээгдлээ!</h3>
+        <p id="fbSuccessMsg"></p>
+        <button class="btn btn-primary" style="width:100%; margin-top:16px;" onclick="closeFeedback()">Хаах</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -1423,6 +1458,65 @@
   }
   function closeAuthor() { authorModal.classList.remove('open'); document.body.style.overflow = 'hidden'; }
 
+  // ---------- Санал хүсэлт — уншигчаас шууд мессеж ----------
+  const feedbackModal = document.getElementById('feedbackModal');
+  function openFeedback() {
+    const me = currentUser() || {};
+    const a = ARTICLES.find(x => x.id === currentArticleId);
+    document.getElementById('fbIntro').textContent = a
+      ? '«' + a.title + '» нийтлэлийн талаар санал хүсэлтээ бичээрэй. Бид уншиж, шаардлагатай бол хариу өгнө.'
+      : 'Санал хүсэлтээ бичээрэй. Бид уншиж, шаардлагатай бол хариу өгнө.';
+    document.getElementById('fbName').value = me.name || '';
+    document.getElementById('fbEmail').value = me.email || '';
+    // Бүртгэлтэй хүнд нэр/и-мэйл аль хэдийн мэдэгдэж байгаа тул нуруулна
+    const known = !!(me.name && me.email);
+    document.getElementById('fbNameWrap').classList.toggle('hidden', known);
+    document.getElementById('fbEmailWrap').classList.toggle('hidden', known);
+    document.getElementById('fbText').value = '';
+    document.getElementById('fbMsg').textContent = '';
+    document.getElementById('fbForm').classList.remove('hidden');
+    document.getElementById('fbSuccess').classList.add('hidden');
+    feedbackModal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => document.getElementById('fbText').focus(), 50);
+  }
+  function closeFeedback() {
+    feedbackModal.classList.remove('open');
+    // Уншигч ард нь нээлттэй хэвээр байвал хуудасны гүйлтийг сэргээхгүй
+    document.body.style.overflow = arOverlay.classList.contains('open') ? 'hidden' : '';
+  }
+  function submitFeedback() {
+    const msgEl = document.getElementById('fbMsg');
+    const btn = document.getElementById('fbBtn');
+    const text = document.getElementById('fbText').value.trim();
+    const name = document.getElementById('fbName').value.trim();
+    const email = document.getElementById('fbEmail').value.trim().toLowerCase();
+    if (text.length < 3) {
+      msgEl.textContent = 'Мессежээ бичнэ үү.'; msgEl.style.color = '#ff7a7a';
+      document.getElementById('fbText').focus(); return;
+    }
+    if (email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      msgEl.textContent = 'И-мэйл хаягаа зөв оруулна уу.'; msgEl.style.color = '#ff7a7a';
+      document.getElementById('fbEmail').focus(); return;
+    }
+    const a = ARTICLES.find(x => x.id === currentArticleId);
+    btn.disabled = true;
+    msgEl.textContent = 'Илгээж байна…'; msgEl.style.color = 'var(--muted)';
+    KPICloud.addSubmission('feedback', {
+      name: name, email: email,
+      message: text.slice(0, 2000),
+      product: a ? a.title : ''
+    }).then(() => {
+      document.getElementById('fbSuccessMsg').textContent = email
+        ? 'Баярлалаа. Шаардлагатай бол ' + email + ' хаяг руу хариу өгнө.'
+        : 'Баярлалаа. Таны саналыг хүлээн авлаа.';
+      document.getElementById('fbForm').classList.add('hidden');
+      document.getElementById('fbSuccess').classList.remove('hidden');
+    }).catch(() => {
+      msgEl.textContent = 'Илгээхэд алдаа гарлаа. Дахин оролдоно уу.'; msgEl.style.color = '#ff7a7a';
+    }).then(() => { btn.disabled = false; });
+  }
+
   // ---------- Дагах — и-мэйлийн захиалга ----------
   const followModal = document.getElementById('followModal');
   // Түлхүүрийг шууд бичив: энэ функц нь #article-... холбоосоор орж ирэхэд
@@ -1475,7 +1569,8 @@
   }
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
-    if (followModal.classList.contains('open')) closeFollow();
+    if (feedbackModal.classList.contains('open')) closeFeedback();
+    else if (followModal.classList.contains('open')) closeFollow();
     else if (authorModal.classList.contains('open')) closeAuthor();
   });
 
