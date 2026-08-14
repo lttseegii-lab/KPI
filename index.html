@@ -444,6 +444,26 @@
   .reader-cta .btn-ghost { background: transparent; border: 1.5px solid #cfd2da; color: #222; padding: 11px 24px; }
   .reader-cta .btn-ghost:hover { border-color: var(--accent); color: var(--accent); }
 
+  /* Уншсан нийтлэлтэй холбоотой санал болголт (3 хүртэл) */
+  .reader-related { max-width: 1000px; margin: 40px auto 0; }
+  .reader-related h4 {
+    font-size: 12.5px; letter-spacing: .6px; text-transform: uppercase;
+    color: #6b7280; margin-bottom: 18px; font-weight: 700;
+  }
+  .rr-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; }
+  .rr-card {
+    text-align: left; cursor: pointer; border: 1px solid #e3e5ec; border-radius: 14px;
+    overflow: hidden; background: #fff; display: flex; flex-direction: column;
+    transition: box-shadow .2s, transform .2s, border-color .2s;
+  }
+  .rr-card:hover { box-shadow: 0 12px 28px rgba(0,0,0,.10); transform: translateY(-3px); border-color: #d4d7e0; }
+  .rr-thumb { height: 104px; display: grid; place-items: center; font-size: 36px; }
+  .rr-thumb img { width: 100%; height: 100%; object-fit: cover; }
+  .rr-body { padding: 13px 15px 16px; }
+  .rr-cat { font-size: 11.5px; color: #6b7280; margin-bottom: 7px; }
+  .rr-title { font-size: 14.5px; font-weight: 700; line-height: 1.36; color: #14161c; }
+  @media (max-width: 720px) { .rr-grid { grid-template-columns: 1fr; } }
+
   /* CTA */
   .cta-wrap { padding: 60px 0 90px; }
   .cta {
@@ -1043,6 +1063,11 @@
       <a href="#" class="btn btn-primary" id="arRegBtn" onclick="closeArticle(); openModal(event);">Бүртгүүлэх</a>
       <a href="#insights" class="btn btn-ghost" onclick="closeArticle()">Бусад нийтлэл</a>
     </div>
+
+    <div class="reader-related" id="arRelated" style="display:none;">
+      <h4>Холбоотой нийтлэл</h4>
+      <div class="rr-grid" id="arRelatedGrid"></div>
+    </div>
   </div>
 </div>
 
@@ -1384,11 +1409,40 @@
     else { cover.textContent = a.icon; cover.style.background = (THEMES[a.cat] || THEMES._default).bg; }
     document.getElementById('arContent').innerHTML = renderBody(a.body);
     document.getElementById('arSaveBtn').classList.toggle('saved', getSaved().has(id));
+    renderRelated(a);
     arOverlay.scrollTop = 0; window.scrollTo(0, 0);
     arOverlay.classList.add('open');
     document.body.style.overflow = 'hidden';
     // Хуваалцсан холбоос нээгдэхэд яг энэ нийтлэл дээр очихын тулд хаягийг тэмдэглэнэ
     try { history.replaceState(null, '', '#article-' + encodeURIComponent(id)); } catch (e) {}
+  }
+  // Уншсан нийтлэлтэй холбоотойг сонгоно: эхлээд ижил ангиллынх, дараа нь
+  // бусдаас нөхөж, нийт 3 хүртэл. Массивын дараалал (шинэ→хуучин) хадгалагдана.
+  function relatedArticles(a, n) {
+    const others = ARTICLES.filter(x => x.id !== a.id);
+    const sameCat = others.filter(x => x.cat === a.cat);
+    const rest = others.filter(x => x.cat !== a.cat);
+    return sameCat.concat(rest).slice(0, n);
+  }
+  function renderRelated(a) {
+    const wrap = document.getElementById('arRelated');
+    const grid = document.getElementById('arRelatedGrid');
+    if (!wrap || !grid) return;
+    const items = relatedArticles(a, 3);
+    if (!items.length) { wrap.style.display = 'none'; grid.innerHTML = ''; return; }
+    grid.innerHTML = items.map(r => {
+      const t = THEMES[r.cat] || THEMES._default;
+      const media = r.image
+        ? '<img src="' + safeUrl(r.image) + '" alt="">'
+        : '<span>' + esc(r.icon || '📄') + '</span>';
+      return '<div class="rr-card" onclick="openArticle(\'' + esc(r.id) + '\')">'
+        + '<div class="rr-thumb" style="background:' + t.bg + '">' + media + '</div>'
+        + '<div class="rr-body">'
+        + '<div class="rr-cat">' + esc(r.cat) + '</div>'
+        + '<div class="rr-title">' + esc(r.title) + '</div>'
+        + '</div></div>';
+    }).join('');
+    wrap.style.display = '';
   }
   function closeArticle() {
     arOverlay.classList.remove('open');
