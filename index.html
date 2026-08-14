@@ -998,7 +998,7 @@
       <button class="rb-avatar" id="arAuthorAvatar" onclick="openAuthor()" aria-label="Нийтлэл бичсэн хүний мэдээлэл"></button>
       <div class="rb-name">
         <span>By <b id="arAuthorName"></b></span>
-        <button class="rb-follow" id="arFollowBtn" onclick="openFollow()">+ Дагах</button>
+        <button class="rb-follow" id="arFollowBtn" onclick="openFollow()">+ Follow</button>
       </div>
       <div class="rb-date"><span id="arDate"></span> · <span id="arRead"></span></div>
       <div class="rb-acts">
@@ -1432,7 +1432,7 @@
     document.getElementById('arAuthorAvatar').style.cursor = author ? 'pointer' : 'default';
     const fb = document.getElementById('arFollowBtn');
     const done = followedAlready();
-    fb.textContent = done ? '✓ Дагасан' : '+ Дагах';
+    fb.textContent = done ? '✓ Following' : '+ Follow';
     fb.classList.toggle('done', done);
   }
 
