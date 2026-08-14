@@ -219,6 +219,7 @@
       <div class="tab" data-tab="schedule" onclick="switchTab('schedule')">Цаг товлолт</div>
       <div class="tab" data-tab="users" onclick="switchTab('users')">Хэрэглэгч</div>
       <div class="tab" data-tab="subs" onclick="switchTab('subs')">Захиалагчид</div>
+      <div class="tab" data-tab="authors" onclick="switchTab('authors')">Зохиогчид</div>
       <div class="tab" data-tab="register" onclick="switchTab('register')">Бүртгэлийн текст</div>
       <div class="tab" data-tab="admins" onclick="switchTab('admins')">Админууд</div>
       <div class="tab" data-tab="contact" onclick="switchTab('contact')">Холбоо барих</div>
@@ -516,6 +517,20 @@
     </section>
 
     <!-- ===== Admin users panel ===== -->
+    <!-- ===== Authors panel ===== -->
+    <section id="tab-authors" class="hidden">
+      <div class="panel-head">
+        <h2>Зохиогчид</h2>
+        <div class="actions">
+          <button class="btn btn-sm" onclick="addAuthor()">+ Зохиогч нэмэх</button>
+          <button class="btn btn-primary" onclick="saveAuthors()">Хадгалах</button>
+          <span class="saved-msg" id="authSaved">✓ Хадгалагдлаа</span>
+        </div>
+      </div>
+      <div class="hint">Нийтлэлийн «Зохиогч (By ...)» талбарт бичсэн НЭРТЭЙ яг таарсан бүртгэл эндээс олдвол уншигчид зураг нь харагдаж, дарахад дэлгэрэнгүй гарна. Төслүүдийг мөр тус бүрд нэгээр бичнэ.</div>
+      <div id="authList"></div>
+    </section>
+
     <!-- ===== Registration texts panel ===== -->
     <section id="tab-register" class="hidden">
       <div class="panel-head">
@@ -663,7 +678,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
-<script src="firebase.js?v=6"></script>
+<script src="firebase.js?v=7"></script>
 
 <script>
 
@@ -925,6 +940,7 @@
     successText: 'Таны мэйл хаяг руу KPI нэвтрүүлэх зөвлөгөөг илгээлээ. Амжилт хүсье.'
   };
   let register = load('kpihub_register', Object.assign({}, DEFAULT_REGISTER));
+  let authors = load('kpihub_authors', []);
 
   const DEFAULT_QUESTIONS = [
     { q: 'Байгууллагын нэр', type: 'text' },
@@ -973,6 +989,7 @@
     renderTemplates();
     renderProductsAdmin();
     renderRegisterForm();
+    renderAuthors();
     renderArticles();
     renderContactForm();
     renderWhyForm();
@@ -1002,7 +1019,7 @@
   // ---------- Tabs ----------
   function switchTab(t) {
     document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.dataset.tab === t));
-    ['home','templates','products','articles','why','pricing','schedule','users','subs','register','admins','contact'].forEach(name =>
+    ['home','templates','products','articles','why','pricing','schedule','users','subs','authors','register','admins','contact'].forEach(name =>
       document.getElementById('tab-' + name).classList.toggle('hidden', name !== t));
     if (t === 'home') renderHome();
     if (t === 'products') renderProductsAdmin();
@@ -1011,6 +1028,7 @@
     if (t === 'users') { renderUsers(); clearUserMsg(); }
     if (t === 'subs') renderSubs();
     if (t === 'register') renderRegisterForm();
+    if (t === 'authors') renderAuthors();
     if (t === 'admins') { renderAdmins(); clearAdminMsg(); }
   }
   function confirmDelete(message) {
@@ -1769,6 +1787,62 @@
   }
 
   // ---------- Contact ----------
+  // ---------- Зохиогчид ----------
+  function renderAuthors() {
+    const el = document.getElementById('authList');
+    if (!el) return;
+    el.innerHTML = authors.map((a, i) => {
+      const photo = a.photo
+        ? '<img src="' + esc(a.photo) + '" style="width:64px; height:64px; border-radius:50%; object-fit:cover; border:1px solid var(--line);">'
+        : '<div style="width:64px; height:64px; border-radius:50%; background:var(--accent-soft); border:1px solid var(--line); display:grid; place-items:center; font-size:24px; font-weight:700; color:var(--muted);">' + esc(String(a.name || '?').charAt(0)) + '</div>';
+      return '<div class="editor" style="margin-top:16px;">'
+        + '<div style="display:flex; gap:16px; align-items:flex-start; margin-bottom:16px;">'
+        + '<div>' + photo + '</div>'
+        + '<div style="flex:1; min-width:0;">'
+        + '<div class="row2">'
+        + '<div class="field" style="margin-bottom:10px;"><label>Нэр (нийтлэлийн «Зохиогч» талбартай яг таарна)</label><input value="' + esc(a.name || '') + '" oninput="authors[' + i + '].name = this.value"></div>'
+        + '<div class="field" style="margin-bottom:10px;"><label>Албан тушаал</label><input value="' + esc(a.role || '') + '" oninput="authors[' + i + '].role = this.value"></div>'
+        + '</div>'
+        + '<div class="tpl-file" style="border-top:none; padding-top:0;">'
+        + '<label class="file-btn">🖼️ Зураг сонгох<input type="file" accept="image/*" style="display:none;" onchange="onAuthorPhoto(this, ' + i + ')"></label>'
+        + (a.photo ? '<button class="file-rm" onclick="removeAuthorPhoto(' + i + ')">Зураг устгах</button>' : '<span class="file-name">Зураг сонгоогүй</span>')
+        + '</div>'
+        + '</div></div>'
+        + '<div class="field"><label>Товч танилцуулга</label><textarea rows="3" oninput="authors[' + i + '].bio = this.value">' + esc(a.bio || '') + '</textarea></div>'
+        + '<div class="field"><label>Ажилласан төслүүд — мөр тус бүр нэг төсөл</label><textarea rows="4" oninput="authors[' + i + '].projects = linesToList(this.value)">' + esc((a.projects || []).join('\n')) + '</textarea></div>'
+        + '<div class="save-bar"><button class="btn btn-danger btn-sm" onclick="delAuthor(' + i + ')">Устгах</button></div>'
+        + '</div>';
+    }).join('') || '<div class="empty">Зохиогч алга. «+ Зохиогч нэмэх» дарна уу.</div>';
+  }
+  function addAuthor() {
+    authors.push({ name: '', role: '', bio: '', photo: '', projects: [] });
+    renderAuthors();
+  }
+  function delAuthor(i) {
+    if (!confirmDelete()) return;
+    const removed = authors.splice(i, 1)[0];
+    renderAuthors();
+    save('kpihub_authors', authors, () => { authors.splice(i, 0, removed); renderAuthors(); });
+  }
+  function onAuthorPhoto(input, i) {
+    const f = input.files && input.files[0]; if (!f) return;
+    if (f.size > MAX_IMG) { alert('Зураг хэт том байна (дээд тал нь 5MB).'); input.value = ''; return; }
+    const reader = new FileReader();
+    reader.onload = () => { authors[i].photo = reader.result; renderAuthors(); };
+    reader.readAsDataURL(f);
+  }
+  function removeAuthorPhoto(i) {
+    if (!confirmDelete('Энэ зургийг устгах уу?')) return;
+    authors[i].photo = '';
+    renderAuthors();
+  }
+  function saveAuthors() {
+    // Нэргүй мөрүүдийг хадгалахгүй — уншигч талд ашиггүй
+    authors = authors.filter(a => String(a.name || '').trim());
+    renderAuthors();
+    save('kpihub_authors', authors).then(ok => { if (ok) flash('authSaved'); });
+  }
+
   // ---------- Бүртгэлийн цонхны текст ----------
   const REG_FIELDS = ['intro', 'successHead', 'successTitle', 'successText'];
   function renderRegisterForm() {
@@ -2130,6 +2204,7 @@
     articles     = load('kpihub_articles', DEFAULT_ARTICLES.map(a=>JSON.parse(JSON.stringify(a))));
     products     = load('kpihub_products', JSON.parse(JSON.stringify(DEFAULT_PRODUCTS)));
     register     = load('kpihub_register', Object.assign({}, DEFAULT_REGISTER));
+    authors      = load('kpihub_authors', []);
     contact      = load('kpihub_contact', Object.assign({}, DEFAULT_CONTACT));
     why          = load('kpihub_why', JSON.parse(JSON.stringify(DEFAULT_WHY)));
     availability = load('kpihub_availability', []);

@@ -363,28 +363,56 @@
     font-size: clamp(30px, 5vw, 52px); line-height: 1.12; color: #111; letter-spacing: -.3px;
     max-width: 900px; margin: 0 auto 30px;
   }
-  .reader-meta {
-    display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;
-    max-width: 900px; margin: 0 auto 30px;
+  /* Нийтлэлийн зохиогчийн мөр — төвлөрсөн: зураг, нэр + Дагах, огноо, үйлдэл */
+  .reader-byline { max-width: 900px; margin: 0 auto 34px; text-align: center; }
+  .rb-avatar {
+    width: 74px; height: 74px; border-radius: 50%; padding: 0; margin: 0 auto 14px;
+    display: block; cursor: pointer; overflow: hidden;
+    background: #eef1f7; border: 1px solid #dfe2ea; transition: transform .2s, border-color .2s;
   }
-  .reader-meta .rm-info { font-size: 15px; color: #333; }
-  .rm-share { display: flex; align-items: center; gap: 10px; }
-  .rm-share .rm-label { font-size: 15px; color: #333; margin-right: 2px; }
-  .rm-share a, .rm-share button {
-    width: 34px; height: 34px; border-radius: 50%; background: #111; color: #fff; border: none; cursor: pointer;
-    display: grid; place-items: center; text-decoration: none; transition: background .2s;
+  .rb-avatar:hover { transform: scale(1.05); border-color: var(--accent); }
+  .rb-avatar img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .rb-avatar .rb-initial { font-size: 26px; font-weight: 700; color: #5a6273; line-height: 74px; }
+  .rb-name {
+    display: flex; align-items: center; justify-content: center; gap: 12px; flex-wrap: wrap;
+    font-size: 19px; color: #111; margin-bottom: 10px;
   }
-  .rm-share a:hover, .rm-share button:hover { background: var(--accent); }
-  .rm-share svg { width: 16px; height: 16px; }
-  .rm-share .rm-sep { width: 1px; height: 24px; background: #d0d2da; border-radius: 0; }
-  .rm-share button.saved { background: var(--accent); }
-  @media (max-width: 520px) {
-    /* «Хуваалцах/Хадгалах» бичгүүд 375px-д багтахгүй, Хадгалах товч
-       дэлгэцээс тасардаг байв — бичгийг нууж, дүрсүүд өөрөө ойлгогдоно. */
-    .rm-share { gap: 8px; }
-    .rm-share .rm-label { display: none; }
-    .rm-share a, .rm-share button { width: 38px; height: 38px; }
+  .rb-name b { color: var(--accent); font-weight: 800; }
+  .rb-follow {
+    border: 1px solid #cfd2da; background: #fff; color: #111; border-radius: 999px;
+    padding: 8px 18px; font-size: 15px; font-weight: 600; cursor: pointer; font-family: inherit;
+    transition: border-color .2s, color .2s;
   }
+  .rb-follow:hover { border-color: var(--accent); color: var(--accent); }
+  .rb-follow.done { border-color: #067647; color: #067647; cursor: default; }
+  .rb-date { font-size: 15px; color: #444; margin-bottom: 18px; }
+  .rb-acts { display: flex; align-items: center; justify-content: center; gap: 26px; }
+  .rb-acts button {
+    background: none; border: none; padding: 4px; cursor: pointer; color: #111;
+    display: grid; place-items: center; transition: color .2s;
+  }
+  .rb-acts button:hover { color: var(--accent); }
+  .rb-acts button.saved { color: var(--accent); }
+  .rb-acts button.saved svg path { fill: currentColor; }
+  .rb-acts svg { width: 22px; height: 22px; display: block; }
+
+  /* Зохиогчийн дэлгэрэнгүй цонх */
+  .au-head { text-align: center; padding-bottom: 18px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
+  .au-photo {
+    width: 84px; height: 84px; border-radius: 50%; margin: 0 auto 14px; overflow: hidden;
+    background: var(--bg-soft); border: 1px solid var(--line); display: grid; place-items: center;
+  }
+  .au-photo img { width: 100%; height: 100%; object-fit: cover; }
+  .au-photo span { font-size: 30px; font-weight: 700; color: var(--muted); }
+  .au-name { font-size: 20px; font-weight: 800; }
+  .au-role { font-size: 13.5px; color: var(--accent-2); margin-top: 4px; }
+  .au-bio { font-size: 14px; color: var(--muted); line-height: 1.6; margin-top: 12px; }
+  .au-projects h4 { font-size: 12.5px; letter-spacing: .6px; text-transform: uppercase; color: var(--accent); margin-bottom: 12px; }
+  .au-projects li {
+    list-style: none; font-size: 14px; padding: 9px 0 9px 22px; position: relative; border-bottom: 1px solid var(--line);
+  }
+  .au-projects li:last-child { border-bottom: none; }
+  .au-projects li::before { content: '→'; position: absolute; left: 0; color: var(--accent); }
 
   .reader-cover {
     display: grid; place-items: center; font-size: 90px; border-radius: 12px; overflow: hidden;
@@ -966,17 +994,23 @@
     <div class="reader-cat"><span id="arCat"></span> | KPI consulting</div>
     <h1 class="reader-title" id="arTitle"></h1>
 
-    <div class="reader-meta">
-      <div class="rm-info"><span id="arDate"></span> | <span id="arRead"></span></div>
-      <div class="rm-share">
-        <span class="rm-label">Хуваалцах</span>
-        <a href="#" onclick="event.preventDefault(); readerShare('li')" aria-label="LinkedIn"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.94 5a1.94 1.94 0 1 1-3.88 0 1.94 1.94 0 0 1 3.88 0zM3.4 8.4h3.1V21H3.4V8.4zm5.06 0h2.97v1.72h.04c.41-.78 1.42-1.6 2.93-1.6 3.13 0 3.71 2.06 3.71 4.74V21h-3.1v-5.4c0-1.29-.02-2.95-1.8-2.95-1.8 0-2.08 1.4-2.08 2.85V21H8.46V8.4z"/></svg></a>
-        <a href="#" onclick="event.preventDefault(); readerShare('x')" aria-label="X"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M18.9 2H22l-7.1 8.1L23.2 22h-6.6l-5.2-6.8L5.5 22H2.4l7.6-8.7L1.2 2h6.8l4.7 6.2L18.9 2zm-1.2 18h1.8L7.4 3.9H5.5L17.7 20z"/></svg></a>
-        <a href="#" onclick="event.preventDefault(); readerShare('fb')" aria-label="Facebook"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1V7.9c0-.9.25-1.5 1.55-1.5H17V3.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v2.1H7.5V13h2.8v8h3.2z"/></svg></a>
-        <a href="#" onclick="event.preventDefault(); readerShare('email')" aria-label="Email"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3.5 6.5 12 13l8.5-6.5"/></svg></a>
-        <span class="rm-sep"></span>
-        <span class="rm-label">Хадгалах</span>
-        <button id="arSaveBtn" onclick="toggleReaderSave()" aria-label="Хадгалах"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg></button>
+    <div class="reader-byline">
+      <button class="rb-avatar" id="arAuthorAvatar" onclick="openAuthor()" aria-label="Зохиогчийн мэдээлэл"></button>
+      <div class="rb-name">
+        <span>By <b id="arAuthorName"></b></span>
+        <button class="rb-follow" id="arFollowBtn" onclick="openFollow()">+ Дагах</button>
+      </div>
+      <div class="rb-date"><span id="arDate"></span> · <span id="arRead"></span></div>
+      <div class="rb-acts">
+        <button id="arShareBtn" onclick="event.stopPropagation(); openReaderShare(this)" aria-label="Хуваалцах" title="Хуваалцах">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 12v7a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-7"/><path d="M12 15V3"/><path d="M7.5 7.5 12 3l4.5 4.5"/></svg>
+        </button>
+        <button id="arSaveBtn" onclick="toggleReaderSave()" aria-label="Хадгалах" title="Хадгалах">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>
+        </button>
+        <button onclick="closeArticle(); openContact(event)" aria-label="Бидэнтэй чатлах" title="Бидэнтэй чатлах">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+        </button>
       </div>
     </div>
 
@@ -990,6 +1024,44 @@
   </div>
 </div>
 
+<!-- ===== Зохиогчийн дэлгэрэнгүй ===== -->
+<div class="modal-overlay" id="authorModal" style="z-index:140;" onclick="if(event.target===this) closeAuthor()">
+  <div class="modal">
+    <div class="modal-head">
+      <h3>Зохиогч</h3>
+      <button class="modal-close" onclick="closeAuthor()" aria-label="Хаах">×</button>
+    </div>
+    <div class="modal-body" id="authorBody"></div>
+  </div>
+</div>
+
+<!-- ===== Дагах (и-мэйл захиалга) ===== -->
+<div class="modal-overlay" id="followModal" style="z-index:140;" onclick="if(event.target===this) closeFollow()">
+  <div class="modal">
+    <div class="modal-head">
+      <h3 id="followHead">Дагах</h3>
+      <button class="modal-close" onclick="closeFollow()" aria-label="Хаах">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="followForm">
+        <p style="font-size:13.5px; color:var(--muted); margin-bottom:16px;" id="followIntro"></p>
+        <div class="field">
+          <label>И-мэйл хаяг</label>
+          <input type="email" id="followEmail" placeholder="name@company.mn" onkeydown="if(event.key==='Enter') submitFollow()">
+        </div>
+        <div id="followMsg" style="font-size:13px; min-height:18px; margin-bottom:10px;"></div>
+        <button class="btn btn-primary" id="followBtn" style="width:100%;" onclick="submitFollow()">Захиалах</button>
+      </div>
+      <div class="center hidden" id="followSuccess">
+        <div class="success-icon">✓</div>
+        <h3 style="font-size:20px; margin-bottom:8px;">Баярлалаа!</h3>
+        <p id="followSuccessMsg"></p>
+        <button class="btn btn-primary" style="width:100%; margin-top:16px;" onclick="closeFollow()">Хаах</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Хуваалцах цэс (карт бүрд дундаа ашиглагдана) -->
 <div class="share-menu" id="shareMenu" role="menu" onclick="event.stopPropagation()"></div>
 
@@ -997,7 +1069,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
-<script src="firebase.js?v=6"></script>
+<script src="firebase.js?v=7"></script>
 
 <script>
   // ---------- Insights / articles ----------
@@ -1247,6 +1319,7 @@
     document.getElementById('arDate').textContent = a.date;
     document.getElementById('arRead').textContent = a.read;
     document.getElementById('arTitle').textContent = a.title;
+    renderByline();
     const cover = document.getElementById('arCover');
     if (a.image) { cover.innerHTML = '<img src="' + a.image + '" alt="">'; cover.style.background = '#eee'; }
     else { cover.textContent = a.icon; cover.style.background = (THEMES[a.cat] || THEMES._default).bg; }
@@ -1290,6 +1363,121 @@
     renderArticles();
   }
   function readerShare(platform) { shareTo(platform, currentArticleId); }
+  // Уншигчийн хуваалцах товч — картуудтай ижил цэсийг ашиглана
+  function openReaderShare(btn) { shareArticle(currentArticleId, btn); }
+
+  // ---------- Зохиогчид (админаас удирдана) ----------
+  let AUTHORS = [];
+  try {
+    const rawA = localStorage.getItem('kpihub_authors');
+    const parsed = rawA ? JSON.parse(rawA) : null;
+    if (Array.isArray(parsed)) AUTHORS = parsed;
+  } catch (e) {}
+  const FALLBACK_AUTHOR = 'KPI consulting';
+  function findAuthor(name) {
+    const n = String(name || '').trim().toLowerCase();
+    if (!n) return null;
+    return AUTHORS.find(a => String(a.name || '').trim().toLowerCase() === n) || null;
+  }
+  // Одоо уншиж буй нийтлэлийн зохиогчийн нэр
+  function currentAuthorName() {
+    const a = ARTICLES.find(x => x.id === currentArticleId);
+    return (a && a.author) ? a.author : FALLBACK_AUTHOR;
+  }
+  function avatarInner(author, name) {
+    if (author && author.photo) return '<img src="' + esc(author.photo) + '" alt="">';
+    return '<span class="rb-initial">' + esc(String(name || '?').trim().charAt(0)) + '</span>';
+  }
+  function renderByline() {
+    const name = currentAuthorName();
+    const author = findAuthor(name);
+    document.getElementById('arAuthorName').textContent = name;
+    document.getElementById('arAuthorAvatar').innerHTML = avatarInner(author, name);
+    // Зохиогчийн бүртгэл байхгүй бол дарахад үзүүлэх зүйл алга
+    document.getElementById('arAuthorAvatar').style.cursor = author ? 'pointer' : 'default';
+    const fb = document.getElementById('arFollowBtn');
+    const done = followedAlready();
+    fb.textContent = done ? '✓ Дагасан' : '+ Дагах';
+    fb.classList.toggle('done', done);
+  }
+
+  // ---------- Зохиогчийн дэлгэрэнгүй ----------
+  const authorModal = document.getElementById('authorModal');
+  function openAuthor() {
+    const name = currentAuthorName();
+    const a = findAuthor(name);
+    if (!a) return; // бүртгэлгүй зохиогчид цонх нээхгүй
+    const projects = Array.isArray(a.projects) ? a.projects.filter(Boolean) : [];
+    document.getElementById('authorBody').innerHTML =
+      '<div class="au-head">'
+      + '<div class="au-photo">' + (a.photo ? '<img src="' + esc(a.photo) + '" alt="">' : '<span>' + esc(name.charAt(0)) + '</span>') + '</div>'
+      + '<div class="au-name">' + esc(name) + '</div>'
+      + (a.role ? '<div class="au-role">' + esc(a.role) + '</div>' : '')
+      + (a.bio ? '<div class="au-bio">' + esc(a.bio) + '</div>' : '')
+      + '</div>'
+      + (projects.length
+          ? '<div class="au-projects"><h4>Ажилласан төслүүд</h4><ul>' + projects.map(p => '<li>' + esc(p) + '</li>').join('') + '</ul></div>'
+          : '<div style="font-size:13.5px; color:var(--muted); text-align:center;">Төслийн мэдээлэл оруулаагүй байна.</div>');
+    authorModal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeAuthor() { authorModal.classList.remove('open'); document.body.style.overflow = 'hidden'; }
+
+  // ---------- Дагах — и-мэйлийн захиалга ----------
+  const followModal = document.getElementById('followModal');
+  // Түлхүүрийг шууд бичив: энэ функц нь #article-... холбоосоор орж ирэхэд
+  // эхлүүлэлтийн үед дуудагддаг тул доор тунхаглагдсан SUBS_LOCAL-ыг
+  // ашиглавал temporal dead zone-д унана.
+  function followedAlready() {
+    try {
+      const list = JSON.parse(localStorage.getItem('kpihub_subscribed') || '[]');
+      return Array.isArray(list) && list.length > 0;
+    } catch (e) { return false; }
+  }
+  function openFollow() {
+    if (followedAlready()) return;
+    const name = currentAuthorName();
+    document.getElementById('followHead').textContent = name + '-г дагах';
+    document.getElementById('followIntro').textContent =
+      name + '-ийн шинэ нийтлэл гармагц и-мэйлээр мэдэгдэнэ. Хүссэн үедээ цуцалж болно.';
+    const inp = document.getElementById('followEmail');
+    inp.value = (currentUser() || {}).email || '';
+    document.getElementById('followMsg').textContent = '';
+    document.getElementById('followForm').classList.remove('hidden');
+    document.getElementById('followSuccess').classList.add('hidden');
+    followModal.classList.add('open');
+    document.body.style.overflow = 'hidden';
+    setTimeout(() => inp.focus(), 50);
+  }
+  function closeFollow() { followModal.classList.remove('open'); document.body.style.overflow = ''; }
+  function submitFollow() {
+    const inp = document.getElementById('followEmail');
+    const msg = document.getElementById('followMsg');
+    const btn = document.getElementById('followBtn');
+    const email = inp.value.trim().toLowerCase();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      msg.textContent = 'И-мэйл хаягаа зөв оруулна уу.';
+      msg.style.color = '#ff7a7a'; inp.focus(); return;
+    }
+    btn.disabled = true;
+    msg.textContent = 'Илгээж байна…'; msg.style.color = 'var(--muted)';
+    KPICloud.addSubmission('subscribe', { email: email })
+      .then(() => {
+        try { localStorage.setItem(SUBS_LOCAL, JSON.stringify(localSubscribed().concat(email))); } catch (e) {}
+        document.getElementById('followSuccessMsg').textContent =
+          'Шинэ нийтлэл гармагц ' + email + ' хаяг руу мэдэгдэх болно.';
+        document.getElementById('followForm').classList.add('hidden');
+        document.getElementById('followSuccess').classList.remove('hidden');
+        renderByline();
+      })
+      .catch(() => { msg.textContent = 'Илгээхэд алдаа гарлаа. Дахин оролдоно уу.'; msg.style.color = '#ff7a7a'; })
+      .then(() => { btn.disabled = false; });
+  }
+  document.addEventListener('keydown', e => {
+    if (e.key !== 'Escape') return;
+    if (followModal.classList.contains('open')) closeFollow();
+    else if (authorModal.classList.contains('open')) closeAuthor();
+  });
 
   renderFilters();
   renderArticles();
@@ -2169,6 +2357,10 @@
       if (rg) REGISTER = Object.assign({}, DEFAULT_REGISTER, rg);
     } catch (e) {}
     try {
+      const au = JSON.parse(localStorage.getItem('kpihub_authors') || 'null');
+      if (Array.isArray(au)) AUTHORS = au;
+    } catch (e) {}
+    try {
       const w = JSON.parse(localStorage.getItem('kpihub_why') || 'null');
       if (w) WHY = Object.assign({}, DEFAULT_WHY, w);
     } catch (e) {}
@@ -2177,6 +2369,7 @@
     renderProducts();
     renderContact();
     renderRegisterTexts();
+    if (currentArticleId && arOverlay.classList.contains('open')) renderByline();
     renderFooterSocial();
     renderWhy();
     if (bookingModal && bookingModal.classList.contains('open')) {
