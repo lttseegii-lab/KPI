@@ -753,7 +753,7 @@
 
       <!-- Registration form -->
       <div id="pane1">
-        <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Доорх мэдээллийг бөглөж бүртгэлээ үүсгээрэй. Бүртгэл үнэ төлбөргүй.</p>
+        <p id="regIntro" style="font-size:13px;color:var(--muted);margin-bottom:16px;">Доорх мэдээллийг бөглөж бүртгэлээ үүсгээрэй. Бүртгэл үнэ төлбөргүй.</p>
         <div class="field" id="f-name">
           <label>Нэр</label>
           <input type="text" id="in-name" placeholder="Таны нэр">
@@ -788,8 +788,8 @@
       <!-- Success -->
       <div class="center hidden" id="pane3">
         <div class="success-icon">✓</div>
-        <h3 style="font-size:20px;margin-bottom:8px;">Бидэнтэй нэгдсэн танд баярлалаа!</h3>
-        <p>Таны мэйл хаяг руу KPI нэвтрүүлэх зөвлөгөөг илгээлээ. Амжилт хүсье.</p>
+        <h3 id="regSuccessTitle" style="font-size:20px;margin-bottom:8px;">Бидэнтэй нэгдсэн танд баярлалаа!</h3>
+        <p id="regSuccessText">Таны мэйл хаяг руу KPI нэвтрүүлэх зөвлөгөөг илгээлээ. Амжилт хүсье.</p>
         <button class="btn btn-primary" onclick="closeModal();">Хаах</button>
       </div>
 
@@ -997,7 +997,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
-<script src="firebase.js?v=5"></script>
+<script src="firebase.js?v=6"></script>
 
 <script>
   // ---------- Insights / articles ----------
@@ -1805,6 +1805,26 @@
     if (rawC) CONTACT = Object.assign({}, DEFAULT_CONTACT, JSON.parse(rawC));
   } catch (e) {}
 
+  // ---------- Бүртгэлийн цонхны текст (админаас удирдана) ----------
+  const DEFAULT_REGISTER = {
+    intro: 'Доорх мэдээллийг бөглөж бүртгэлээ үүсгээрэй. Бүртгэл үнэ төлбөргүй.',
+    successHead: 'Баярлалаа',
+    successTitle: 'Бидэнтэй нэгдсэн танд баярлалаа!',
+    successText: 'Таны мэйл хаяг руу KPI нэвтрүүлэх зөвлөгөөг илгээлээ. Амжилт хүсье.'
+  };
+  let REGISTER = DEFAULT_REGISTER;
+  try {
+    const rawR = localStorage.getItem('kpihub_register');
+    if (rawR) REGISTER = Object.assign({}, DEFAULT_REGISTER, JSON.parse(rawR));
+  } catch (e) {}
+  function renderRegisterTexts() {
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('regIntro', REGISTER.intro);
+    set('regSuccessTitle', REGISTER.successTitle);
+    set('regSuccessText', REGISTER.successText);
+  }
+  renderRegisterTexts();
+
   function renderContact() {
     document.getElementById('contactIntro').textContent = CONTACT.intro || '';
     const rows = [];
@@ -2058,7 +2078,7 @@
 
     document.getElementById('pane1').classList.add('hidden');
     document.getElementById('pane3').classList.remove('hidden');
-    document.getElementById('modalTitle').textContent = 'Баярлалаа';
+    document.getElementById('modalTitle').textContent = REGISTER.successHead;
     renderAuthState();
   }
 
@@ -2145,6 +2165,10 @@
       if (c) CONTACT = Object.assign({}, DEFAULT_CONTACT, c);
     } catch (e) {}
     try {
+      const rg = JSON.parse(localStorage.getItem('kpihub_register') || 'null');
+      if (rg) REGISTER = Object.assign({}, DEFAULT_REGISTER, rg);
+    } catch (e) {}
+    try {
       const w = JSON.parse(localStorage.getItem('kpihub_why') || 'null');
       if (w) WHY = Object.assign({}, DEFAULT_WHY, w);
     } catch (e) {}
@@ -2152,6 +2176,7 @@
     renderArticles();
     renderProducts();
     renderContact();
+    renderRegisterTexts();
     renderFooterSocial();
     renderWhy();
     if (bookingModal && bookingModal.classList.contains('open')) {

@@ -36,6 +36,7 @@
     "kpihub_templates",
     "kpihub_articles",
     "kpihub_products",
+    "kpihub_register",
     "kpihub_contact",
     "kpihub_why",
     "kpihub_availability",

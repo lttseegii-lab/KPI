@@ -219,6 +219,7 @@
       <div class="tab" data-tab="schedule" onclick="switchTab('schedule')">Цаг товлолт</div>
       <div class="tab" data-tab="users" onclick="switchTab('users')">Хэрэглэгч</div>
       <div class="tab" data-tab="subs" onclick="switchTab('subs')">Захиалагчид</div>
+      <div class="tab" data-tab="register" onclick="switchTab('register')">Бүртгэлийн текст</div>
       <div class="tab" data-tab="admins" onclick="switchTab('admins')">Админууд</div>
       <div class="tab" data-tab="contact" onclick="switchTab('contact')">Холбоо барих</div>
     </div>
@@ -515,6 +516,37 @@
     </section>
 
     <!-- ===== Admin users panel ===== -->
+    <!-- ===== Registration texts panel ===== -->
+    <section id="tab-register" class="hidden">
+      <div class="panel-head">
+        <h2>Бүртгэлийн цонхны текст</h2>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="saveRegister()">Хадгалах</button>
+          <button class="btn" onclick="resetRegister()">Анхны төлөвт</button>
+          <span class="saved-msg" id="regSaved">✓ Хадгалагдлаа</span>
+        </div>
+      </div>
+      <div class="hint">Зочин «Бүртгэл үүсгэх» цонхыг нээх болон амжилттай бүртгүүлэх үед харагдах бичвэрүүд.</div>
+      <div class="editor">
+        <div class="field">
+          <label>Маягтын танилцуулга</label>
+          <textarea id="r-intro" style="min-height:60px" placeholder="Доорх мэдээллийг бөглөж..."></textarea>
+        </div>
+        <div class="field">
+          <label>Амжилтын цонхны толгой</label>
+          <input id="r-successHead" placeholder="Баярлалаа">
+        </div>
+        <div class="field">
+          <label>Амжилтын гарчиг</label>
+          <input id="r-successTitle" placeholder="Бидэнтэй нэгдсэн танд баярлалаа!">
+        </div>
+        <div class="field">
+          <label>Амжилтын тайлбар</label>
+          <textarea id="r-successText" style="min-height:70px" placeholder="Таны мэйл хаяг руу..."></textarea>
+        </div>
+      </div>
+    </section>
+
     <section id="tab-admins" class="hidden">
       <div class="panel-head">
         <h2>Админ хэрэглэгчид</h2>
@@ -631,7 +663,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
-<script src="firebase.js?v=5"></script>
+<script src="firebase.js?v=6"></script>
 
 <script>
 
@@ -886,6 +918,14 @@
   let availability = load('kpihub_availability', []); // [{date, time}]
   let products = load('kpihub_products', JSON.parse(JSON.stringify(DEFAULT_PRODUCTS)));
 
+  const DEFAULT_REGISTER = {
+    intro: 'Доорх мэдээллийг бөглөж бүртгэлээ үүсгээрэй. Бүртгэл үнэ төлбөргүй.',
+    successHead: 'Баярлалаа',
+    successTitle: 'Бидэнтэй нэгдсэн танд баярлалаа!',
+    successText: 'Таны мэйл хаяг руу KPI нэвтрүүлэх зөвлөгөөг илгээлээ. Амжилт хүсье.'
+  };
+  let register = load('kpihub_register', Object.assign({}, DEFAULT_REGISTER));
+
   const DEFAULT_QUESTIONS = [
     { q: 'Байгууллагын нэр', type: 'text' },
     { q: 'Ажилтны тоо', type: 'text' },
@@ -932,6 +972,7 @@
     document.getElementById('app').classList.remove('hidden');
     renderTemplates();
     renderProductsAdmin();
+    renderRegisterForm();
     renderArticles();
     renderContactForm();
     renderWhyForm();
@@ -961,7 +1002,7 @@
   // ---------- Tabs ----------
   function switchTab(t) {
     document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.dataset.tab === t));
-    ['home','templates','products','articles','why','pricing','schedule','users','subs','admins','contact'].forEach(name =>
+    ['home','templates','products','articles','why','pricing','schedule','users','subs','register','admins','contact'].forEach(name =>
       document.getElementById('tab-' + name).classList.toggle('hidden', name !== t));
     if (t === 'home') renderHome();
     if (t === 'products') renderProductsAdmin();
@@ -969,6 +1010,7 @@
     if (t === 'pricing') { renderQuestions(); renderQuoteRequests(); }
     if (t === 'users') { renderUsers(); clearUserMsg(); }
     if (t === 'subs') renderSubs();
+    if (t === 'register') renderRegisterForm();
     if (t === 'admins') { renderAdmins(); clearAdminMsg(); }
   }
   function confirmDelete(message) {
@@ -1727,6 +1769,25 @@
   }
 
   // ---------- Contact ----------
+  // ---------- Бүртгэлийн цонхны текст ----------
+  const REG_FIELDS = ['intro', 'successHead', 'successTitle', 'successText'];
+  function renderRegisterForm() {
+    if (!document.getElementById('r-intro')) return;
+    REG_FIELDS.forEach(f => { document.getElementById('r-' + f).value = register[f] || ''; });
+  }
+  function saveRegister() {
+    const next = {};
+    REG_FIELDS.forEach(f => { next[f] = document.getElementById('r-' + f).value.trim(); });
+    register = next;
+    save('kpihub_register', register).then(ok => { if (ok) flash('regSaved'); });
+  }
+  function resetRegister() {
+    if (!confirm('Бүртгэлийн цонхны текстийг анхны төлөвт буцаах уу?')) return;
+    register = Object.assign({}, DEFAULT_REGISTER);
+    renderRegisterForm();
+    save('kpihub_register', register);
+  }
+
   function renderContactForm() {
     document.getElementById('c-intro').value = contact.intro || '';
     document.getElementById('c-email').value = contact.email || '';
@@ -2068,6 +2129,7 @@
     templates    = load('kpihub_templates', DEFAULT_TEMPLATES.map(t=>t.slice()));
     articles     = load('kpihub_articles', DEFAULT_ARTICLES.map(a=>JSON.parse(JSON.stringify(a))));
     products     = load('kpihub_products', JSON.parse(JSON.stringify(DEFAULT_PRODUCTS)));
+    register     = load('kpihub_register', Object.assign({}, DEFAULT_REGISTER));
     contact      = load('kpihub_contact', Object.assign({}, DEFAULT_CONTACT));
     why          = load('kpihub_why', JSON.parse(JSON.stringify(DEFAULT_WHY)));
     availability = load('kpihub_availability', []);
