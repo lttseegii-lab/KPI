@@ -2411,7 +2411,7 @@
       about.innerHTML = img + txt;
     }
     document.getElementById('whyGrid').innerHTML = (WHY.features || []).map(f =>
-      '<article class="card"><div class="icon">' + esc(f[0]) + '</div><h3>' + esc(f[1]) + '</h3><p>' + esc(f[2]) + '</p></article>'
+      '<article class="card"><h3>' + esc(f[1]) + '</h3><p>' + esc(f[2]) + '</p></article>'
     ).join('');
   }
   renderWhy();

@@ -1788,8 +1788,7 @@
   function renderWhyFeatures() {
     document.getElementById('w-featList').innerHTML = (why.features || []).map((f, i) =>
       '<div class="tpl-card">'
-      + '<div class="tpl-top" style="grid-template-columns:60px 1fr auto;">'
-      + '<input value="' + esc(f[0]) + '" maxlength="4" oninput="why.features[' + i + '][0]=this.value" title="Дүрс">'
+      + '<div class="tpl-top" style="grid-template-columns:1fr auto;">'
       + '<input value="' + esc(f[1]) + '" oninput="why.features[' + i + '][1]=this.value" placeholder="Гарчиг">'
       + '<button class="btn btn-danger btn-sm" onclick="delWhyFeature(' + i + ')">Устгах</button>'
       + '</div>'
@@ -1811,7 +1810,7 @@
     if (!confirmDelete('Та энэ зургийг устгахдаа итгэлтэй байна уу?')) return;
     why.image = ''; renderWhyForm();
   }
-  function addWhyFeature() { why.features.push(['✨', 'Шинэ давуу тал', 'Тайлбар']); renderWhyFeatures(); }
+  function addWhyFeature() { why.features.push(['', 'Шинэ давуу тал', 'Тайлбар']); renderWhyFeatures(); }
   function delWhyFeature(i) {
     if (!confirmDelete()) return;
     why.features.splice(i, 1); renderWhyFeatures();
