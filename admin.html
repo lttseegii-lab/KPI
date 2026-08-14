@@ -2129,6 +2129,9 @@
       + '<div class="field"><label>Карт дээрх товч тайлбар</label><textarea rows="2" oninput="products[\'' + k + '\'].excerpt = this.value">' + esc(p.excerpt || '') + '</textarea></div>'
       + '<div class="field"><label>Дэлгэрэнгүй тайлбар</label><textarea rows="3" oninput="products[\'' + k + '\'].lead = this.value">' + esc(p.lead || '') + '</textarea></div>'
       + lists
+      + '<div class="field" style="margin-top:2px;"><label style="display:flex; justify-content:space-between; align-items:center;">Хэрэгжүүлэх замын зураг — зорилтууд (заавал биш)'
+      + '<button class="btn btn-sm" onclick="addMilestone()">+ Зорилт нэмэх</button></label>'
+      + '<div id="prodRoadmap"></div></div>'
       + '<label style="display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--text); cursor:pointer; margin:0;">'
       + '<input type="checkbox" style="width:auto;" ' + (p.best ? 'checked' : '')
       + ' onchange="products[\'' + k + '\'].best = this.checked">«Хамгийн үнэ цэнэтэй» тэмдэг харуулах</label>'
@@ -2138,7 +2141,34 @@
     // benchmarking = KPI-ийн сан) дээр файл нэмж/хасах засварлагчийг доор нь харуулна.
     const tplEnabled = !!TEMPLATE_PRODUCT_KEYS[k];
     el.innerHTML = editorHtml + (tplEnabled ? templatesEditorHtml() : '');
+    renderRoadmapEditor();
     if (tplEnabled) renderTemplates();
+  }
+  // Замын зураг (milestone) засварлагч — products[k].roadmap = [{title, checkpoints:[]}]
+  function renderRoadmapEditor() {
+    const box = document.getElementById('prodRoadmap');
+    if (!box) return;
+    const k = prodSelected;
+    const road = (products[k] && products[k].roadmap) || [];
+    box.innerHTML = road.map(function (m, mi) {
+      return '<div class="tpl-card" style="margin-top:8px;">'
+        + '<div style="display:flex; gap:10px; align-items:center;">'
+        + '<input value="' + esc(m.title || '') + '" oninput="products[\'' + k + '\'].roadmap[' + mi + '].title=this.value" placeholder="Зорилтын гарчиг" style="flex:1;">'
+        + '<button class="btn btn-danger btn-sm" onclick="delMilestone(' + mi + ')">Устгах</button>'
+        + '</div>'
+        + '<textarea style="min-height:66px; margin-top:8px;" oninput="products[\'' + k + '\'].roadmap[' + mi + '].checkpoints=linesToList(this.value)" placeholder="Хяналтын цэгүүд — мөр тус бүр нэг">' + esc((m.checkpoints || []).join('\n')) + '</textarea>'
+        + '</div>';
+    }).join('') || '<div class="empty" style="padding:8px 0;">Зорилт алга. «+ Зорилт нэмэх» дарна уу.</div>';
+  }
+  function addMilestone() {
+    const k = prodSelected;
+    if (!products[k].roadmap) products[k].roadmap = [];
+    products[k].roadmap.push({ title: '', checkpoints: [] });
+    renderRoadmapEditor();
+  }
+  function delMilestone(mi) {
+    if (!confirmDelete()) return;
+    products[prodSelected].roadmap.splice(mi, 1); renderRoadmapEditor();
   }
   function templatesEditorHtml() {
     return '<div class="editor" style="margin-top:18px;">'

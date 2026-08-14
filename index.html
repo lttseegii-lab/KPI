@@ -699,6 +699,13 @@
   .pd-dl-card .nm { font-size: 15px; font-weight: 700; color: #111; }
   .pd-dl-card .ty { font-size: 12.5px; color: #777; flex: 1; }
   .pd-dl-card .badge.dl { align-self: flex-start; margin-top: 4px; }
+  /* Замын зураг — зорилт бүр хяналтын цэгүүдтэй */
+  .pd-milestone { border: 1px solid #e3e5ec; border-radius: 10px; padding: 20px 22px; margin-bottom: 14px; background: #fff; }
+  .pd-milestone h4 { font-size: 15px; font-weight: 700; color: #111; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .pd-milestone .ms-badge { background: #111; color: #fff; font-size: 10.5px; font-weight: 700; letter-spacing: .04em; padding: 3px 9px; border-radius: 999px; white-space: nowrap; }
+  .pd-checkpoints { list-style: none; display: flex; flex-direction: column; gap: 9px; }
+  .pd-checkpoints li { font-size: 14px; color: #333; line-height: 1.5; padding-left: 22px; position: relative; }
+  .pd-checkpoints li::before { content: ""; position: absolute; left: 0; top: 5px; width: 9px; height: 9px; border: 2px solid var(--accent); border-radius: 50%; box-sizing: border-box; }
 
   .pd-tpl { display: flex; flex-direction: column; gap: 9px; }
   .pd-tpl .row {
@@ -1040,6 +1047,11 @@
       <div class="pd-section" id="pdPhasesWrap" style="display:none;">
         <h3 id="pdPhasesTitle">Үе шат, хэрэгслүүд</h3>
         <div class="pd-phases" id="pdPhases"></div>
+      </div>
+
+      <div class="pd-section" id="pdRoadmapWrap" style="display:none;">
+        <h3>Хэрэгжүүлэх замын зураг</h3>
+        <div id="pdRoadmap"></div>
       </div>
 
       <div class="pd-section" id="pdDownloadsWrap" style="display:none;">
@@ -2012,6 +2024,7 @@
     toggleSection('pdIncludesWrap', (p.includes || []).length);
     toggleSection('pdOutcomesWrap', (p.outcomes || []).length);
     renderPhases(p);
+    renderRoadmap(p);
     pdOverlay.scrollTop = 0; window.scrollTo(0, 0);
     pdOverlay.classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -2069,6 +2082,23 @@
     } else {
       dwrap.style.display = 'none';
     }
+  }
+  // Хэрэгжүүлэх замын зураг — зорилт (milestone) бүр хяналтын цэгүүдтэй
+  function renderRoadmap(p) {
+    const wrap = document.getElementById('pdRoadmapWrap');
+    const road = (p.roadmap || []).filter(function (m) {
+      return (m.title && m.title.trim()) || (m.checkpoints && m.checkpoints.length);
+    });
+    if (!road.length) { wrap.style.display = 'none'; return; }
+    document.getElementById('pdRoadmap').innerHTML = road.map(function (m, i) {
+      const cps = (m.checkpoints || []).filter(Boolean)
+        .map(function (c) { return '<li>' + esc(c) + '</li>'; }).join('');
+      return '<div class="pd-milestone">'
+        + '<h4><span class="ms-badge">ЗОРИЛТ ' + (i + 1) + '</span>' + esc(m.title || '') + '</h4>'
+        + (cps ? '<ul class="pd-checkpoints">' + cps + '</ul>' : '')
+        + '</div>';
+    }).join('');
+    wrap.style.display = '';
   }
   function closeProduct() { pdOverlay.classList.remove('open'); document.body.style.overflow = ''; }
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeProduct(); });
