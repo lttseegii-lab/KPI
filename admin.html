@@ -229,7 +229,6 @@
   <main class="wrap admin-layout">
     <div class="tabs">
       <div class="tab active" data-tab="home" onclick="switchTab('home')">Нүүр</div>
-      <div class="tab" data-tab="templates" onclick="switchTab('templates')">Темплэйтүүд</div>
       <div class="tab" data-tab="products" onclick="switchTab('products')">Бүтээгдэхүүн</div>
       <div class="tab" data-tab="articles" onclick="switchTab('articles')">Мэдээ нийтлэл</div>
       <div class="tab" data-tab="why" onclick="switchTab('why')">Яагаад бид</div>
@@ -283,22 +282,6 @@
     </section>
 
     <!-- ===== Templates panel ===== -->
-    <section id="tab-templates" class="hidden">
-      <div class="panel-head">
-        <h2>Blueprints багц дахь темплэйтүүд</h2>
-        <div class="actions">
-          <button class="btn btn-sm" onclick="addTemplate()">+ Темплэйт нэмэх</button>
-          <button class="btn btn-sm" onclick="resetTemplates()">Анхны төлөвт</button>
-        </div>
-      </div>
-      <div class="hint">Нэр, төрлийг оруулаад темплэйт бүрд файл хавсаргаж болно (дээд тал нь 5MB). Хавсаргасан файл сайт дээр «Татах» товчоор татагдана. Хадгалсны дараа «KPI нэвтрүүлэх аргачлал» бүтээгдэхүүн дотор шинэчлэгдэнэ.</div>
-      <div class="list" id="tplList"></div>
-      <div class="save-bar">
-        <button class="btn btn-primary" onclick="saveTemplates()">Хадгалах</button>
-        <span class="saved-msg" id="tplSaved">Хадгалагдлаа</span>
-      </div>
-    </section>
-
     <!-- ===== Articles panel ===== -->
     <!-- ===== Products panel ===== -->
     <section id="tab-products" class="hidden">
@@ -1024,7 +1007,6 @@
   function showApp() {
     document.getElementById('gate').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
-    renderTemplates();
     renderProductsAdmin();
     renderRegisterForm();
     renderAuthors();
@@ -1058,7 +1040,7 @@
   // ---------- Tabs ----------
   function switchTab(t) {
     document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.dataset.tab === t));
-    ['home','templates','products','articles','why','pricing','schedule','users','subs','feedback','authors','register','admins','contact'].forEach(name =>
+    ['home','products','articles','why','pricing','schedule','users','subs','feedback','authors','register','admins','contact'].forEach(name =>
       document.getElementById('tab-' + name).classList.toggle('hidden', name !== t));
     if (t === 'home') renderHome();
     if (t === 'products') renderProductsAdmin();
@@ -1977,7 +1959,9 @@
 
   // ---------- Templates ----------
   function renderTemplates() {
-    document.getElementById('tplList').innerHTML = templates.map((t, i) => {
+    const wrap = document.getElementById('tplList');
+    if (!wrap) return; // Темплэйт засварлагч нь «Бүтээгдэхүүн» доторх blueprints дээр л харагдана
+    wrap.innerHTML = templates.map((t, i) => {
       const file = t[3];
       const fileInfo = (file && file.name)
         ? '<span class="file-name has">' + esc(file.name) + '</span><button class="file-rm" onclick="removeTplFile(' + i + ')">Устгах</button>'
@@ -2077,7 +2061,7 @@
       + '<textarea rows="4" oninput="products[\'' + k + '\'].' + f[0] + ' = linesToList(this.value)">'
       + esc((p[f[0]] || []).join('\n')) + '</textarea></div>'
     ).join('');
-    el.innerHTML = '<div class="editor" style="margin-top:16px;">'
+    const editorHtml = '<div class="editor" style="margin-top:16px;">'
       + '<div class="field"><label>Гарчиг — карт болон дэлгэрэнгүй цонх хоёуланд харагдана</label>'
       + '<input value="' + esc(p.title || '') + '" oninput="onProductTitle(\'' + k + '\', this.value)"></div>'
       + '<div class="row2">'
@@ -2092,6 +2076,28 @@
       + ' onchange="products[\'' + k + '\'].best = this.checked">«Хамгийн үнэ цэнэтэй» тэмдэг харуулах</label>'
       + '<div class="code-note" style="margin-top:16px;">Дотоод түлхүүр: <b>' + esc(k) + '</b> — гарчгийг өөрчилсөн ч энэ хэвээр үлдэх тул үнийн санал, холбоосууд эвдрэхгүй.</div>'
       + '</div>';
+    // Темплэйтүүд нь зөвхөн «KPI нэвтрүүлэх аргачлал» (blueprints) бүтээгдэхүүнд
+    // хамаарна — өмнө тусдаа «Темплэйтүүд» таб байсныг энэ бүтээгдэхүүн дотор оруулав.
+    el.innerHTML = editorHtml + (k === TPL_PRODUCT_KEY ? templatesEditorHtml() : '');
+    if (k === TPL_PRODUCT_KEY) renderTemplates();
+  }
+  // «KPI нэвтрүүлэх аргачлал, гарын авлага, темплэйт» — темплэйт агуулдаг бүтээгдэхүүн.
+  // (Сайт дээр kpihub_templates яг энэ түлхүүрт нэгддэг: index.html → PRODUCTS.blueprints.)
+  const TPL_PRODUCT_KEY = 'blueprints';
+  function templatesEditorHtml() {
+    return '<div class="editor" style="margin-top:18px;">'
+      + '<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">'
+      + '<label style="font-weight:600; margin:0;">Багц дахь темплэйтүүд</label>'
+      + '<div class="actions">'
+      + '<button class="btn btn-sm" onclick="addTemplate()">+ Темплэйт нэмэх</button>'
+      + '<button class="btn btn-sm" onclick="resetTemplates()">Анхны төлөвт</button>'
+      + '</div></div>'
+      + '<div class="hint">Нэр, төрлийг оруулаад темплэйт бүрд файл хавсаргана (дээд тал нь 5MB). Хавсаргасан файл сайт дээр «Татах» товчоор татагдана.</div>'
+      + '<div class="list" id="tplList"></div>'
+      + '<div class="save-bar">'
+      + '<button class="btn btn-primary" onclick="saveTemplates()">Темплэйт хадгалах</button>'
+      + '<span class="saved-msg" id="tplSaved">Хадгалагдлаа</span>'
+      + '</div></div>';
   }
   function saveProducts() {
     // Темплэйтийн жагсаалт нь kpihub_templates түлхүүрээр тусад нь удирдагддаг
