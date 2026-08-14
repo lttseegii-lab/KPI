@@ -1858,13 +1858,20 @@
   // Ажиллаж буй хувилбар. Админаас засварласан бол applyCloudContent() дарж бичнэ.
   let PRODUCTS = JSON.parse(JSON.stringify(DEFAULT_PRODUCTS));
 
-  // Темплэйтийн жагсаалт нь тусдаа түлхүүрээр (kpihub_templates) удирдагддаг тул
-  // PRODUCTS шинэчлэгдэх бүрд дахин холбож өгнө.
+  // Темплэйтийн жагсаалт нь бүтээгдэхүүн бүрд ТУСДАА түлхүүрээр удирдагддаг тул
+  // PRODUCTS шинэчлэгдэх бүрд дахин холбож өгнө. (Firestore-ийн 1MB баримтын
+  // хязгаараас болж бүтээгдэхүүний үндсэн өгөгдлөөс салгасан.)
+  const TEMPLATE_PRODUCT_KEYS = {
+    blueprints: 'kpihub_templates',
+    benchmarking: 'kpihub_templates_benchmarking'
+  };
   function attachTemplates() {
-    try {
-      const arr = JSON.parse(localStorage.getItem('kpihub_templates') || 'null');
-      if (Array.isArray(arr) && PRODUCTS.blueprints) PRODUCTS.blueprints.templates = arr;
-    } catch (e) {}
+    Object.keys(TEMPLATE_PRODUCT_KEYS).forEach(function (pk) {
+      try {
+        const arr = JSON.parse(localStorage.getItem(TEMPLATE_PRODUCT_KEYS[pk]) || 'null');
+        if (Array.isArray(arr) && PRODUCTS[pk]) PRODUCTS[pk].templates = arr;
+      } catch (e) {}
+    });
   }
   attachTemplates();
 
@@ -2716,10 +2723,7 @@
       const pr = JSON.parse(localStorage.getItem('kpihub_products') || 'null');
       if (pr) mergeProducts(pr);
     } catch (e) {}
-    try {
-      const t = JSON.parse(localStorage.getItem('kpihub_templates') || 'null');
-      if (Array.isArray(t) && PRODUCTS.blueprints) PRODUCTS.blueprints.templates = t;
-    } catch (e) {}
+    attachTemplates();
     try {
       const q = JSON.parse(localStorage.getItem('kpihub_quote_questions') || 'null');
       if (Array.isArray(q) && q.length) QUESTIONS = q;
@@ -2758,7 +2762,7 @@
 
   KPICloud.ready.then(applyCloudContent);
   // Админаас засвар хийвэл нийтийн сайтад бодит цагт тусгагдана
-  ['kpihub_articles','kpihub_templates','kpihub_quote_questions','kpihub_contact','kpihub_why','kpihub_availability']
+  ['kpihub_articles','kpihub_templates','kpihub_templates_benchmarking','kpihub_quote_questions','kpihub_contact','kpihub_why','kpihub_availability']
     .forEach(k => KPICloud.watch(k, applyCloudContent));
   // Захиалагдсан цаг өөрчлөгдвөл захиалгын цонхыг шинэчилнэ
   KPICloud.watchTaken(applyCloudContent);

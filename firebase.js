@@ -34,6 +34,7 @@
   // Нийтийн контентын түлхүүрүүд (content коллекц дотор доκ тус бүр)
   var CONTENT_KEYS = [
     "kpihub_templates",
+    "kpihub_templates_benchmarking",
     "kpihub_articles",
     "kpihub_products",
     "kpihub_register",

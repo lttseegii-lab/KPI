@@ -947,7 +947,21 @@
     },
   };
 
-  let templates = load('kpihub_templates', DEFAULT_TEMPLATES.map(t=>t.slice()));
+  // Темплэйтүүд нь бүтээгдэхүүн бүрд ТУСДАА түлхүүрт хадгалагдана (Firestore-ийн
+  // 1MB баримтын хязгаараас болж бүтээгдэхүүний үндсэн өгөгдлөөс салгасан).
+  const TEMPLATE_PRODUCT_KEYS = {
+    blueprints:   'kpihub_templates',                 // KPI нэвтрүүлэх аргачлал
+    benchmarking: 'kpihub_templates_benchmarking'     // KPI-ийн сан
+  };
+  const productTemplates = {};
+  function tplDefault(pk) { return pk === 'blueprints' ? DEFAULT_TEMPLATES.map(t => t.slice()) : []; }
+  function loadProductTemplates() {
+    Object.keys(TEMPLATE_PRODUCT_KEYS).forEach(function (pk) {
+      const arr = load(TEMPLATE_PRODUCT_KEYS[pk], tplDefault(pk));
+      productTemplates[pk] = Array.isArray(arr) ? arr : tplDefault(pk);
+    });
+  }
+  loadProductTemplates();
   let articles = load('kpihub_articles', DEFAULT_ARTICLES.map(a=>JSON.parse(JSON.stringify(a))));
   let contact = load('kpihub_contact', Object.assign({}, DEFAULT_CONTACT));
   let why = load('kpihub_why', JSON.parse(JSON.stringify(DEFAULT_WHY)));
@@ -1105,7 +1119,7 @@
       statCard('💰', 'Үнийн санал', quoteReqs.length, week(countSince(quoteReqs, 7))),
       statCard('📅', 'Ойрын цаг товлолт', upcoming.length, { text: 'Нийт ' + bookingsList.length }),
       statCard('📝', 'Нийтлэл', articles.length, { text: 'Сайт дээр нийтлэгдсэн' }),
-      statCard('📄', 'Темплэйт', templates.length, { text: 'Blueprints багцад' }),
+      statCard('📄', 'Темплэйт', Object.keys(TEMPLATE_PRODUCT_KEYS).reduce((n, pk) => n + ((productTemplates[pk] || []).length), 0), { text: 'Бүтээгдэхүүн доторх' }),
       statCard('💳', 'Төлбөр', paymentsList.length, { text: 'Нийт ₮' + paymentsList.reduce((a, p) => a + (Number(p.amount) || 0), 0).toLocaleString('en-US') })
     ].join('');
 
@@ -1960,16 +1974,17 @@
   // ---------- Templates ----------
   function renderTemplates() {
     const wrap = document.getElementById('tplList');
-    if (!wrap) return; // Темплэйт засварлагч нь «Бүтээгдэхүүн» доторх blueprints дээр л харагдана
-    wrap.innerHTML = templates.map((t, i) => {
+    if (!wrap) return; // Темплэйт засварлагч нь «Бүтээгдэхүүн» доторх темплэйттэй бүтээгдэхүүн дээр л харагдана
+    const list = productTemplates[prodSelected] || [];
+    wrap.innerHTML = list.map((t, i) => {
       const file = t[3];
       const fileInfo = (file && file.name)
         ? '<span class="file-name has">' + esc(file.name) + '</span><button class="file-rm" onclick="removeTplFile(' + i + ')">Устгах</button>'
         : '<span class="file-name">Файл хавсаргаагүй</span>';
       return '<div class="tpl-card">'
         + '<div class="tpl-top">'
-        + '<input class="nm" value="' + esc(t[1]) + '" oninput="templates[' + i + '][1]=this.value" placeholder="Нэр">'
-        + '<input class="ty" value="' + esc(t[2]) + '" oninput="templates[' + i + '][2]=this.value" placeholder="Төрөл">'
+        + '<input class="nm" value="' + esc(t[1]) + '" oninput="productTemplates[prodSelected][' + i + '][1]=this.value" placeholder="Нэр">'
+        + '<input class="ty" value="' + esc(t[2]) + '" oninput="productTemplates[prodSelected][' + i + '][2]=this.value" placeholder="Төрөл">'
         + '<button class="btn btn-danger btn-sm" onclick="delTemplate(' + i + ')">Устгах</button>'
         + '</div>'
         + '<div class="tpl-file">'
@@ -1984,16 +1999,17 @@
     const f = input.files && input.files[0];
     if (!f) return;
     if (f.size > MAX_FILE) { alert('Файл хэт том байна (дээд тал нь 5MB). Жижиг файл сонгоно уу.'); input.value=''; return; }
+    const pk = prodSelected;
     const reader = new FileReader();
-    reader.onload = () => { templates[i][3] = { name: f.name, data: reader.result }; renderTemplates(); };
+    reader.onload = () => { productTemplates[pk][i][3] = { name: f.name, data: reader.result }; renderTemplates(); };
     reader.readAsDataURL(f);
   }
   function removeTplFile(i) {
     if (!confirmDelete('Та энэ файлыг устгахдаа итгэлтэй байна уу?')) return;
-    templates[i][3] = null; renderTemplates();
+    productTemplates[prodSelected][i][3] = null; renderTemplates();
   }
   function addTemplate() {
-    templates.push(['📄', 'Шинэ темплэйт', 'Төрөл', null]);
+    (productTemplates[prodSelected] || (productTemplates[prodSelected] = [])).push(['📄', 'Шинэ темплэйт', 'Төрөл', null]);
     renderTemplates();
     const cards = document.querySelectorAll('#tplList .tpl-card');
     const last = cards[cards.length - 1];
@@ -2005,14 +2021,17 @@
   }
   function delTemplate(i) {
     if (!confirmDelete()) return;
-    templates.splice(i, 1); renderTemplates();
+    productTemplates[prodSelected].splice(i, 1); renderTemplates();
   }
   function saveTemplates() {
-    save('kpihub_templates', templates).then(ok => { if (ok) flash('tplSaved'); });
+    const pk = prodSelected;
+    save(TEMPLATE_PRODUCT_KEYS[pk], productTemplates[pk]).then(ok => { if (ok) flash('tplSaved'); });
   }
   function resetTemplates() {
     if (!confirm('Темплэйтүүдийг анхны төлөвт буцаах уу?')) return;
-    templates = DEFAULT_TEMPLATES.map(t=>t.slice()); save('kpihub_templates', templates); renderTemplates();
+    const pk = prodSelected;
+    productTemplates[pk] = tplDefault(pk);
+    save(TEMPLATE_PRODUCT_KEYS[pk], productTemplates[pk]); renderTemplates();
   }
 
   // ---------- Articles ----------
@@ -2076,14 +2095,12 @@
       + ' onchange="products[\'' + k + '\'].best = this.checked">«Хамгийн үнэ цэнэтэй» тэмдэг харуулах</label>'
       + '<div class="code-note" style="margin-top:16px;">Дотоод түлхүүр: <b>' + esc(k) + '</b> — гарчгийг өөрчилсөн ч энэ хэвээр үлдэх тул үнийн санал, холбоосууд эвдрэхгүй.</div>'
       + '</div>';
-    // Темплэйтүүд нь зөвхөн «KPI нэвтрүүлэх аргачлал» (blueprints) бүтээгдэхүүнд
-    // хамаарна — өмнө тусдаа «Темплэйтүүд» таб байсныг энэ бүтээгдэхүүн дотор оруулав.
-    el.innerHTML = editorHtml + (k === TPL_PRODUCT_KEY ? templatesEditorHtml() : '');
-    if (k === TPL_PRODUCT_KEY) renderTemplates();
+    // Темплэйттэй бүтээгдэхүүн (blueprints = KPI нэвтрүүлэх аргачлал,
+    // benchmarking = KPI-ийн сан) дээр файл нэмж/хасах засварлагчийг доор нь харуулна.
+    const tplEnabled = !!TEMPLATE_PRODUCT_KEYS[k];
+    el.innerHTML = editorHtml + (tplEnabled ? templatesEditorHtml() : '');
+    if (tplEnabled) renderTemplates();
   }
-  // «KPI нэвтрүүлэх аргачлал, гарын авлага, темплэйт» — темплэйт агуулдаг бүтээгдэхүүн.
-  // (Сайт дээр kpihub_templates яг энэ түлхүүрт нэгддэг: index.html → PRODUCTS.blueprints.)
-  const TPL_PRODUCT_KEY = 'blueprints';
   function templatesEditorHtml() {
     return '<div class="editor" style="margin-top:18px;">'
       + '<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">'
@@ -2326,7 +2343,7 @@
 
   // Контентыг Firestore-оос ачаалж дуусмагц хувьсагчдыг шинэчилнэ
   KPICloud.ready.then(() => {
-    templates    = load('kpihub_templates', DEFAULT_TEMPLATES.map(t=>t.slice()));
+    loadProductTemplates();
     articles     = load('kpihub_articles', DEFAULT_ARTICLES.map(a=>JSON.parse(JSON.stringify(a))));
     products     = load('kpihub_products', JSON.parse(JSON.stringify(DEFAULT_PRODUCTS)));
     register     = load('kpihub_register', Object.assign({}, DEFAULT_REGISTER));
