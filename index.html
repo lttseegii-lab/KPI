@@ -1360,9 +1360,15 @@
   function articleUrl(id) {
     return location.origin + location.pathname + '#article-' + encodeURIComponent(id);
   }
+  // Гадаад сүлжээнд хуваалцах хаяг: /a/<id> нь серверээс тухайн нийтлэлийн
+  // гарчиг, тайлбар, ЗУРАГ бүхий OG таг буцаадаг тул Facebook/LinkedIn дээр
+  // зурагтай preview гарна (hash хаяг ажилладаггүй). Хүн ороход SPA руу шилжинэ.
+  function shareUrl(id) {
+    return location.origin + '/a/' + encodeURIComponent(id);
+  }
   function shareTo(platform, id) {
     const a = ARTICLES.find(x => x.id === id);
-    const url = encodeURIComponent(id ? articleUrl(id) : location.href);
+    const url = encodeURIComponent(id ? shareUrl(id) : location.href);
     const title = encodeURIComponent(a ? a.title : document.title);
     let u = '';
     if (platform === 'li') u = 'https://www.linkedin.com/sharing/share-offsite/?url=' + url;
