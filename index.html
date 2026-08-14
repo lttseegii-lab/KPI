@@ -808,6 +808,28 @@
           <div class="field-err">Албан тушаалаа оруулна уу.</div>
         </div>
         <button class="btn btn-primary" id="regSubmitBtn" onclick="submitRegistration()">Бүртгэл үүсгэх</button>
+        <p style="font-size:13px;color:var(--muted);text-align:center;margin-top:14px;">Бүртгэлтэй юу? <a href="#" style="color:var(--accent);font-weight:600;" onclick="showLoginPane(event)">Нэвтрэх</a></p>
+      </div>
+
+      <!-- Login (returning users) -->
+      <div class="hidden" id="paneLogin">
+        <div class="hidden" id="loginWelcome" style="text-align:center;padding:8px 0 4px;">
+          <div class="success-icon" style="background:rgba(120,180,255,.14);border-color:rgba(120,180,255,.4);">👋</div>
+          <h3 style="font-size:19px;margin:12px 0 4px;">Тавтай морилно уу, <span id="loginWelcomeName"></span>!</h3>
+          <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Энэ төхөөрөмж дээрх бүртгэлээр үргэлжлүүлэх үү?</p>
+          <button class="btn btn-primary" style="width:100%;" onclick="restoreKnownUser()">Нэвтрэх</button>
+          <p style="font-size:13px;color:var(--muted);margin-top:12px;"><a href="#" style="color:var(--accent);font-weight:600;" onclick="showLoginEmail(event)">Өөр мэйл хаягаар нэвтрэх</a></p>
+        </div>
+        <div id="loginEmailBox">
+          <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Бүртгэлтэй мэйл хаягаа оруулж нэвтэрнэ үү.</p>
+          <div class="field" id="f-login-email">
+            <label>Мэйл хаяг</label>
+            <input type="email" id="login-email" placeholder="name@company.mn" onkeydown="if(event.key==='Enter')submitLogin()">
+            <div class="field-err">Зөв мэйл хаяг оруулна уу.</div>
+          </div>
+          <button class="btn btn-primary" id="loginSubmitBtn" onclick="submitLogin()">Нэвтрэх</button>
+        </div>
+        <p style="font-size:13px;color:var(--muted);text-align:center;margin-top:14px;">Бүртгэлгүй юу? <a href="#" style="color:var(--accent);font-weight:600;" onclick="showRegisterPane(event)">Бүртгүүлэх</a></p>
       </div>
 
       <!-- Profile (registered users) -->
@@ -1933,10 +1955,11 @@
     const GUEST_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="3.6"/><path d="M4.8 20v-1.4a5.2 5.2 0 0 1 5.2-5.2h4a5.2 5.2 0 0 1 5.2 5.2V20"/></svg>';
     const btn = document.getElementById('navAuthBtn');
     if (btn) {
-      const me = currentUser();
+      const me = currentUser() || {};
       const reg = isRegistered();
-      // Нэрний эхний үсэг (кирилл ч ажиллана); нэргүй бол дүрсээ хэвээр
-      const initial = reg && me.name ? String(me.name).trim().charAt(0) : '';
+      // Нэрний эхний үсэг (кирилл ч ажиллана); нэргүй бол мэйлээр, эс бөгөөс дүрсээ хэвээр
+      const label = me.name || me.email || '';
+      const initial = reg && label ? String(label).trim().charAt(0).toUpperCase() : '';
       btn.innerHTML = initial ? esc(initial) : GUEST_ICON;
       btn.setAttribute('aria-label', reg ? 'Миний бүртгэл' : 'Бүртгэл үүсгэх');
       btn.setAttribute('title', reg ? (me.name || 'Миний бүртгэл') : 'Бүртгэл үүсгэх');
@@ -1964,21 +1987,139 @@
   function logoutUser() {
     if (!confirm('Бүртгэлээс гарах уу? (Худалдаж авсан темплэйтийн эрх энэ төхөөрөмж дээр хадгалагдана)')) return;
     try {
+      // Идэвхтэй нэвтрэлтийг цуцлана. Профайлыг kpihub_known_user-т үлдээж,
+      // дараагийн удаа «дахин тавтай морил» нэг товчийн нэвтрэлт боломжтой байлгана.
       localStorage.removeItem('kpihub_registered');
       localStorage.removeItem('kpihub_current_user');
     } catch (e) {}
     renderAuthState();
     closeModal();
   }
+
+  // ---------- Login (returning users) ----------
+  // Бүртгэл нь нууц үггүй бөгөөд нэвтэрсэн төлөв нь эмзэг мэдээлэлд хандалт
+  // ОЛГОХГҮЙ (худалдан авалт тусдаа, төхөөрөмжид хадгалагдана). Иймд нэвтрэлт
+  // нь «би хэн бэ»-г сайтад мэдэгдэж, маягтуудыг урьдчилан бөглөхөд л зориулагдана.
+  const KNOWN_KEY = 'kpihub_known_user';
+  function knownUser() {
+    try { return JSON.parse(localStorage.getItem(KNOWN_KEY) || 'null'); } catch (e) { return null; }
+  }
+  function rememberUser(me) {
+    try { localStorage.setItem(KNOWN_KEY, JSON.stringify(me)); } catch (e) {}
+  }
+  // Профайлыг идэвхжүүлж, дүрс/CTA-г шинэчилнэ
+  function loginAs(me) {
+    try {
+      localStorage.setItem('kpihub_registered', '1');
+      localStorage.setItem('kpihub_current_user', JSON.stringify(me));
+    } catch (e) {}
+    rememberUser(me);
+    renderAuthState();
+  }
+  function showRegisterPane(e) {
+    if (e) e.preventDefault();
+    resetRegForm();
+    document.getElementById('paneLogin').classList.add('hidden');
+    document.getElementById('pane2').classList.add('hidden');
+    document.getElementById('pane3').classList.add('hidden');
+    document.getElementById('pane1').classList.remove('hidden');
+    document.getElementById('modalTitle').textContent = 'Бүртгэл үүсгэх';
+  }
+  function showLoginPane(e) {
+    if (e) e.preventDefault();
+    document.getElementById('pane1').classList.add('hidden');
+    document.getElementById('pane2').classList.add('hidden');
+    document.getElementById('pane3').classList.add('hidden');
+    document.getElementById('paneLogin').classList.remove('hidden');
+    document.getElementById('modalTitle').textContent = 'Нэвтрэх';
+    const em = document.getElementById('login-email'); if (em) em.value = '';
+    setInvalid('f-login-email', false);
+    const known = knownUser();
+    const hasKnown = !!(known && known.name);
+    if (hasKnown) document.getElementById('loginWelcomeName').textContent = known.name;
+    document.getElementById('loginWelcome').classList.toggle('hidden', !hasKnown);
+    document.getElementById('loginEmailBox').classList.toggle('hidden', hasKnown);
+  }
+  function showLoginEmail(e) {
+    if (e) e.preventDefault();
+    document.getElementById('loginWelcome').classList.add('hidden');
+    document.getElementById('loginEmailBox').classList.remove('hidden');
+    const em = document.getElementById('login-email'); if (em) em.focus();
+  }
+  // Нэвтэрсний дараа профайл самбарыг харуулна
+  function showProfileAfterLogin() {
+    renderProfilePane();
+    document.getElementById('paneLogin').classList.add('hidden');
+    document.getElementById('pane2').classList.remove('hidden');
+    document.getElementById('modalTitle').textContent = 'Миний бүртгэл';
+  }
+  function restoreKnownUser() {
+    const known = knownUser();
+    if (!known) { showLoginEmail(); return; }
+    loginAs(known);
+    showProfileAfterLogin();
+  }
+  async function submitLogin() {
+    const btn = document.getElementById('loginSubmitBtn');
+    const email = document.getElementById('login-email').value.trim().toLowerCase();
+    const okEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    setFieldErr('f-login-email', 'Зөв мэйл хаяг оруулна уу.');
+    setInvalid('f-login-email', !okEmail);
+    if (!okEmail) return;
+
+    // Энэ төхөөрөмж дээр мэдэгдэж буй хэрэглэгчийн хаягтай тохирвол бүрэн
+    // профайлыг (нэр, утас, байгууллага…) шууд сэргээнэ.
+    const known = knownUser();
+    if (known && String(known.email || '').trim().toLowerCase() === email) {
+      loginAs(known);
+      showProfileAfterLogin();
+      return;
+    }
+
+    // Өөр төхөөрөмж — Firestore-ийн бүртгэлийн индексээс хаяг бүртгэлтэй эсэхийг шалгана.
+    btn.disabled = true;
+    const prev = btn.textContent;
+    btn.textContent = 'Шалгаж байна…';
+    let exists = false;
+    try {
+      const hash = await KPICloud.regHash('email:' + email);
+      exists = await KPICloud.regIndexTaken(hash);
+    } catch (e) { exists = false; }
+    btn.disabled = false;
+    btn.textContent = prev;
+
+    if (exists) {
+      // Cloud-оос профайл уншиж болдоггүй (зочид submissions уншихгүй) тул
+      // хаягаар нэвтрүүлж, бусад талбарыг хоосон үлдээнэ.
+      loginAs({ email: email, at: new Date().toISOString() });
+      showProfileAfterLogin();
+    } else {
+      setFieldErr('f-login-email', 'Энэ хаягаар бүртгэл олдсонгүй. Эхлээд бүртгүүлнэ үү.');
+      setInvalid('f-login-email', true);
+    }
+  }
+
   function openModal(e) {
     if (e) e.preventDefault();
-    const done = isRegistered();
-    if (done) renderProfilePane();
-    else resetRegForm();
-    document.getElementById('pane1').classList.toggle('hidden', done);
-    document.getElementById('pane2').classList.toggle('hidden', !done);
     document.getElementById('pane3').classList.add('hidden');
-    document.getElementById('modalTitle').textContent = done ? 'Миний бүртгэл' : 'Бүртгэл үүсгэх';
+    document.getElementById('paneLogin').classList.add('hidden');
+    if (isRegistered()) {
+      // Аль хэдийн нэвтэрсэн — профайл
+      renderProfilePane();
+      document.getElementById('pane1').classList.add('hidden');
+      document.getElementById('pane2').classList.remove('hidden');
+      document.getElementById('modalTitle').textContent = 'Миний бүртгэл';
+    } else if (knownUser()) {
+      // Энэ төхөөрөмж дээр өмнө нэвтэрсэн — «дахин тавтай морил» нэвтрэлт
+      document.getElementById('pane2').classList.add('hidden');
+      showLoginPane();
+    } else {
+      // Шинэ зочин — бүртгэл
+      resetRegForm();
+      document.getElementById('pane2').classList.add('hidden');
+      document.getElementById('pane1').classList.remove('hidden');
+      document.getElementById('modalTitle').textContent = 'Бүртгэл үүсгэх';
+    }
     modal.classList.add('open');
     document.body.style.overflow = 'hidden';
   }
@@ -2197,14 +2338,10 @@
   const ADVISOR_EMAIL = 'hello@kpihub.mn';
   let bkSelDate = null, bkSelTime = null;
 
-  function currentUser() {
-    try {
-      const me = localStorage.getItem('kpihub_current_user');
-      if (me) return JSON.parse(me);
-      const u = JSON.parse(localStorage.getItem('kpihub_users') || '[]');
-      return u[u.length - 1] || null;
-    } catch (e) { return null; }
-  }
+  // (currentUser нь дээр 1 удаа тодорхойлогдсон — өмнө энд давхар, kpihub_users-д
+  //  тулгуурласан, хоосон үед null буцаадаг хувилбар байсныг устгав. Тэр нь эхнийхийг
+  //  дарж, нэвтрээгүй үед renderAuthState-ийг null дээр унагаж, modal хүртэл ачаалахгүй
+  //  байхад хүргэдэг байв.)
   const pad2 = n => String(n).padStart(2, '0');
   const dateKey = d => d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
   // Захиалагдсан цаг Firestore-ийн public/taken_slots-оос (PII биш)
@@ -2380,8 +2517,16 @@
         KPICloud.regIndexTaken(phoneHash)
       ]);
       if (emailTaken || phoneTaken) {
-        if (emailTaken) { setFieldErr('f-email', 'Энэ и-мэйл хаягаар аль хэдийн бүртгүүлсэн байна.'); setInvalid('f-email', true); }
+        if (emailTaken) { setFieldErr('f-email', 'Энэ и-мэйл хаягаар аль хэдийн бүртгүүлсэн. Доор «Нэвтрэх» дарна уу.'); setInvalid('f-email', true); }
         if (phoneTaken) { setFieldErr('f-phone', 'Энэ утасны дугаараар аль хэдийн бүртгүүлсэн байна.'); setInvalid('f-phone', true); }
+        // Мэйл нь бүртгэлтэй бол шууд нэвтрэлт рүү шилжүүлж, хаягийг урьдчилан бөглөнө.
+        if (emailTaken) {
+          btn.disabled = false; btn.textContent = prevLabel;
+          showLoginPane();
+          showLoginEmail();
+          const em = document.getElementById('login-email'); if (em) em.value = email;
+          return;
+        }
         btn.disabled = false; btn.textContent = prevLabel;
         return;
       }
@@ -2397,6 +2542,7 @@
     try {
       localStorage.setItem('kpihub_registered', '1');       // нэвтрэлт нь тухайн browser-т
       localStorage.setItem('kpihub_current_user', JSON.stringify(me)); // энэ browser-ийн хэрэглэгч
+      localStorage.setItem(KNOWN_KEY, JSON.stringify(me));  // гарсны дараа дахин нэвтрэхэд ашиглана
     } catch (e) {}
 
     document.getElementById('pane1').classList.add('hidden');
