@@ -706,16 +706,6 @@
   .pd-dl-card .ty { font-size: 12.5px; color: #777; flex: 1; }
   .pd-dl-card .badge.dl { align-self: flex-start; margin-top: 4px; }
   /* ===== Манай баг ===== */
-  /* «Бидний тухай» доторх багийн карт — давхарласан зурагнууд */
-  .tm-avs { display: flex; margin-bottom: 20px; }
-  .tm-av {
-    width: 44px; height: 44px; border-radius: 50%; overflow: hidden; flex: none;
-    display: grid; place-items: center; margin-left: -10px;
-    background: var(--accent-soft); border: 2px solid var(--bg);
-    color: var(--accent-2); font-weight: 800; font-size: 16px;
-  }
-  .tm-av:first-child { margin-left: 0; }
-  .tm-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
   /* Багийн дэлгэрэнгүй хуудас (цайвар, pd-overlay бүрхүүлийг ашиглана) */
   .tm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
   @media (max-width: 760px) { .tm-grid { grid-template-columns: 1fr; } }
@@ -2677,14 +2667,7 @@
   // Давхарласан зурагнууд + нэг товч: дарахад багийн дэлгэрэнгүй хуудас нээгдэнэ.
   function teamCardHtml() {
     if (!AUTHORS.length) return '';
-    const avs = AUTHORS.slice(0, 4).map(a =>
-      '<span class="tm-av">'
-      + (a.photo ? '<img src="' + safeUrl(a.photo) + '" alt="">' : esc(String(a.name || '?').trim().charAt(0)))
-      + '</span>'
-    ).join('');
-    const extra = AUTHORS.length > 4 ? '<span class="tm-av">+' + (AUTHORS.length - 4) + '</span>' : '';
     return '<article class="card clickable" onclick="openTeam()">'
-      + '<div class="tm-avs">' + avs + extra + '</div>'
       + '<h3>Манай баг</h3>'
       + '<p>Нийтлэл бичдэг мэргэжилтнүүдийн танилцуулга, туршлага, хэрэгжүүлсэн төслүүд.</p>'
       + '<span class="more">Багтай танилцах →</span>'
