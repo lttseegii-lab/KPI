@@ -1065,7 +1065,53 @@
     });
   }
   loadProductTemplates();
-  let articles = load('kpihub_articles', DEFAULT_ARTICLES.map(a=>JSON.parse(JSON.stringify(a))));
+  // ---------- Нийтлэлийн хадгалалт (хэсэгчилсэн) ----------
+  // Firestore-ийн НЭГ баримт дээд тал нь 1MB. Бүх нийтлэлийг нэг баримтад
+  // багтаах гэвэл хэдхэн нийтлэлээр дүүрдэг тул хэсэг (shard) болгон хуваав.
+  // Эхний түлхүүр хуучин нэрээрээ үлдсэн — шинэчлэгдээгүй клиент эхний хэсгийг уншина.
+  const ART_SHARD_KEYS = ['kpihub_articles', 'kpihub_articles_2', 'kpihub_articles_3', 'kpihub_articles_4',
+                          'kpihub_articles_5', 'kpihub_articles_6', 'kpihub_articles_7', 'kpihub_articles_8'];
+  const SHARD_MAX = 700 * 1024; // 1MB хязгаараас аюулгүй зай үлдээв
+  let artShardsUsed = 1;        // одоо бичигдсэн хэсгийн тоо (хэрэггүй болсныг хоослоход)
+  function loadArticles() {
+    let all = [];
+    let used = 0;
+    ART_SHARD_KEYS.forEach(k => {
+      const a = load(k, null);
+      if (Array.isArray(a) && a.length) { all = all.concat(a); used++; }
+    });
+    artShardsUsed = Math.max(1, used);
+    return all.length ? all : DEFAULT_ARTICLES.map(a => JSON.parse(JSON.stringify(a)));
+  }
+  // Нийтлэлүүдийг хэмжээгээр нь дараалуулан хэсгүүдэд хуваана
+  function packArticles(list) {
+    const shards = [[]];
+    let size = 2;
+    for (const a of list) {
+      const sz = JSON.stringify(a).length + 1;
+      const cur = shards[shards.length - 1];
+      if (size + sz > SHARD_MAX && cur.length) { shards.push([]); size = 2; }
+      shards[shards.length - 1].push(a); size += sz;
+    }
+    return shards;
+  }
+  function saveArticles(onFail) {
+    const shards = packArticles(articles);
+    if (shards.length > ART_SHARD_KEYS.length) {
+      alert('Нийтлэлүүд багтахгүй байна.\n\n«Зураг шахах» дарж зай чөлөөлөх, эсвэл хуучин нийтлэлээ устгана уу.');
+      if (onFail) onFail(new Error('shard overflow'));
+      return Promise.resolve(false);
+    }
+    // Өмнө бичигдсэн ч одоо хэрэггүй болсон хэсгүүдийг хоослоно
+    const writeCount = Math.max(shards.length, artShardsUsed);
+    let failed = false;
+    const guard = err => { if (failed) return; failed = true; if (onFail) onFail(err); };
+    const jobs = [];
+    for (let i = 0; i < writeCount; i++) jobs.push(save(ART_SHARD_KEYS[i], shards[i] || [], guard));
+    artShardsUsed = shards.length;
+    return Promise.all(jobs).then(oks => oks.every(Boolean));
+  }
+  let articles = loadArticles();
   let contact = load('kpihub_contact', Object.assign({}, DEFAULT_CONTACT));
   let why = load('kpihub_why', JSON.parse(JSON.stringify(DEFAULT_WHY)));
   let availability = load('kpihub_availability', []); // [{date, time}]
@@ -2396,15 +2442,15 @@
 
   // Firestore-ийн нэг баримтын хязгаар. Хэр дүүрснийг админд харуулж,
   // хязгаарт ойртохоос өмнө «Зураг шахах» хийхийг сануулна.
-  const DOC_LIMIT = 1048487;
   function renderArticleUsage() {
     const el = document.getElementById('artUsage');
     if (!el) return;
     const used = new Blob([JSON.stringify(articles)]).size;
-    const pct = Math.round(used / DOC_LIMIT * 100);
+    const cap = ART_SHARD_KEYS.length * SHARD_MAX;
+    const pct = Math.round(used / cap * 100);
     const warn = pct >= 80;
     el.innerHTML = 'Хадгалалт: <b>' + Math.round(used / 1024) + 'KB</b> / '
-      + Math.round(DOC_LIMIT / 1024) + 'KB (' + pct + '%)'
+      + Math.round(cap / 1024 / 1024 * 10) / 10 + 'MB (' + pct + '%)'
       + (warn ? ' — <b style="color:var(--danger,#c0392b);">хязгаарт ойрхон. «Зураг шахах» дарж зай чөлөөлнө үү.</b>' : '');
   }
   async function compressArticleImages() {
@@ -2429,7 +2475,7 @@
     const after = new Blob([JSON.stringify(articles)]).size;
     btn.disabled = false; btn.textContent = prevLabel;
     if (!n) { alert('Шахах зураг олдсонгүй — бүгд аль хэдийн шахагдсан байна.'); return; }
-    const ok = await save('kpihub_articles', articles);
+    const ok = await saveArticles();
     renderArticles();
     if (ok) {
       alert(n + ' зураг шахагдлаа.\n' + Math.round(before / 1024) + 'KB → ' + Math.round(after / 1024) + 'KB'
@@ -2581,7 +2627,7 @@
     if (editIndex === i) cancelArticle();
     else if (editIndex > i) editIndex--;
     renderArticles();
-    save('kpihub_articles', articles, () => { articles.splice(i, 0, removed); renderArticles(); });
+    saveArticles(() => { articles.splice(i, 0, removed); renderArticles(); });
   }
   function saveArticle() {
     const title = document.getElementById('e-title').value.trim();
@@ -2602,7 +2648,7 @@
     if (editIndex >= 0) { a.feature = articles[editIndex].feature; articles[editIndex] = a; }
     else { if (!articles.some(x=>x.feature)) a.feature = true; articles.unshift(a); editIndex = 0; }
     renderArticles(); cancelArticle();
-    save('kpihub_articles', articles, () => {
+    saveArticles(() => {
       articles.length = 0; prev.forEach(x => articles.push(x)); renderArticles();
     });
   }
@@ -2684,7 +2730,7 @@
   function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function resetArticles() {
     if (!confirm('Нийтлэлүүдийг анхны төлөвт буцаах уу?')) return;
-    articles = DEFAULT_ARTICLES.map(a=>JSON.parse(JSON.stringify(a))); renderArticles(); cancelArticle(); save('kpihub_articles', articles);
+    articles = DEFAULT_ARTICLES.map(a=>JSON.parse(JSON.stringify(a))); renderArticles(); cancelArticle(); saveArticles();
   }
 
   // ---------- Init ----------
@@ -2717,7 +2763,7 @@
   // Контентыг Firestore-оос ачаалж дуусмагц хувьсагчдыг шинэчилнэ
   KPICloud.ready.then(() => {
     loadProductTemplates();
-    articles     = load('kpihub_articles', DEFAULT_ARTICLES.map(a=>JSON.parse(JSON.stringify(a))));
+    articles     = loadArticles();
     products     = load('kpihub_products', JSON.parse(JSON.stringify(DEFAULT_PRODUCTS)));
     register     = load('kpihub_register', Object.assign({}, DEFAULT_REGISTER));
     authors      = load('kpihub_authors', []);

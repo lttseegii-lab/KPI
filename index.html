@@ -1320,14 +1320,23 @@
     '_default':     { light: false, bg: 'linear-gradient(160deg, #16227e, #0f1a6b)' },
   };
 
+  // Нийтлэлүүд нь Firestore-ийн 1MB баримтын хязгаараас болж хэд хэдэн хэсэгт
+  // хуваагдан хадгалагддаг — бүх хэсгийг дараалан нийлүүлж уншина.
+  const ART_SHARD_KEYS = ['kpihub_articles', 'kpihub_articles_2', 'kpihub_articles_3', 'kpihub_articles_4',
+                          'kpihub_articles_5', 'kpihub_articles_6', 'kpihub_articles_7', 'kpihub_articles_8'];
+  function readArticles() {
+    let all = [];
+    ART_SHARD_KEYS.forEach(k => {
+      try {
+        const arr = JSON.parse(localStorage.getItem(k) || 'null');
+        if (Array.isArray(arr)) all = all.concat(arr);
+      } catch (e) {}
+    });
+    return all;
+  }
   // Apply admin overrides (from localStorage) before deriving categories
-  try {
-    const rawA = localStorage.getItem('kpihub_articles');
-    if (rawA) {
-      const arr = JSON.parse(rawA);
-      if (Array.isArray(arr) && arr.length) { ARTICLES.length = 0; arr.forEach(a => ARTICLES.push(a)); }
-    }
-  } catch (e) {}
+  const savedArticles = readArticles();
+  if (savedArticles.length) { ARTICLES.length = 0; savedArticles.forEach(a => ARTICLES.push(a)); }
 
   let CATS = ['Бүгд', ...Array.from(new Set(ARTICLES.map(a => a.cat)))];
   let activeFilter = 'Бүгд';
@@ -2902,10 +2911,8 @@
   // ---------- Firestore-той бодит цагийн синхрон ----------
   // Cloud-оос ирсэн (localStorage-д тусгагдсан) өгөгдлөөр бүх хэсгийг дахин зурна.
   function applyCloudContent() {
-    try {
-      const arr = JSON.parse(localStorage.getItem('kpihub_articles') || 'null');
-      if (Array.isArray(arr) && arr.length) { ARTICLES.length = 0; arr.forEach(a => ARTICLES.push(a)); }
-    } catch (e) {}
+    const cloudArticles = readArticles();
+    if (cloudArticles.length) { ARTICLES.length = 0; cloudArticles.forEach(a => ARTICLES.push(a)); }
     CATS = ['Бүгд', ...Array.from(new Set(ARTICLES.map(a => a.cat)))];
     if (!CATS.includes(activeFilter)) activeFilter = 'Бүгд';
     try {
@@ -2951,7 +2958,8 @@
 
   KPICloud.ready.then(applyCloudContent);
   // Админаас засвар хийвэл нийтийн сайтад бодит цагт тусгагдана
-  ['kpihub_articles','kpihub_quote_questions','kpihub_contact','kpihub_why','kpihub_availability']
+  ['kpihub_quote_questions','kpihub_contact','kpihub_why','kpihub_availability']
+    .concat(ART_SHARD_KEYS)
     .concat(Object.keys(TEMPLATE_PRODUCT_KEYS).map(k => TEMPLATE_PRODUCT_KEYS[k]))
     .forEach(k => KPICloud.watch(k, applyCloudContent));
   // Захиалагдсан цаг өөрчлөгдвөл захиалгын цонхыг шинэчилнэ

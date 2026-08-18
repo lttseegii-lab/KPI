@@ -39,7 +39,16 @@
     "kpihub_templates_benchmarking",    // KPI-ийн сан
     "kpihub_templates_workshops",
     "kpihub_templates_advisory",
+    // Нийтлэлүүд — нэг баримт 1MB хүртэл тул хэд хэдэн хэсэгт хуваан хадгална.
+    // Эхний түлхүүр нь хуучин нэрээрээ үлдсэн (шинэчлэгдээгүй клиенттэй нийцнэ).
     "kpihub_articles",
+    "kpihub_articles_2",
+    "kpihub_articles_3",
+    "kpihub_articles_4",
+    "kpihub_articles_5",
+    "kpihub_articles_6",
+    "kpihub_articles_7",
+    "kpihub_articles_8",
     "kpihub_products",
     "kpihub_register",
     "kpihub_authors",
