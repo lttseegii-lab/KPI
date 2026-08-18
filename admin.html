@@ -2346,11 +2346,21 @@
     const phases = productTemplates[prodSelected] || [];
     if (!phases.length) { wrap.innerHTML = '<div class="empty">Үе шат алга. «+ Үе шат нэмэх» дарна уу.</div>'; return; }
     wrap.innerHTML = phases.map(function (ph, pi) {
+      // Хэсэгчилсэн үнийн горимд хэрэгсэл бүр өөрийн үнэтэй
+      const byParts = ((products[prodSelected] || {}).buy || {}).enabled
+        && ((products[prodSelected] || {}).buy || {}).mode === 'parts';
       const tools = (ph.tools || []).map(function (t, ti) {
         const file = t.file;
         const fileInfo = (file && file.name)
           ? '<span class="file-name has">' + esc(file.name) + '</span><button class="file-rm" onclick="removeToolFile(' + pi + ',' + ti + ')">Файл устгах</button>'
           : '<span class="file-name">Файл хавсаргаагүй (заавал биш)</span>';
+        const priceRow = byParts
+          ? '<div class="tpl-file" style="padding-top:8px;">'
+            + '<label style="font-size:12.5px; color:var(--muted); margin:0;">Нэгж үнэ (₮)</label>'
+            + '<input type="number" min="0" step="1000" style="max-width:160px;" value="' + (Number(t.price) || 0)
+            + '" oninput="curPhases()[' + pi + '].tools[' + ti + '].price = Number(this.value)||0; refreshPartsTotal()">'
+            + '</div>'
+          : '';
         return '<div class="tpl-card" style="margin-top:8px;">'
           + '<div class="tpl-top">'
           + '<input class="nm" value="' + esc(t.name) + '" oninput="curPhases()[' + pi + '].tools[' + ti + '].name=this.value" placeholder="Хэрэгслийн нэр">'
@@ -2360,7 +2370,7 @@
           + '<div class="tpl-file">'
           + '<label class="file-btn">Файл сонгох<input type="file" hidden onchange="onToolFile(' + pi + ',' + ti + ',this)"></label>'
           + fileInfo
-          + '</div></div>';
+          + '</div>' + priceRow + '</div>';
       }).join('');
       return '<div class="editor" style="margin-top:14px;">'
         + '<div style="display:flex; gap:10px; align-items:center;">'
@@ -2463,6 +2473,8 @@
 
     const k = prodSelected;
     const p = products[k] || {};
+    // Хуучин бүтээгдэхүүнд buy талбар байхгүй байж болзошгүй — дутууг нөхнө
+    p.buy = Object.assign(buyDefaults(), p.buy || {});
     const lists = PROD_LISTS.map(f =>
       '<div class="field"><label>' + f[1] + ' — мөр тус бүр нэг зүйл</label>'
       + '<textarea rows="4" oninput="products[\'' + k + '\'].' + f[0] + ' = linesToList(this.value)">'
@@ -2486,6 +2498,7 @@
       + '<div class="field"><label>Карт дээрх товч тайлбар</label><textarea rows="2" oninput="products[\'' + k + '\'].excerpt = this.value">' + esc(p.excerpt || '') + '</textarea></div>'
       + '<div class="field"><label>Дэлгэрэнгүй тайлбар</label><textarea rows="3" oninput="products[\'' + k + '\'].lead = this.value">' + esc(p.lead || '') + '</textarea></div>'
       + lists
+      + buyEditorHtml(k, p)
       + '<div class="field" style="margin-top:2px;"><label style="display:flex; justify-content:space-between; align-items:center;">Хэрэгжүүлэх замын зураг — зорилтууд (заавал биш)'
       + '<button class="btn btn-sm" onclick="addMilestone()">+ Зорилт нэмэх</button></label>'
       + '<div id="prodRoadmap"></div></div>'
@@ -2501,6 +2514,64 @@
     renderRoadmapEditor();
     if (tplEnabled) renderTemplates();
   }
+  // ---------- Худалдан авалт / үнэ ----------
+  // buy = { enabled, mode:'single'|'parts', amount, note }
+  //   single — бүтээгдэхүүн бүхэлдээ нэг үнэтэй
+  //   parts  — хэрэгсэл (темплэйт) тус бүр өөрийн үнэтэй; нийт нь тэдгээрийн нийлбэр
+  // Шууд худалдан авалт идэвхгүй бол хэрэглэгч асуулга бөглөж, үнийн санал хүсэнэ.
+  function buyDefaults() { return { enabled: false, mode: 'single', amount: 0, note: '' }; }
+  function money(n) { return '₮' + (Number(n) || 0).toLocaleString('en-US'); }
+  // Сонгосон бүтээгдэхүүний хэрэгслүүдийн үнийн нийлбэр
+  function partsTotal(pk) {
+    return (productTemplates[pk] || []).reduce((sum, ph) =>
+      sum + (ph.tools || []).reduce((s, t) => s + (Number(t.price) || 0), 0), 0);
+  }
+  function buyEditorHtml(k, p) {
+    const b = p.buy;
+    const on = !!b.enabled;
+    let body = '';
+    if (on) {
+      const single = b.mode !== 'parts';
+      body = '<div class="row2" style="margin-top:12px;">'
+        + '<div class="field"><label>Үнийн хэлбэр</label>'
+        + '<select onchange="setBuyMode(this.value)">'
+        + '<option value="single"' + (single ? ' selected' : '') + '>Нэг бүхэл үнэ</option>'
+        + '<option value="parts"' + (single ? '' : ' selected') + '>Хэсэгчилсэн — хэрэгсэл тус бүрээр</option>'
+        + '</select></div>'
+        + (single
+            ? '<div class="field"><label>Үнэ (₮)</label><input type="number" min="0" step="1000" value="'
+              + (Number(b.amount) || 0) + '" oninput="products[\'' + k + '\'].buy.amount = Number(this.value)||0"></div>'
+            : '<div class="field"><label>Нийт үнэ — автоматаар тооцно</label>'
+              + '<input value="' + esc(money(partsTotal(k))) + '" disabled></div>')
+        + '</div>'
+        + '<div class="field"><label>Үнийн тайлбар (заавал биш)</label>'
+        + '<input value="' + esc(b.note || '') + '" placeholder="Жишээ: НӨАТ багтсан, нэг удаагийн төлбөр" oninput="products[\'' + k + '\'].buy.note = this.value"></div>'
+        + (single ? '' : '<div class="hint" style="margin:0;">Хэрэгсэл тус бүрийн үнийг доорх «Үе шат, хэрэгслүүд» хэсэгт оруулна. Нийт үнэ нь тэдгээрийн нийлбэрээр бодогдоно.</div>');
+    } else {
+      body = '<div class="hint" style="margin:6px 0 0;">Шууд худалдан авалтгүй — хэрэглэгч асуулга бөглөж, та үнийн санал боловсруулж илгээнэ.</div>';
+    }
+    return '<div class="editor" style="margin-top:2px; background:var(--accent-soft);">'
+      + '<label style="display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--text); cursor:pointer; margin:0; font-weight:600;">'
+      + '<input type="checkbox" style="width:auto;" ' + (on ? 'checked' : '') + ' onchange="toggleBuy(this.checked)">'
+      + 'Шууд худалдан авах боломжтой</label>'
+      + body + '</div>';
+  }
+  // Нэгж үнэ өөрчлөгдөхөд дээрх «Нийт үнэ»-г бүх засварлагчийг дахин зурахгүйгээр шинэчилнэ
+  function refreshPartsTotal() {
+    const box = document.getElementById('prodList');
+    if (!box) return;
+    const inp = box.querySelector('input[disabled]');
+    if (inp) inp.value = money(partsTotal(prodSelected));
+  }
+  function toggleBuy(on) {
+    products[prodSelected].buy.enabled = on;
+    renderProductsAdmin();
+  }
+  function setBuyMode(mode) {
+    products[prodSelected].buy.mode = mode;
+    renderProductsAdmin();
+  }
+
   // Замын зураг (milestone) засварлагч — products[k].roadmap = [{title, checkpoints:[]}]
   function renderRoadmapEditor() {
     const box = document.getElementById('prodRoadmap');

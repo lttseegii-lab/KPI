@@ -11,11 +11,30 @@
 const PROJECT = process.env.FIREBASE_PROJECT_ID || "kpiconsulting";
 const API_KEY =
   process.env.FIREBASE_API_KEY || "AIzaSyBvjR_5pAAksA4UcQeRyzt6bEL1yk717Pw";
-const DOC_URL =
-  "https://firestore.googleapis.com/v1/projects/" +
-  PROJECT +
-  "/databases/(default)/documents/content/kpihub_articles?key=" +
-  API_KEY;
+function docUrl(key) {
+  return (
+    "https://firestore.googleapis.com/v1/projects/" +
+    PROJECT +
+    "/databases/(default)/documents/content/" +
+    encodeURIComponent(key) +
+    "?key=" +
+    API_KEY
+  );
+}
+const DOC_URL = docUrl("kpihub_articles");
+
+// content/{key} баримтын JSON-ыг уншина (нийтэд нээлттэй контент).
+// Олдохгүй/эвдэрсэн бол null буцаана.
+async function getContent(key) {
+  const r = await fetch(docUrl(key));
+  if (!r.ok) return null;
+  const d = await r.json();
+  const f = d && d.fields;
+  if (f && typeof (f.json || {}).stringValue === "string") {
+    try { return JSON.parse(f.json.stringValue); } catch (e) { return null; }
+  }
+  return null;
+}
 
 // Warm instance доторх богино кэш — Firestore-ыг дэмий давтан асуухгүй.
 let cache = { at: 0, list: null };
@@ -65,4 +84,58 @@ function baseUrl(req) {
   return proto + "://" + host;
 }
 
-module.exports = { getArticles, findArticle, esc, queryParam, baseUrl };
+// Бүтээгдэхүүн бүрийн хэрэгслүүд хадгалагдах түлхүүр (index/admin-тай ижил)
+const TEMPLATE_PRODUCT_KEYS = {
+  blueprints: "kpihub_templates",
+  diagnostics: "kpihub_templates_diagnostics",
+  guided: "kpihub_templates_guided",
+  benchmarking: "kpihub_templates_benchmarking",
+  workshops: "kpihub_templates_workshops",
+  advisory: "kpihub_templates_advisory",
+};
+
+// Бүтээгдэхүүний төлбөрийн дүнг СЕРВЕР дээр тооцно — клиентээс ирсэн дүнд
+// найдвал хэн ч дурын үнээр төлж чадна. Худалдан авах боломжгүй эсвэл
+// үнэ тодорхойгүй бол null.
+async function productAmount(key) {
+  if (!key || !TEMPLATE_PRODUCT_KEYS[key]) return null;
+  const products = await getContent("kpihub_products");
+  const p = products && products[key];
+  if (!p) return null;
+  const buy = p.buy || {};
+  if (!buy.enabled) return null;
+  if (buy.mode === "parts") {
+    const phases = await getContent(TEMPLATE_PRODUCT_KEYS[key]);
+    if (!Array.isArray(phases)) return null;
+    let sum = 0;
+    phases.forEach(function (ph) {
+      ((ph && ph.tools) || []).forEach(function (t) {
+        sum += Number((t && t.price) || 0) || 0;
+      });
+    });
+    return sum > 0 ? Math.round(sum) : null;
+  }
+  const amt = Number(buy.amount) || 0;
+  return amt > 0 ? Math.round(amt) : null;
+}
+
+// POST биеийг уншина (Vercel заримдаа аль хэдийн задалсан байдаг)
+async function readJsonBody(req) {
+  if (req.body && typeof req.body === "object") return req.body;
+  if (typeof req.body === "string") {
+    try { return JSON.parse(req.body); } catch (e) { return {}; }
+  }
+  return await new Promise(function (resolve) {
+    let raw = "";
+    req.on("data", function (c) { raw += c; if (raw.length > 1e5) raw = raw.slice(0, 1e5); });
+    req.on("end", function () {
+      try { resolve(JSON.parse(raw || "{}")); } catch (e) { resolve({}); }
+    });
+    req.on("error", function () { resolve({}); });
+  });
+}
+
+module.exports = {
+  getArticles, findArticle, esc, queryParam, baseUrl,
+  getContent, productAmount, readJsonBody, TEMPLATE_PRODUCT_KEYS,
+};

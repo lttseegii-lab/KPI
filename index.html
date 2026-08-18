@@ -742,6 +742,20 @@
   .tm-projects li:last-child { margin-bottom: 0; }
   .tm-projects li::before { content: "→"; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
 
+  /* Үнэ — нэг бүхэл үнэ эсвэл хэсэгчилсэн задаргаа */
+  .pd-price { border: 1px solid #e3e5ec; border-radius: 12px; background: #fff; padding: 22px 24px; }
+  .pd-price .amount { font-size: 32px; font-weight: 800; color: #111; letter-spacing: -.5px; line-height: 1.1; }
+  .pd-price .note { font-size: 13.5px; color: #666; margin-top: 8px; }
+  .pd-price-rows { display: flex; flex-direction: column; gap: 10px; margin-bottom: 16px; }
+  .pd-price-row { display: flex; align-items: baseline; gap: 12px; font-size: 14.5px; color: #333; }
+  .pd-price-row .nm { flex: 1; min-width: 0; }
+  .pd-price-row .amt { font-weight: 700; color: #111; white-space: nowrap; }
+  .pd-price-total {
+    display: flex; align-items: baseline; justify-content: space-between; gap: 12px;
+    padding-top: 16px; border-top: 1px solid #eceef2;
+  }
+  .pd-price-total .lbl { font-size: 14.5px; font-weight: 700; color: #333; }
+
   /* Замын зураг — зорилт бүр хяналтын цэгүүдтэй */
   .pd-milestone { border: 1px solid #e3e5ec; border-radius: 10px; padding: 20px 22px; margin-bottom: 14px; background: #fff; }
   .pd-milestone h4 { font-size: 15px; font-weight: 700; color: #111; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -971,7 +985,7 @@
 <div class="modal-overlay" id="payModal" onclick="if(event.target===this) closePayment()">
   <div class="modal">
     <div class="modal-head">
-      <h3>Темплэйт багц авах</h3>
+      <h3 id="payTitle">Темплэйт багц авах</h3>
       <button class="modal-close" onclick="closePayment()" aria-label="Хаах">×</button>
     </div>
     <div class="modal-body">
@@ -979,7 +993,7 @@
       <div id="payForm">
         <p style="font-size:13px;color:var(--muted);margin-bottom:16px;">Бүх темплэйт, маягтыг хязгааргүй татах эрх. Нэг удаагийн төлбөр — QPay-ээр шууд.</p>
         <div class="pay-summary">
-          <span>Темплэйт багц (нэг удаа)</span>
+          <span id="payItem">Темплэйт багц (нэг удаа)</span>
           <span class="total" id="payAmount">₮99,000</span>
         </div>
         <div class="qpay-box">
@@ -1109,10 +1123,12 @@
         <ul class="pd-list" id="pdOutcomes"></ul>
       </div>
 
-      <div class="pd-cta">
-        <a href="#" class="btn btn-primary" onclick="requestQuote(event)">Үнийн санал авах</a>
-        <a href="#" class="btn btn-ghost" onclick="closeProduct(); openBooking(event);">Зөвлөгөө авах</a>
+      <div class="pd-section" id="pdPriceWrap" style="display:none;">
+        <h3>Үнэ</h3>
+        <div class="pd-price" id="pdPrice"></div>
       </div>
+
+      <div class="pd-cta" id="pdCta"></div>
     </div>
   </div>
 </div>
@@ -2185,6 +2201,7 @@
     toggleSection('pdOutcomesWrap', (p.outcomes || []).length);
     renderPhases(p);
     renderRoadmap(p);
+    renderPrice(p);
     pdOverlay.scrollTop = 0; window.scrollTo(0, 0);
     pdOverlay.classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -2226,7 +2243,7 @@
     // ---- Татан авах файлууд ----
     const dwrap = document.getElementById('pdDownloadsWrap');
     if (files.length) {
-      const paid = hasAccess();
+      const paid = hasAccess(currentProduct);
       document.getElementById('pdDownloads').innerHTML = files.map(function (t) {
         const ext = fileExt(t.file.name) || t.type || 'файл';
         const dl = paid
@@ -2243,6 +2260,62 @@
       dwrap.style.display = 'none';
     }
   }
+  // ---------- Үнэ ба худалдан авалт ----------
+  // buy.enabled бол үнэ харуулж «Худалдан авах» товч гаргана; эс бөгөөс
+  // хэрэглэгч асуулга бөглөж, үнийн санал хүсэх урсгал руу орно.
+  function money(n) { return '₮' + (Number(n) || 0).toLocaleString('en-US'); }
+  function buyOf(p) { return Object.assign({ enabled: false, mode: 'single', amount: 0, note: '' }, p.buy || {}); }
+  // Хэсэгчилсэн горимд үнэтэй хэрэгслүүд болон нийлбэрийг цуглуулна
+  function pricedTools(p) {
+    const out = [];
+    (p.phases || []).forEach(ph => (ph.tools || []).forEach(t => {
+      if (Number(t.price) > 0) out.push(t);
+    }));
+    return out;
+  }
+  function productTotal(p) {
+    const b = buyOf(p);
+    if (!b.enabled) return 0;
+    if (b.mode === 'parts') return pricedTools(p).reduce((s, t) => s + (Number(t.price) || 0), 0);
+    return Number(b.amount) || 0;
+  }
+  function renderPrice(p) {
+    const b = buyOf(p);
+    const wrap = document.getElementById('pdPriceWrap');
+    const cta = document.getElementById('pdCta');
+    const total = productTotal(p);
+    if (b.enabled && total > 0) {
+      const note = b.note ? '<div class="note">' + esc(b.note) + '</div>' : '';
+      if (b.mode === 'parts') {
+        const rows = pricedTools(p).map(t =>
+          '<div class="pd-price-row"><span class="nm">' + esc(t.name || '') + '</span>'
+          + '<span class="amt">' + money(t.price) + '</span></div>'
+        ).join('');
+        document.getElementById('pdPrice').innerHTML =
+          '<div class="pd-price-rows">' + rows + '</div>'
+          + '<div class="pd-price-total"><span class="lbl">Бүгдийг авбал</span>'
+          + '<span class="amount">' + money(total) + '</span></div>' + note;
+      } else {
+        document.getElementById('pdPrice').innerHTML =
+          '<div class="amount">' + money(total) + '</div>' + note;
+      }
+      wrap.style.display = '';
+      cta.innerHTML =
+        '<a href="#" class="btn btn-primary" onclick="event.preventDefault(); buyProduct();">Худалдан авах — ' + esc(money(total)) + '</a>'
+        + '<a href="#" class="btn btn-ghost" onclick="closeProduct(); openBooking(event);">Зөвлөгөө авах</a>';
+    } else {
+      wrap.style.display = 'none';
+      cta.innerHTML =
+        '<a href="#" class="btn btn-primary" onclick="requestQuote(event)">Үнийн санал авах</a>'
+        + '<a href="#" class="btn btn-ghost" onclick="closeProduct(); openBooking(event);">Зөвлөгөө авах</a>';
+    }
+  }
+  function buyProduct() {
+    const p = PRODUCTS[currentProduct];
+    if (!p) return;
+    openPayment(null, currentProduct);
+  }
+
   // Хэрэгжүүлэх замын зураг — зорилт (milestone) бүр хяналтын цэгүүдтэй
   function renderRoadmap(p) {
     const wrap = document.getElementById('pdRoadmapWrap');
@@ -2309,7 +2382,27 @@
 
   // ---------- Membership / unlock state ----------
   const STORE_KEY = 'kpihub_access';
-  function hasAccess() { try { return localStorage.getItem(STORE_KEY) === 'paid'; } catch(e) { return false; } }
+  const OWNED_KEY = 'kpihub_owned';
+  // 'paid' нь хуучин темплэйт багцын БҮХ эрх. Бүтээгдэхүүн тус бүрийн худалдан
+  // авалт нь зөвхөн ӨӨРИЙНХ нь файлыг нээнэ — бусдынхыг нээхгүй.
+  function ownedProducts() {
+    try { const a = JSON.parse(localStorage.getItem(OWNED_KEY) || '[]'); return Array.isArray(a) ? a : []; } catch (e) { return []; }
+  }
+  function hasAccess(productKey) {
+    try {
+      if (localStorage.getItem(STORE_KEY) === 'paid') return true;
+      return !!productKey && ownedProducts().indexOf(productKey) !== -1;
+    } catch (e) { return false; }
+  }
+  function grantProduct(key) {
+    if (!key) return;
+    try {
+      const list = ownedProducts();
+      if (list.indexOf(key) === -1) { list.push(key); localStorage.setItem(OWNED_KEY, JSON.stringify(list)); }
+    } catch (e) {}
+    refreshAccessUI();
+    if (currentProduct && pdOverlay.classList.contains('open')) openProduct(currentProduct);
+  }
   function grantAccess() {
     try { localStorage.setItem(STORE_KEY, 'paid'); } catch(e) {}
     refreshAccessUI();
@@ -2541,9 +2634,16 @@
     btn.textContent = 'QPay-р төлөх';
     btn.style.opacity = ''; btn.style.pointerEvents = '';
   }
-  function openPayment(e) {
+  // payProduct — аль бүтээгдэхүүнийг авч буй нь. Хоосон бол темплэйт багц (хуучин урсгал).
+  let payProduct = '';
+  function openPayment(e, productKey) {
     if (e) e.preventDefault();
+    payProduct = productKey || '';
     payResetForm();
+    const p = payProduct ? PRODUCTS[payProduct] : null;
+    document.getElementById('payTitle').textContent = p ? (p.title || 'Худалдан авалт') : 'Темплэйт багц авах';
+    document.getElementById('payAmount').textContent = p ? money(productTotal(p)) : '₮99,000';
+    document.getElementById('payItem').textContent = p ? (p.title || '') : 'Темплэйт багц (нэг удаа)';
     document.getElementById('payForm').classList.remove('hidden');
     document.getElementById('paySuccess').classList.add('hidden');
     payModal.classList.add('open');
@@ -2557,6 +2657,14 @@
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closePayment(); });
 
   function paySucceeded(status) {
+    // Бүтээгдэхүүн худалдаж авсан бол зөвхөн түүний файлыг нээнэ
+    if (payProduct) {
+      payStopPolling();
+      grantProduct(payProduct);
+      document.getElementById('payForm').classList.add('hidden');
+      document.getElementById('paySuccess').classList.remove('hidden');
+      return;
+    }
     payStopPolling();
     // Худалдан авалтын бүртгэлийг ЭНДЭЭС бичихээ болив: зочны бичсэн бичлэгийг
     // хуурамчаар үүсгэж, орлогын тайланг бохирдуулах боломжтой байсан.
@@ -2584,7 +2692,11 @@
     btn.textContent = 'Нэхэмжлэл үүсгэж байна…';
     btn.style.opacity = '.7'; btn.style.pointerEvents = 'none';
     try {
-      const r = await fetch('/api/qpay/invoice', { method: 'POST' });
+      const r = await fetch('/api/qpay/invoice', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product: payProduct })
+      });
       const d = await r.json().catch(() => ({}));
       if (!r.ok || !d.invoice_id) throw new Error(d.error || 'Нэхэмжлэл үүсгэж чадсангүй');
       payInvoiceId = d.invoice_id;
