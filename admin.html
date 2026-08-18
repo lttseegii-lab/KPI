@@ -156,6 +156,24 @@
 
   .editor { background:var(--card); border:1px solid var(--line); border-radius:16px; padding:22px; margin-top:20px; }
   .editor h3 { font-size:16px; margin-bottom:16px; }
+
+  /* Бүтээгдэхүүний засварлагчийн бүлгүүд — тус бүр өөрийн дэвсгэр өнгөтэй */
+  .pg { margin-top:18px; }
+  .pg-title {
+    font-size:13px; font-weight:800; letter-spacing:.3px; color:var(--text);
+    text-transform:uppercase; margin-bottom:16px; padding-bottom:12px;
+    border-bottom:1px solid rgba(0,0,0,.08);
+  }
+  .pg-info  { background:#ffffff; }
+  .pg-buy   { background:#f1f5fb; border-color:#d7e0ee; }
+  .pg-road  { background:#fbf7f1; border-color:#eadfd0; }
+  .pg-tools { background:#f4f7f4; border-color:#d9e4d9; }
+  /* Бүлэг доторх талбарын гарчгууд тод */
+  #prodList label { font-weight:700; color:var(--text); }
+  #prodList .hint { color:var(--muted); font-weight:400; }
+  /* Дэвсгэр өнгөтэй бүлэг дээр оролтууд цагаанаараа ялгарна */
+  .pg-buy input, .pg-buy select, .pg-road input, .pg-road textarea,
+  .pg-tools input, .pg-tools textarea { background:#fff; }
   .save-bar { display:flex; gap:10px; align-items:center; margin-top:20px; padding-top:18px; border-top:1px solid var(--line); flex-wrap:wrap; }
   .saved-msg { color:var(--accent-2); font-size:13.5px; font-weight:600; opacity:0; transition:opacity .2s; }
   .saved-msg.show { opacity:1; }
@@ -2480,7 +2498,8 @@
       + '<textarea rows="4" oninput="products[\'' + k + '\'].' + f[0] + ' = linesToList(this.value)">'
       + esc((p[f[0]] || []).join('\n')) + '</textarea></div>'
     ).join('');
-    const editorHtml = '<div class="editor" style="margin-top:16px;">'
+    const editorHtml = '<div class="editor pg pg-info">'
+      + '<div class="pg-title">Бүтээгдэхүүний мэдээлэл</div>'
       + '<div class="field"><label>Гарчиг — карт болон дэлгэрэнгүй цонх хоёуланд харагдана</label>'
       + '<input value="' + esc(p.title || '') + '" oninput="onProductTitle(\'' + k + '\', this.value)"></div>'
       + '<div class="field"><label>Зураг — дэлгэрэнгүй цонхны танилцуулгын хажууд харагдана (заавал биш)</label>'
@@ -2498,14 +2517,19 @@
       + '<div class="field"><label>Карт дээрх товч тайлбар</label><textarea rows="2" oninput="products[\'' + k + '\'].excerpt = this.value">' + esc(p.excerpt || '') + '</textarea></div>'
       + '<div class="field"><label>Дэлгэрэнгүй тайлбар</label><textarea rows="3" oninput="products[\'' + k + '\'].lead = this.value">' + esc(p.lead || '') + '</textarea></div>'
       + lists
-      + buyEditorHtml(k, p)
-      + '<div class="field" style="margin-top:2px;"><label style="display:flex; justify-content:space-between; align-items:center;">Хэрэгжүүлэх замын зураг — зорилтууд (заавал биш)'
-      + '<button class="btn btn-sm" onclick="addMilestone()">+ Зорилт нэмэх</button></label>'
-      + '<div id="prodRoadmap"></div></div>'
       + '<label style="display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--text); cursor:pointer; margin:0;">'
       + '<input type="checkbox" style="width:auto;" ' + (p.best ? 'checked' : '')
       + ' onchange="products[\'' + k + '\'].best = this.checked">«Хамгийн үнэ цэнэтэй» тэмдэг харуулах</label>'
       + '<div class="code-note" style="margin-top:16px;">Дотоод түлхүүр: <b>' + esc(k) + '</b> — гарчгийг өөрчилсөн ч энэ хэвээр үлдэх тул үнийн санал, холбоосууд эвдрэхгүй.</div>'
+      + '</div>'
+      // ---- Бүлэг: Худалдан авалт, үнэ ----
+      + buyEditorHtml(k, p)
+      // ---- Бүлэг: Хэрэгжүүлэх замын зураг ----
+      + '<div class="editor pg pg-road">'
+      + '<div class="pg-title">Хэрэгжүүлэх замын зураг</div>'
+      + '<div class="field" style="margin-bottom:0;"><label style="display:flex; justify-content:space-between; align-items:center;">Зорилтууд (заавал биш)'
+      + '<button class="btn btn-sm" onclick="addMilestone()">+ Зорилт нэмэх</button></label>'
+      + '<div id="prodRoadmap"></div></div>'
       + '</div>';
     // Темплэйттэй бүтээгдэхүүн (blueprints = KPI нэвтрүүлэх аргачлал,
     // benchmarking = KPI-ийн сан) дээр файл нэмж/хасах засварлагчийг доор нь харуулна.
@@ -2550,8 +2574,9 @@
     } else {
       body = '<div class="hint" style="margin:6px 0 0;">Шууд худалдан авалтгүй — хэрэглэгч асуулга бөглөж, та үнийн санал боловсруулж илгээнэ.</div>';
     }
-    return '<div class="editor" style="margin-top:2px; background:var(--accent-soft);">'
-      + '<label style="display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--text); cursor:pointer; margin:0; font-weight:600;">'
+    return '<div class="editor pg pg-buy">'
+      + '<div class="pg-title">Худалдан авалт, үнэ</div>'
+      + '<label style="display:flex; align-items:center; gap:8px; font-size:13.5px; color:var(--text); cursor:pointer; margin:0; font-weight:700;">'
       + '<input type="checkbox" style="width:auto;" ' + (on ? 'checked' : '') + ' onchange="toggleBuy(this.checked)">'
       + 'Шууд худалдан авах боломжтой</label>'
       + body + '</div>';
@@ -2610,9 +2635,9 @@
     products[prodSelected].roadmap.splice(mi, 1); renderRoadmapEditor();
   }
   function templatesEditorHtml() {
-    return '<div class="editor" style="margin-top:18px;">'
+    return '<div class="editor pg pg-tools">'
       + '<div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">'
-      + '<label style="font-weight:600; margin:0;">Үе шат, хэрэгслүүд</label>'
+      + '<div class="pg-title" style="margin:0;">Үе шат, хэрэгслүүд</div>'
       + '<div class="actions">'
       + '<button class="btn btn-sm" onclick="addPhase()">+ Үе шат нэмэх</button>'
       + '<button class="btn btn-sm" onclick="resetTemplates()">Анхны төлөвт</button>'
