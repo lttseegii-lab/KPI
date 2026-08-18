@@ -54,6 +54,14 @@
   .tab { width:100%; padding:10px 12px; border-radius:6px; font-size:14px; font-weight:600; cursor:pointer; background:transparent; border:1px solid transparent; color:var(--muted); text-align:left; }
   .tab:hover { color:var(--text); background:var(--card); }
   .tab.active { color:var(--text); background:var(--accent-soft); border-color:var(--line); }
+  /* Тохиргооны задардаг бүлэг */
+  .tab-group { display:flex; align-items:center; justify-content:space-between; gap:8px; user-select:none; }
+  .tab-group .caret { font-size:15px; line-height:1; transition:transform .18s; }
+  .tab-group.open .caret { transform:rotate(90deg); }
+  .tab-group.has-active { color:var(--text); }
+  .tab-sub { display:none; flex-direction:column; gap:4px; margin:2px 0 2px 10px; padding-left:8px; border-left:1px solid var(--line); }
+  .tab-sub.open { display:flex; }
+  .tab-sub .tab { font-size:13.5px; padding:8px 10px; }
   .admin-content { min-width:0; }
   @media (max-width:760px) {
     .wrap { padding-left:16px; padding-right:16px; }
@@ -293,10 +301,19 @@
       <div class="tab" data-tab="users" onclick="switchTab('users')">Хэрэглэгч</div>
       <div class="tab" data-tab="subs" onclick="switchTab('subs')">Захиалагчид</div>
       <div class="tab" data-tab="feedback" onclick="switchTab('feedback')">Санал хүсэлт</div>
-      <div class="tab" data-tab="authors" onclick="switchTab('authors')">Нийтлэл бичсэн</div>
-      <div class="tab" data-tab="register" onclick="switchTab('register')">Бүртгэлийн текст</div>
-      <div class="tab" data-tab="admins" onclick="switchTab('admins')">Админууд</div>
-      <div class="tab" data-tab="contact" onclick="switchTab('contact')">Холбоо барих</div>
+
+      <!-- Тохиргоо — цөөн ашигладаг тохиргоог задардаг бүлэгт хийв -->
+      <div class="tab tab-group" id="settingsToggle" onclick="toggleSettings()" role="button" tabindex="0"
+           aria-expanded="false" aria-controls="settingsSub"
+           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); toggleSettings();}">
+        Тохиргоо<span class="caret" aria-hidden="true">›</span>
+      </div>
+      <div class="tab-sub" id="settingsSub">
+        <div class="tab" data-tab="authors" onclick="switchTab('authors')">Нийтлэл бичсэн</div>
+        <div class="tab" data-tab="register" onclick="switchTab('register')">Бүртгэлийн текст</div>
+        <div class="tab" data-tab="admins" onclick="switchTab('admins')">Админууд</div>
+        <div class="tab" data-tab="contact" onclick="switchTab('contact')">Холбоо барих</div>
+      </div>
     </div>
     <div class="admin-content">
 
@@ -1149,8 +1166,23 @@
   }
 
   // ---------- Tabs ----------
+  // «Тохиргоо» бүлэгт багтах дэд цэсүүд
+  const SETTINGS_TABS = ['authors', 'register', 'admins', 'contact'];
+  function setSettingsOpen(open) {
+    document.getElementById('settingsSub').classList.toggle('open', open);
+    const tog = document.getElementById('settingsToggle');
+    tog.classList.toggle('open', open);
+    tog.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  function toggleSettings() {
+    setSettingsOpen(!document.getElementById('settingsSub').classList.contains('open'));
+  }
   function switchTab(t) {
     document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.dataset.tab === t));
+    // Тохиргооны дэд цэс сонгосон бол бүлгийг нээлттэй байлгаж, бүлгийг тэмдэглэнэ
+    const inSettings = SETTINGS_TABS.indexOf(t) !== -1;
+    if (inSettings) setSettingsOpen(true);
+    document.getElementById('settingsToggle').classList.toggle('has-active', inSettings);
     ['home','products','articles','why','pricing','schedule','users','subs','feedback','authors','register','admins','contact'].forEach(name =>
       document.getElementById('tab-' + name).classList.toggle('hidden', name !== t));
     if (t === 'home') renderHome();
