@@ -657,6 +657,16 @@
         <div class="field"><label>Гарчиг</label><input id="s-prod-title" oninput="sections.products.title = this.value"></div>
         <div class="field"><label>Тайлбар</label><textarea id="s-prod-text" rows="2" oninput="sections.products.text = this.value"></textarea></div>
       </div>
+
+      <div class="editor" style="margin-top:18px;">
+        <div class="se-meta-title" style="margin-bottom:14px;">И-мэйл захиалгын хэсэг</div>
+        <div class="field"><label>Гарчиг</label><input id="s-sub-title" oninput="sections.subscribe.title = this.value"></div>
+        <div class="field"><label>Тайлбар</label><textarea id="s-sub-sub" rows="2" oninput="sections.subscribe.sub = this.value"></textarea></div>
+        <div class="row2">
+          <div class="field"><label>Талбарын түр текст</label><input id="s-sub-ph" oninput="sections.subscribe.placeholder = this.value"></div>
+          <div class="field"><label>Товчны бичиг</label><input id="s-sub-btn" oninput="sections.subscribe.button = this.value"></div>
+        </div>
+      </div>
     </section>
 
     <section id="tab-authors" class="hidden">
@@ -1172,11 +1182,17 @@
       title: 'Танд хэрэгтэй бүх зүйл нэг дороос',
       text: 'Бие даан хэрэгжүүлэхээс эхлээд стратегийн түвшний зөвлөгөө хүртэл — өсөлтийн шат бүрд тохирсон шийдэл.',
     },
+    subscribe: {
+      title: '✏️ Үнэ цэнтэй, утга учиртай бас хүнд хэрэгтэй контентыг эндээс',
+      sub: 'Шинэ нийтлэл, KPI-ийн зөвлөмжийг и-мэйлээр хүлээн авна уу. Хүссэн үедээ цуцалж болно.',
+      placeholder: 'И-мэйл хаягаа оруулна уу',
+      button: 'Захиалах',
+    },
   };
   // Шинэ талбар нэмэгдвэл хуучин хадгалсан өгөгдөл дээр дутуу үлдэхээс сэргийлж давхарлана
   function mergeSections(s) {
     const out = JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
-    ['hero', 'insights', 'products'].forEach(k => { if (s && s[k]) Object.assign(out[k], s[k]); });
+    ['hero', 'insights', 'products', 'subscribe'].forEach(k => { if (s && s[k]) Object.assign(out[k], s[k]); });
     return out;
   }
   let sections = mergeSections(load('kpihub_sections', null));
@@ -2033,6 +2049,10 @@
     document.getElementById('s-prod-eyebrow').value = sections.products.eyebrow || '';
     document.getElementById('s-prod-title').value = sections.products.title || '';
     document.getElementById('s-prod-text').value = sections.products.text || '';
+    document.getElementById('s-sub-title').value = sections.subscribe.title || '';
+    document.getElementById('s-sub-sub').value = sections.subscribe.sub || '';
+    document.getElementById('s-sub-ph').value = sections.subscribe.placeholder || '';
+    document.getElementById('s-sub-btn').value = sections.subscribe.button || '';
     renderStats();
   }
   function renderStats() {

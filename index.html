@@ -819,11 +819,11 @@
   <div class="container">
     <form class="subscribe-bar" onsubmit="submitSubscribe(event)" novalidate>
       <div class="subscribe-copy">
-        <div class="subscribe-title">✏️ Үнэ цэнтэй, утга учиртай бас хүнд хэрэгтэй контентыг эндээс</div>
-        <div class="subscribe-sub">Шинэ нийтлэл, KPI-ийн зөвлөмжийг и-мэйлээр хүлээн авна уу. Хүссэн үедээ цуцалж болно.</div>
+        <div class="subscribe-title" id="subTitle"></div>
+        <div class="subscribe-sub" id="subSub"></div>
       </div>
       <div class="subscribe-form">
-        <input type="email" id="subEmail" placeholder="И-мэйл хаягаа оруулна уу" autocomplete="email" aria-label="И-мэйл хаяг">
+        <input type="email" id="subEmail" autocomplete="email" aria-label="И-мэйл хаяг">
         <button class="btn btn-primary" type="submit" id="subBtn">Захиалах</button>
       </div>
     </form>
@@ -2648,6 +2648,12 @@
       title: 'Танд хэрэгтэй бүх зүйл нэг дороос',
       text: 'Бие даан хэрэгжүүлэхээс эхлээд стратегийн түвшний зөвлөгөө хүртэл — өсөлтийн шат бүрд тохирсон шийдэл.',
     },
+    subscribe: {
+      title: '✏️ Үнэ цэнтэй, утга учиртай бас хүнд хэрэгтэй контентыг эндээс',
+      sub: 'Шинэ нийтлэл, KPI-ийн зөвлөмжийг и-мэйлээр хүлээн авна уу. Хүссэн үедээ цуцалж болно.',
+      placeholder: 'И-мэйл хаягаа оруулна уу',
+      button: 'Захиалах',
+    },
   };
   let SECTIONS = JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
   try {
@@ -2657,7 +2663,7 @@
   // Админаас ирсэн утгыг анхны төлөв дээр давхарлана (шинэ талбар нэмэгдвэл алдагдахгүй)
   function mergeSections(s) {
     const out = JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
-    ['hero', 'insights', 'products'].forEach(k => {
+    ['hero', 'insights', 'products', 'subscribe'].forEach(k => {
       if (s && s[k]) Object.assign(out[k], s[k]);
     });
     return out;
@@ -2684,6 +2690,11 @@
       document.getElementById(pre + 'Title').textContent = d.title || '';
       document.getElementById(pre + 'Text').textContent = d.text || '';
     });
+    const sb = SECTIONS.subscribe || {};
+    document.getElementById('subTitle').textContent = sb.title || '';
+    document.getElementById('subSub').textContent = sb.sub || '';
+    document.getElementById('subEmail').placeholder = sb.placeholder || '';
+    document.getElementById('subBtn').textContent = sb.button || '';
   }
   renderSections();
 
