@@ -309,6 +309,7 @@
         Тохиргоо<span class="caret" aria-hidden="true">›</span>
       </div>
       <div class="tab-sub" id="settingsSub">
+        <div class="tab" data-tab="sections" onclick="switchTab('sections')">Хуудасны текст</div>
         <div class="tab" data-tab="authors" onclick="switchTab('authors')">Нийтлэл бичсэн</div>
         <div class="tab" data-tab="register" onclick="switchTab('register')">Бүртгэлийн текст</div>
         <div class="tab" data-tab="admins" onclick="switchTab('admins')">Админууд</div>
@@ -616,6 +617,48 @@
     </section>
 
     <!-- ===== Authors panel ===== -->
+    <!-- ===== Хуудасны текст ===== -->
+    <section id="tab-sections" class="hidden">
+      <div class="panel-head">
+        <h2>Нүүр хуудасны текстүүд</h2>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="saveSections()">Хадгалах</button>
+          <button class="btn" onclick="resetSections()">Анхны төлөвт</button>
+          <span class="saved-msg" id="secSaved">✓ Хадгалагдлаа</span>
+        </div>
+      </div>
+      <div class="hint">Нүүр хуудасны эхний дэлгэц болон хэсгүүдийн гарчгийг эндээс өөрчилнө. Гарчиг дотор <b>*од хоёрын дунд*</b> бичсэн үг цэнхэрээр онцлогдоно.</div>
+
+      <div class="editor">
+        <div class="se-meta-title" style="margin-bottom:14px;">Эхний дэлгэц (hero)</div>
+        <div class="field"><label>Дээд шошго — хоосон орхивол харагдахгүй</label>
+          <input id="s-hero-pill" oninput="sections.hero.pill = this.value"></div>
+        <div class="field"><label>Гол гарчиг — *онцлох үг* энэ хэлбэрээр</label>
+          <input id="s-hero-title" oninput="sections.hero.title = this.value"></div>
+        <div class="field"><label>Тайлбар — мөр таслах бол Enter дарна</label>
+          <textarea id="s-hero-lead" rows="3" oninput="sections.hero.lead = this.value"></textarea></div>
+        <div class="field">
+          <label style="display:flex; justify-content:space-between; align-items:center;">Тоон үзүүлэлтүүд
+            <button class="btn btn-sm" onclick="addStat()">+ Үзүүлэлт нэмэх</button></label>
+          <div id="s-hero-stats"></div>
+        </div>
+      </div>
+
+      <div class="editor" style="margin-top:18px;">
+        <div class="se-meta-title" style="margin-bottom:14px;">«Мэдээ мэдээлэл» хэсэг</div>
+        <div class="field"><label>Дээд шошго</label><input id="s-ins-eyebrow" oninput="sections.insights.eyebrow = this.value"></div>
+        <div class="field"><label>Гарчиг</label><input id="s-ins-title" oninput="sections.insights.title = this.value"></div>
+        <div class="field"><label>Тайлбар</label><textarea id="s-ins-text" rows="2" oninput="sections.insights.text = this.value"></textarea></div>
+      </div>
+
+      <div class="editor" style="margin-top:18px;">
+        <div class="se-meta-title" style="margin-bottom:14px;">«Бүтээгдэхүүн, үйлчилгээ» хэсэг</div>
+        <div class="field"><label>Дээд шошго</label><input id="s-prod-eyebrow" oninput="sections.products.eyebrow = this.value"></div>
+        <div class="field"><label>Гарчиг</label><input id="s-prod-title" oninput="sections.products.title = this.value"></div>
+        <div class="field"><label>Тайлбар</label><textarea id="s-prod-text" rows="2" oninput="sections.products.text = this.value"></textarea></div>
+      </div>
+    </section>
+
     <section id="tab-authors" class="hidden">
       <div class="panel-head">
         <h2>Нийтлэл бичсэн хүмүүс</h2>
@@ -1111,6 +1154,32 @@
     artShardsUsed = shards.length;
     return Promise.all(jobs).then(oks => oks.every(Boolean));
   }
+  // ---------- Нүүр хуудасны текстүүд ----------
+  const DEFAULT_SECTIONS = {
+    hero: {
+      pill: '● KPI хэмжилтийн төгс шийдэл',
+      title: 'Байгууллагынхаа *гүйцэтгэлийг* зөв хэмжиж, ухаалаг удирдъя.',
+      lead: 'Зорилгоо зөв KPI-тэй холбож, гүйцэтгэлээ хэмжиж, үр дүнгээ сайжруул.\nKPI болон гүйцэтгэлийн удирдлагын бэлэн бүтээгдэхүүн, аргачлал, сургалт, зөвлөх үйлчилгээ.',
+      stats: [['6', 'Үндсэн шийдэл'], ['10', 'Зөвлөгөөний цаг / төсөл'], ['100+', 'Бэлэн темплэйт']],
+    },
+    insights: {
+      eyebrow: 'Мэдээ мэдээлэл',
+      title: 'Гүйцэтгэлийн удирдлагын шинэ мэдээ мэдээлэл',
+      text: 'Салбарын судалгаа, бенчмарк тайлан, KPI-ийн шилдэг туршлагын талаарх хамгийн сүүлийн үеийн нийтлэлүүд.',
+    },
+    products: {
+      eyebrow: 'Бүтээгдэхүүн, үйлчилгээ',
+      title: 'Танд хэрэгтэй бүх зүйл нэг дороос',
+      text: 'Бие даан хэрэгжүүлэхээс эхлээд стратегийн түвшний зөвлөгөө хүртэл — өсөлтийн шат бүрд тохирсон шийдэл.',
+    },
+  };
+  // Шинэ талбар нэмэгдвэл хуучин хадгалсан өгөгдөл дээр дутуу үлдэхээс сэргийлж давхарлана
+  function mergeSections(s) {
+    const out = JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
+    ['hero', 'insights', 'products'].forEach(k => { if (s && s[k]) Object.assign(out[k], s[k]); });
+    return out;
+  }
+  let sections = mergeSections(load('kpihub_sections', null));
   let articles = loadArticles();
   let contact = load('kpihub_contact', Object.assign({}, DEFAULT_CONTACT));
   let why = load('kpihub_why', JSON.parse(JSON.stringify(DEFAULT_WHY)));
@@ -1178,6 +1247,7 @@
     document.getElementById('gate').classList.add('hidden');
     document.getElementById('app').classList.remove('hidden');
     renderProductsAdmin();
+    renderSectionsForm();
     renderRegisterForm();
     renderAuthors();
     renderFeedback();
@@ -1212,7 +1282,7 @@
 
   // ---------- Tabs ----------
   // «Тохиргоо» бүлэгт багтах дэд цэсүүд
-  const SETTINGS_TABS = ['authors', 'register', 'admins', 'contact'];
+  const SETTINGS_TABS = ['sections', 'authors', 'register', 'admins', 'contact'];
   function setSettingsOpen(open) {
     document.getElementById('settingsSub').classList.toggle('open', open);
     const tog = document.getElementById('settingsToggle');
@@ -1243,7 +1313,7 @@
     // Бүтээгдэхүүний хуудас дээр байхад бүлэг нээлттэй, тэмдэглэгдсэн байна
     if (t === 'products') setProductsOpen(true);
     document.getElementById('productsToggle').classList.toggle('has-active', t === 'products');
-    ['home','products','articles','why','pricing','schedule','users','subs','feedback','authors','register','admins','contact'].forEach(name =>
+    ['home','products','articles','why','pricing','schedule','users','subs','feedback','sections','authors','register','admins','contact'].forEach(name =>
       document.getElementById('tab-' + name).classList.toggle('hidden', name !== t));
     if (t === 'home') renderHome();
     if (t === 'products') renderProductsAdmin();
@@ -1252,6 +1322,7 @@
     if (t === 'users') { renderUsers(); clearUserMsg(); }
     if (t === 'subs') renderSubs();
     if (t === 'register') renderRegisterForm();
+    if (t === 'sections') renderSectionsForm();
     if (t === 'authors') renderAuthors();
     if (t === 'feedback') renderFeedback();
     if (t === 'admins') { renderAdmins(); clearAdminMsg(); }
@@ -1948,6 +2019,46 @@
     const [y, m, day] = d.split('-').map(Number);
     const wd = ['Ня','Да','Мя','Лх','Пү','Ба','Бя'][new Date(y, m - 1, day).getDay()];
     return y + '.' + String(m).padStart(2,'0') + '.' + String(day).padStart(2,'0') + ' (' + wd + ')';
+  }
+
+  // ---------- Нүүр хуудасны текстүүд ----------
+  function renderSectionsForm() {
+    if (!document.getElementById('s-hero-title')) return;
+    document.getElementById('s-hero-pill').value = sections.hero.pill || '';
+    document.getElementById('s-hero-title').value = sections.hero.title || '';
+    document.getElementById('s-hero-lead').value = sections.hero.lead || '';
+    document.getElementById('s-ins-eyebrow').value = sections.insights.eyebrow || '';
+    document.getElementById('s-ins-title').value = sections.insights.title || '';
+    document.getElementById('s-ins-text').value = sections.insights.text || '';
+    document.getElementById('s-prod-eyebrow').value = sections.products.eyebrow || '';
+    document.getElementById('s-prod-title').value = sections.products.title || '';
+    document.getElementById('s-prod-text').value = sections.products.text || '';
+    renderStats();
+  }
+  function renderStats() {
+    const box = document.getElementById('s-hero-stats');
+    if (!box) return;
+    box.innerHTML = (sections.hero.stats || []).map((s, i) =>
+      '<div class="tpl-card" style="margin-top:8px;"><div class="tpl-top" style="grid-template-columns:110px 1fr auto;">'
+      + '<input value="' + esc(s[0]) + '" oninput="sections.hero.stats[' + i + '][0]=this.value" placeholder="Тоо">'
+      + '<input value="' + esc(s[1]) + '" oninput="sections.hero.stats[' + i + '][1]=this.value" placeholder="Тайлбар">'
+      + '<button class="btn btn-danger btn-sm" onclick="delStat(' + i + ')">Устгах</button>'
+      + '</div></div>'
+    ).join('') || '<div class="empty" style="padding:8px 0;">Үзүүлэлт алга.</div>';
+  }
+  function addStat() { sections.hero.stats.push(['0', 'Шинэ үзүүлэлт']); renderStats(); }
+  function delStat(i) {
+    if (!confirmDelete()) return;
+    sections.hero.stats.splice(i, 1); renderStats();
+  }
+  function saveSections() {
+    save('kpihub_sections', sections).then(ok => { if (ok) flash('secSaved'); });
+  }
+  function resetSections() {
+    if (!confirm('Нүүр хуудасны текстүүдийг анхны төлөвт буцаах уу?')) return;
+    sections = JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
+    renderSectionsForm();
+    save('kpihub_sections', sections);
   }
 
   // ---------- Why-us ----------
@@ -2769,6 +2880,7 @@
     authors      = load('kpihub_authors', []);
     contact      = load('kpihub_contact', Object.assign({}, DEFAULT_CONTACT));
     why          = load('kpihub_why', JSON.parse(JSON.stringify(DEFAULT_WHY)));
+    sections     = mergeSections(load('kpihub_sections', null));
     availability = load('kpihub_availability', []);
     questions    = load('kpihub_quote_questions', JSON.parse(JSON.stringify(DEFAULT_QUESTIONS)));
     if (appShown) showApp();

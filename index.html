@@ -789,23 +789,19 @@
 
 <section class="hero">
   <div class="container">
-    <span class="pill">● KPI хэмжилтийн төгс шийдэл</span>
-    <h1>Байгууллагынхаа <span class="grad">гүйцэтгэлийг</span> зөв хэмжиж, ухаалаг удирдъя.</h1>
-    <p class="lead">Зорилгоо зөв KPI-тэй холбож, гүйцэтгэлээ хэмжиж, үр дүнгээ сайжруул.<br>KPI болон гүйцэтгэлийн удирдлагын бэлэн бүтээгдэхүүн, аргачлал, сургалт, зөвлөх үйлчилгээ.</p>
-    <div class="stats">
-      <div class="stat"><div class="num">6</div><div class="lbl">Үндсэн шийдэл</div></div>
-      <div class="stat"><div class="num">10</div><div class="lbl">Зөвлөгөөний цаг / төсөл</div></div>
-      <div class="stat"><div class="num">100+</div><div class="lbl">Бэлэн темплэйт</div></div>
-    </div>
+    <span class="pill" id="heroPill"></span>
+    <h1 id="heroTitle"></h1>
+    <p class="lead" id="heroLead"></p>
+    <div class="stats" id="heroStats"></div>
   </div>
 </section>
 
 <section class="section" id="insights">
   <div class="container">
     <div class="section-head">
-      <div class="eyebrow">Мэдээ мэдээлэл</div>
-      <h2>Гүйцэтгэлийн удирдлагын шинэ мэдээ мэдээлэл</h2>
-      <p>Салбарын судалгаа, бенчмарк тайлан, KPI-ийн шилдэг туршлагын талаарх хамгийн сүүлийн үеийн нийтлэлүүд.</p>
+      <div class="eyebrow" id="insEyebrow"></div>
+      <h2 id="insTitle"></h2>
+      <p id="insText"></p>
     </div>
 
     <div class="filter-bar" id="filterBar"></div>
@@ -838,9 +834,9 @@
 <section class="section" id="products">
   <div class="container">
     <div class="section-head">
-      <div class="eyebrow">Бүтээгдэхүүн, үйлчилгээ</div>
-      <h2>Танд хэрэгтэй бүх зүйл нэг дороос</h2>
-      <p>Бие даан хэрэгжүүлэхээс эхлээд стратегийн түвшний зөвлөгөө хүртэл — өсөлтийн шат бүрд тохирсон шийдэл.</p>
+      <div class="eyebrow" id="prodEyebrow"></div>
+      <h2 id="prodTitle"></h2>
+      <p id="prodText"></p>
     </div>
 
     <div class="grid" id="productsGrid"></div>
@@ -2628,6 +2624,69 @@
   renderFooterSocial();
 
   // ---------- "Бидний тухай" / About section ----------
+  // ---------- Хуудасны тогтмол текстүүд (админаас удирдана) ----------
+  // Нүүр хуудасны эхний дэлгэц болон хэсгүүдийн гарчиг. Гарчиг доторх
+  // *од хоёрын дунд* бичсэн үг онцолсон (цэнхэр) өнгөөр гарна.
+  const DEFAULT_SECTIONS = {
+    hero: {
+      pill: '● KPI хэмжилтийн төгс шийдэл',
+      title: 'Байгууллагынхаа *гүйцэтгэлийг* зөв хэмжиж, ухаалаг удирдъя.',
+      lead: 'Зорилгоо зөв KPI-тэй холбож, гүйцэтгэлээ хэмжиж, үр дүнгээ сайжруул.\nKPI болон гүйцэтгэлийн удирдлагын бэлэн бүтээгдэхүүн, аргачлал, сургалт, зөвлөх үйлчилгээ.',
+      stats: [
+        ['6', 'Үндсэн шийдэл'],
+        ['10', 'Зөвлөгөөний цаг / төсөл'],
+        ['100+', 'Бэлэн темплэйт'],
+      ],
+    },
+    insights: {
+      eyebrow: 'Мэдээ мэдээлэл',
+      title: 'Гүйцэтгэлийн удирдлагын шинэ мэдээ мэдээлэл',
+      text: 'Салбарын судалгаа, бенчмарк тайлан, KPI-ийн шилдэг туршлагын талаарх хамгийн сүүлийн үеийн нийтлэлүүд.',
+    },
+    products: {
+      eyebrow: 'Бүтээгдэхүүн, үйлчилгээ',
+      title: 'Танд хэрэгтэй бүх зүйл нэг дороос',
+      text: 'Бие даан хэрэгжүүлэхээс эхлээд стратегийн түвшний зөвлөгөө хүртэл — өсөлтийн шат бүрд тохирсон шийдэл.',
+    },
+  };
+  let SECTIONS = JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
+  try {
+    const rawS = JSON.parse(localStorage.getItem('kpihub_sections') || 'null');
+    if (rawS) SECTIONS = mergeSections(rawS);
+  } catch (e) {}
+  // Админаас ирсэн утгыг анхны төлөв дээр давхарлана (шинэ талбар нэмэгдвэл алдагдахгүй)
+  function mergeSections(s) {
+    const out = JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
+    ['hero', 'insights', 'products'].forEach(k => {
+      if (s && s[k]) Object.assign(out[k], s[k]);
+    });
+    return out;
+  }
+  // *онцолсон* хэсгийг ялгаж, бусдыг нь аюулгүй болгож гаргана
+  function markTitle(t) {
+    return String(t || '').split(/\*([^*]+)\*/).map((part, i) =>
+      i % 2 ? '<span class="grad">' + esc(part) + '</span>' : esc(part)
+    ).join('');
+  }
+  function renderSections() {
+    const h = SECTIONS.hero || {};
+    document.getElementById('heroPill').textContent = h.pill || '';
+    document.getElementById('heroPill').style.display = (h.pill || '').trim() ? '' : 'none';
+    document.getElementById('heroTitle').innerHTML = markTitle(h.title);
+    document.getElementById('heroLead').innerHTML =
+      String(h.lead || '').split(/\n/).map(esc).join('<br>');
+    document.getElementById('heroStats').innerHTML = (h.stats || []).map(s =>
+      '<div class="stat"><div class="num">' + esc(s[0]) + '</div><div class="lbl">' + esc(s[1]) + '</div></div>'
+    ).join('');
+    [['insights', 'ins'], ['products', 'prod']].forEach(([key, pre]) => {
+      const d = SECTIONS[key] || {};
+      document.getElementById(pre + 'Eyebrow').textContent = d.eyebrow || '';
+      document.getElementById(pre + 'Title').textContent = d.title || '';
+      document.getElementById(pre + 'Text').textContent = d.text || '';
+    });
+  }
+  renderSections();
+
   const DEFAULT_WHY = {
     eyebrow: 'Бидний тухай',
     title: 'Хэмжилтийг тааварлахаа боль',
@@ -3019,6 +3078,10 @@
       const w = JSON.parse(localStorage.getItem('kpihub_why') || 'null');
       if (w) WHY = Object.assign({}, DEFAULT_WHY, w);
     } catch (e) {}
+    try {
+      const sec = JSON.parse(localStorage.getItem('kpihub_sections') || 'null');
+      if (sec) { SECTIONS = mergeSections(sec); renderSections(); }
+    } catch (e) {}
     renderFilters();
     renderArticles();
     renderProducts();
@@ -3037,7 +3100,7 @@
 
   KPICloud.ready.then(applyCloudContent);
   // Админаас засвар хийвэл нийтийн сайтад бодит цагт тусгагдана
-  ['kpihub_quote_questions','kpihub_contact','kpihub_why','kpihub_availability']
+  ['kpihub_quote_questions','kpihub_contact','kpihub_why','kpihub_availability','kpihub_sections','kpihub_authors']
     .concat(ART_SHARD_KEYS)
     .concat(Object.keys(TEMPLATE_PRODUCT_KEYS).map(k => TEMPLATE_PRODUCT_KEYS[k]))
     .forEach(k => KPICloud.watch(k, applyCloudContent));

@@ -51,6 +51,7 @@
     "kpihub_articles_8",
     "kpihub_products",
     "kpihub_register",
+    "kpihub_sections",
     "kpihub_authors",
     "kpihub_contact",
     "kpihub_why",
