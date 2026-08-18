@@ -59,6 +59,48 @@
     .tabs { position:static; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); padding:0 0 18px; border-right:0; border-bottom:1px solid var(--line); }
   }
 
+  /* ===== Substack маягийн нийтлэлийн засварлагч ===== */
+  .se-toolbar {
+    position:sticky; top:63px; z-index:7; background:#fff; border:1px solid var(--line);
+    border-radius:10px; padding:6px 10px; display:flex; gap:2px; align-items:center; flex-wrap:wrap;
+    box-shadow:0 4px 14px rgba(0,0,0,.05);
+  }
+  .se-toolbar > button, .se-imgbtn {
+    border:none; background:none; padding:7px 10px; border-radius:6px; cursor:pointer;
+    font-size:14px; color:var(--text); line-height:1; font-family:inherit;
+  }
+  .se-toolbar > button:hover, .se-imgbtn:hover { background:var(--bg); }
+  .se-sep { width:1px; height:20px; background:var(--line); margin:0 6px; }
+  .se-spacer { flex:1; }
+  .se-title {
+    display:block; width:100%; border:none; outline:none; background:none;
+    font-family:Georgia,'Times New Roman',serif; font-size:32px; font-weight:700; color:var(--text);
+    margin-top:22px; padding:0;
+  }
+  .se-title::placeholder { color:#b8bcc6; }
+  .se-subtitle {
+    display:block; width:100%; border:none; outline:none; background:none;
+    font-family:Georgia,'Times New Roman',serif; font-size:18px; color:var(--muted);
+    margin-top:8px; padding:0;
+  }
+  .se-subtitle::placeholder { color:#c4c8d0; }
+  .se-body {
+    min-height:300px; outline:none; margin-top:20px;
+    font-size:16px; line-height:1.7; color:var(--text);
+  }
+  .se-body:empty::before { content:attr(data-ph); color:#b8bcc6; pointer-events:none; }
+  .se-body p { margin:0 0 14px; }
+  .se-body h3 { font-size:21px; font-weight:700; margin:22px 0 10px; }
+  .se-body blockquote { border-left:3px solid var(--accent); margin:16px 0; padding:4px 0 4px 16px; color:var(--muted); font-style:italic; }
+  .se-body ul { margin:0 0 14px 22px; }
+  .se-body li { margin-bottom:6px; }
+  .se-body a { color:var(--accent); text-decoration:underline; }
+  .se-body figure { margin:18px 0; }
+  .se-body figure img, .se-body img { max-width:100%; border-radius:10px; border:1px solid var(--line); display:block; }
+  .se-body figcaption { font-size:12.5px; color:var(--muted); margin-top:6px; text-align:center; }
+  .se-meta { margin-top:30px; border-top:1px solid var(--line); padding-top:18px; }
+  .se-meta-title { font-size:12.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
+
   .panel-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:12px; }
   .panel-head h2 { font-size:20px; }
   /* Бүтээгдэхүүн хэсэгт «Хадгалах» товч гүйхэд байнга дээр харагдана */
@@ -311,51 +353,50 @@
       <div class="list" id="artList"></div>
 
       <div class="editor hidden" id="artEditor">
-        <h3 id="artEditorTitle">Шинэ нийтлэл</h3>
-        <div class="row2">
-          <div class="field"><label>Ангилал</label><input id="e-cat" placeholder="Судалгаа"></div>
-          <div class="field"><label>Огноо</label><input type="date" id="e-date"></div>
-        </div>
-        <div class="field"><label>Унших хугацаа</label><input id="e-read" placeholder="5 мин"></div>
-        <div class="field"><label>Нийтлэл бичсэн (By ...)</label><input id="e-author" placeholder="Жишээ: Бат Болд"></div>
-        <div class="field"><label>Гарчиг</label><input id="e-title" placeholder="Нийтлэлийн гарчиг"></div>
-        <div class="field">
-          <label>Нүүр зураг</label>
-          <div class="tpl-file" style="border-top:none; padding-top:0;">
-            <label class="file-btn">Зураг сонгох<input type="file" accept="image/*" hidden onchange="onArticleImage(this)"></label>
-            <span class="file-name" id="e-imgName">Зураг сонгоогүй</span>
-            <button class="file-rm" id="e-imgRm" style="display:none;" onclick="removeArticleImage()">Устгах</button>
-          </div>
-          <img id="e-imgPreview" style="display:none; margin-top:12px; max-width:280px; width:100%; border-radius:10px; border:1px solid var(--line);">
-        </div>
-        <div class="field"><label>Товч тайлбар</label><textarea id="e-excerpt" style="min-height:70px" placeholder="Хавтан дээр харагдах богино тайлбар"></textarea></div>
-        <div class="field">
-          <label>Агуулга</label>
-          <textarea id="e-body" style="min-height:200px" placeholder="Энгийн догол мөр..."></textarea>
-          <div class="tpl-file" style="border-top:none; padding-top:10px;">
-            <label class="file-btn">Агуулгад зураг нэмэх<input type="file" accept="image/*" hidden onchange="onBodyImage(this)"></label>
-            <span class="file-name">Курсор байрласан хэсэгт зураг нэмэгдэнэ</span>
-          </div>
-          <div class="code-note fmt-help">
-            <div class="fmt-title">Хэрхэн бичих вэ</div>
-            <table class="fmt-table">
-              <tr><td><code>Энгийн текст</code></td><td>Догол мөр</td></tr>
-              <tr><td><code>## Гарчиг</code></td><td>Дэд гарчиг</td></tr>
-              <tr><td><code>- Жагсаалтын мөр</code></td><td>Жагсаалт (дараалсан мөрүүд нэг жагсаалт болно)</td></tr>
-              <tr><td><code>&gt; Эшлэл</code></td><td>Онцолсон эшлэл</td></tr>
-              <tr><td><code>![Тайлбар](зураг)</code></td><td>Агуулга доторх зураг — дээрх товчоор автоматаар нэмэгдэнэ</td></tr>
-            </table>
-            <div class="fmt-tip">
-              Тэмдэглэгээний ард зай тавьсан ч, тавиагүй ч ажиллана (<code>##Гарчиг</code> = <code>## Гарчиг</code>).
-              Жагсаалтад <code>-</code>, <code>*</code>, <code>•</code> гурвуулаа тохирно.
-              Догол мөр хооронд <b>хоосон мөр</b> үлдээвэл тусдаа хэсэг болно.
-            </div>
-          </div>
-        </div>
-        <div class="save-bar">
-          <button class="btn btn-primary" onclick="saveArticle()">Хадгалах</button>
-          <button class="btn" onclick="cancelArticle()">Болих</button>
+        <h3 id="artEditorTitle" class="sr-only-title" style="display:none;">Шинэ нийтлэл</h3>
+
+        <!-- Substack маягийн бичих туршлага: toolbar + том гарчиг + дэд гарчиг + WYSIWYG бие -->
+        <div class="se-toolbar">
+          <button type="button" title="Дэд гарчиг" onclick="seHeading()"><b>T</b></button>
+          <span class="se-sep"></span>
+          <button type="button" title="Тод" onclick="seCmd('bold')"><b>B</b></button>
+          <button type="button" title="Налуу" onclick="seCmd('italic')"><i>I</i></button>
+          <button type="button" title="Доогуур зураас" onclick="seCmd('underline')"><u>U</u></button>
+          <span class="se-sep"></span>
+          <button type="button" title="Холбоос" onclick="seLink()">🔗</button>
+          <button type="button" title="Эшлэл" onclick="seQuote()">❝</button>
+          <button type="button" title="Жагсаалт" onclick="seCmd('insertUnorderedList')">•≡</button>
+          <label class="se-imgbtn" title="Зураг оруулах">🖼<input type="file" accept="image/*" hidden onchange="onBodyImage(this)"></label>
+          <span class="se-spacer"></span>
+          <button type="button" class="btn btn-primary btn-sm" onclick="saveArticle()">Нийтлэх</button>
+          <button type="button" class="btn btn-sm" onclick="cancelArticle()">Болих</button>
           <span class="saved-msg" id="artSaved">Хадгалагдлаа</span>
+        </div>
+
+        <input id="e-title" class="se-title" placeholder="Гарчиг">
+        <input id="e-excerpt" class="se-subtitle" placeholder="Дэд гарчиг (товч тайлбар) нэмэх…">
+        <div id="e-body" class="se-body" contenteditable="true" data-ph="Бичиж эхлэх…"></div>
+
+        <!-- Нийтлэлийн тохиргоо -->
+        <div class="se-meta">
+          <div class="se-meta-title">Нийтлэлийн тохиргоо</div>
+          <div class="row2">
+            <div class="field"><label>Ангилал</label><input id="e-cat" placeholder="Судалгаа"></div>
+            <div class="field"><label>Огноо</label><input type="date" id="e-date"></div>
+          </div>
+          <div class="row2">
+            <div class="field"><label>Унших хугацаа</label><input id="e-read" placeholder="5 мин"></div>
+            <div class="field"><label>Нийтлэл бичсэн (By ...)</label><input id="e-author" placeholder="Жишээ: Бат Болд"></div>
+          </div>
+          <div class="field">
+            <label>Нүүр зураг</label>
+            <div class="tpl-file" style="border-top:none; padding-top:0;">
+              <label class="file-btn">Зураг сонгох<input type="file" accept="image/*" hidden onchange="onArticleImage(this)"></label>
+              <span class="file-name" id="e-imgName">Зураг сонгоогүй</span>
+              <button class="file-rm" id="e-imgRm" style="display:none;" onclick="removeArticleImage()">Устгах</button>
+            </div>
+            <img id="e-imgPreview" style="display:none; margin-top:12px; max-width:280px; width:100%; border-radius:10px; border:1px solid var(--line);">
+          </div>
         </div>
       </div>
     </section>
@@ -2271,7 +2312,7 @@
     document.getElementById('e-author').value = a.author || '';
     document.getElementById('e-title').value = a.title || '';
     document.getElementById('e-excerpt').value = a.excerpt || '';
-    document.getElementById('e-body').value = blocksToText(a.body || []);
+    document.getElementById('e-body').innerHTML = blocksToEditorHtml(a.body || []);
     editImage = a.image || '';
     renderArticleImage();
   }
@@ -2287,26 +2328,54 @@
     reader.onload = () => { editImage = reader.result; renderArticleImage(); };
     reader.readAsDataURL(f);
   }
-  function insertBodyText(text) {
-    const body = document.getElementById('e-body');
-    const start = body.selectionStart || 0;
-    const end = body.selectionEnd || start;
-    const before = body.value.slice(0, start);
-    const after = body.value.slice(end);
-    const prefix = before && !before.endsWith('\n\n') ? (before.endsWith('\n') ? '\n' : '\n\n') : '';
-    const suffix = after && !after.startsWith('\n\n') ? (after.startsWith('\n') ? '\n' : '\n\n') : '';
-    body.value = before + prefix + text + suffix + after;
-    const pos = (before + prefix + text).length;
-    body.focus();
-    body.setSelectionRange(pos, pos);
+  // ---------- WYSIWYG туслахууд ----------
+  // Toolbar дарахад сонголт (selection) алдагддаг тул биед хийсэн сүүлийн
+  // байрлалыг хадгалж, команд ажиллуулахын өмнө сэргээнэ.
+  let seSavedRange = null;
+  function seBody() { return document.getElementById('e-body'); }
+  function seSaveSel() {
+    const sel = window.getSelection();
+    if (sel.rangeCount && seBody().contains(sel.anchorNode)) seSavedRange = sel.getRangeAt(0).cloneRange();
+  }
+  function seRestoreSel() {
+    seBody().focus();
+    if (!seSavedRange) return;
+    const sel = window.getSelection();
+    sel.removeAllRanges(); sel.addRange(seSavedRange);
+  }
+  function seCmd(cmd, val) {
+    seRestoreSel();
+    document.execCommand(cmd, false, val || null);
+    seSaveSel();
+  }
+  // Блок доторх байгаа эсэхийг шалгаад гарчиг/эшлэлийг асааж унтраана
+  function seInTag(tag) {
+    const sel = window.getSelection();
+    let n = sel.rangeCount ? sel.anchorNode : null;
+    while (n && n !== seBody()) { if (n.tagName === tag) return true; n = n.parentNode; }
+    return false;
+  }
+  function seHeading() { seRestoreSel(); document.execCommand('formatBlock', false, seInTag('H3') ? 'p' : 'h3'); seSaveSel(); }
+  function seQuote() { seRestoreSel(); document.execCommand('formatBlock', false, seInTag('BLOCKQUOTE') ? 'p' : 'blockquote'); seSaveSel(); }
+  function seLink() {
+    seRestoreSel();
+    const url = prompt('Холбоосын хаяг (https://…):');
+    if (url === null) return;
+    if (!url.trim()) { document.execCommand('unlink'); return; }
+    const u = /^(https?:\/\/|mailto:)/i.test(url.trim()) ? url.trim() : 'https://' + url.trim();
+    document.execCommand('createLink', false, u);
+    seSaveSel();
   }
   function onBodyImage(input) {
     const f = input.files && input.files[0]; if (!f) return;
     if (f.size > MAX_IMG) { alert('Зураг хэт том байна (дээд тал нь 5MB).'); input.value = ''; return; }
     const reader = new FileReader();
     reader.onload = () => {
-      insertBodyText('![' + (f.name || 'Зураг') + '](' + reader.result + ')');
+      seRestoreSel();
+      document.execCommand('insertHTML', false,
+        '<figure contenteditable="false"><img src="' + reader.result + '" alt=""></figure><p><br></p>');
       input.value = '';
+      seSaveSel();
     };
     reader.readAsDataURL(f);
   }
@@ -2351,7 +2420,7 @@
       image: editImage || '',
       title: title,
       excerpt: document.getElementById('e-excerpt').value.trim(),
-      body: textToBlocks(document.getElementById('e-body').value),
+      body: editorToBlocks(document.getElementById('e-body')),
     };
     const prev = articles.slice();
     if (editIndex >= 0) { a.feature = articles[editIndex].feature; articles[editIndex] = a; }
@@ -2362,43 +2431,79 @@
     });
   }
 
-  // ---------- Body <-> text ----------
-  function blocksToText(blocks) {
-    return blocks.map(b => {
-      if (b[0] === 'h3') return '## ' + b[1];
-      if (b[0] === 'blockquote') return '> ' + b[1];
-      if (b[0] === 'ul') return b[1].map(li => '- ' + li).join('\n');
-      if (b[0] === 'img') return '![' + (b[2] || 'Зураг') + '](' + b[1] + ')';
-      return b[1];
-    }).join('\n\n');
-  }
-  // Форматлагдсан текстийг блок болгож задлана.
-  // Тэмдэглэгээний ард зай ЗААВАЛ биш: «##Гарчиг» ба «## Гарчиг» хоёулаа
-  // ажиллана. Мөн жагсаалтад -, *, • гурвуулаа тохирно.
-  function textToBlocks(text) {
-    const HEAD  = /^#{1,3}\s*(.+)$/;
-    const QUOTE = /^>\s*(.+)$/;
-    const ITEM  = /^[-*•]\s*(.+)$/;
-    const IMG   = /^!\[([^\]]*)\]\((.+)\)$/;
-
-    const blocks = [];
-    String(text || '').split(/\n\s*\n/).forEach(chunk => {
-      const lines = chunk.split('\n').map(l => l.trim()).filter(Boolean);
-      let list = null; // дараалсан жагсаалтын мөрүүдийг нэг блок болгож цуглуулна
-      const flush = () => { if (list && list.length) blocks.push(['ul', list]); list = null; };
-      lines.forEach(l => {
-        let m;
-        if ((m = l.match(IMG))) { flush(); blocks.push(['img', m[2].trim(), (m[1] || 'Зураг').trim()]); return; }
-        if ((m = l.match(ITEM))) { (list = list || []).push(m[1].trim()); return; }
-        flush();
-        if ((m = l.match(HEAD))) blocks.push(['h3', m[1].trim()]);
-        else if ((m = l.match(QUOTE))) blocks.push(['blockquote', m[1].trim()]);
-        else blocks.push(['p', l]);
+  // ---------- Body <-> editor HTML ----------
+  // Блок доторх текст нь ХЯЗГААРЛАГДСАН inline HTML (b/i/u/a/br) агуулж болно.
+  // inlineSafe нь дурын HTML-ээс зөвхөн эдгээрийг үлдээж, бусдыг нь текст
+  // болгон задална — хуучин энгийн текст нийтлэлүүд өөрчлөлтгүй ажиллана.
+  function inlineSafe(s) {
+    const tpl = document.createElement('template');
+    tpl.innerHTML = String(s == null ? '' : s);
+    function walk(node) {
+      let r = '';
+      node.childNodes.forEach(n => {
+        if (n.nodeType === 3) { r += esc(n.nodeValue); return; }
+        if (n.nodeType !== 1) return;
+        const tag = n.tagName.toLowerCase();
+        const inner = walk(n);
+        if (tag === 'b' || tag === 'strong') r += inner ? '<b>' + inner + '</b>' : '';
+        else if (tag === 'i' || tag === 'em') r += inner ? '<i>' + inner + '</i>' : '';
+        else if (tag === 'u') r += inner ? '<u>' + inner + '</u>' : '';
+        else if (tag === 'br') r += '<br>';
+        else if (tag === 'a') {
+          const href = String(n.getAttribute('href') || '').trim();
+          r += (/^(https?:\/\/|mailto:)/i.test(href) && inner)
+            ? '<a href="' + esc(href) + '" target="_blank" rel="noopener">' + inner + '</a>'
+            : inner;
+        }
+        else r += inner;
       });
-      flush();
+      return r;
+    }
+    return walk(tpl.content);
+  }
+  function blocksToEditorHtml(blocks) {
+    return (blocks || []).map(b => {
+      if (b[0] === 'h3') return '<h3>' + inlineSafe(b[1]) + '</h3>';
+      if (b[0] === 'blockquote') return '<blockquote>' + inlineSafe(b[1]) + '</blockquote>';
+      if (b[0] === 'ul') return '<ul>' + b[1].map(li => '<li>' + inlineSafe(li) + '</li>').join('') + '</ul>';
+      if (b[0] === 'img') return '<figure contenteditable="false"><img src="' + b[1] + '" alt="' + esc(b[2] || '') + '"></figure>';
+      return '<p>' + inlineSafe(b[1]) + '</p>';
+    }).join('');
+  }
+  // Хоосон эсэхийг inline HTML талаас нь шалгана (зөвхөн <br>/зай бол хоосон)
+  function seEmpty(html) { return !String(html || '').replace(/<br>/g, '').replace(/&nbsp;/g, ' ').trim(); }
+  function editorToBlocks(root) {
+    const blocks = [];
+    root.childNodes.forEach(n => {
+      if (n.nodeType === 3) { const t = n.nodeValue.trim(); if (t) blocks.push(['p', esc(t)]); return; }
+      if (n.nodeType !== 1) return;
+      const tag = n.tagName.toLowerCase();
+      if (/^h[1-4]$/.test(tag)) { const t = inlineSafe(n.innerHTML); if (!seEmpty(t)) blocks.push(['h3', t]); }
+      else if (tag === 'blockquote') { const t = inlineSafe(n.innerHTML); if (!seEmpty(t)) blocks.push(['blockquote', t]); }
+      else if (tag === 'ul' || tag === 'ol') {
+        const items = Array.prototype.map.call(n.querySelectorAll('li'), li => inlineSafe(li.innerHTML)).filter(t => !seEmpty(t));
+        if (items.length) blocks.push(['ul', items]);
+      }
+      else if (tag === 'figure' || tag === 'img') {
+        const img = tag === 'img' ? n : n.querySelector('img');
+        if (img && img.getAttribute('src')) blocks.push(['img', img.getAttribute('src'), (n.querySelector && n.querySelector('figcaption') ? n.querySelector('figcaption').textContent : img.getAttribute('alt')) || '']);
+      }
+      else {
+        // p/div — дотор нь ганц зураг байвал зургийн блок болгоно
+        const img = n.querySelector && n.querySelector('img');
+        if (img && !(n.textContent || '').trim()) { blocks.push(['img', img.getAttribute('src'), img.getAttribute('alt') || '']); return; }
+        const t = inlineSafe(n.innerHTML);
+        if (!seEmpty(t)) blocks.push(['p', t]);
+      }
     });
     return blocks;
   }
+  // Сонголтын байрлалыг тогтмол хадгална (toolbar дарахад алдагдахаас сэргийлж)
+  (function () {
+    const b = document.getElementById('e-body');
+    if (b) ['keyup', 'mouseup', 'focus', 'input'].forEach(ev => b.addEventListener(ev, seSaveSel));
+    try { document.execCommand('defaultParagraphSeparator', false, 'p'); } catch (e) {}
+  })();
 
   function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
   function resetArticles() {

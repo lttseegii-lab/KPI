@@ -444,6 +444,7 @@
 
   .reader-body { max-width: 720px; margin: 0 auto; }
   .reader-body p { font-size: 16.5px; color: #222; line-height: 1.75; margin-bottom: 18px; }
+  .reader-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
   .reader-body h3 { font-size: 20px; font-weight: 700; color: #111; margin: 30px 0 10px; }
   .reader-body ul { margin: 0 0 20px 4px; display: flex; flex-direction: column; gap: 11px; list-style: none; }
   .reader-body ul li { display: flex; gap: 12px; font-size: 16.5px; color: #222; line-height: 1.65; }
@@ -775,7 +776,7 @@
 <section class="section" id="insights">
   <div class="container">
     <div class="section-head">
-      <div class="eyebrow">Мэдээ мэдээлэл, судалгаа</div>
+      <div class="eyebrow">Мэдээ мэдээлэл</div>
       <h2>Хэмжилтийн шинэ мэдлэг, тренд</h2>
       <p>Салбарын судалгаа, бенчмарк тайлан, KPI-ийн шилдэг туршлагын талаарх хамгийн сүүлийн үеийн нийтлэлүүд.</p>
     </div>
@@ -1472,12 +1473,42 @@
   }
 
   const arOverlay = document.getElementById('arOverlay');
+  // Блок доторх текст нь админы WYSIWYG-ээс ирсэн ХЯЗГААРЛАГДСАН inline
+  // форматтай (тод, налуу, доогуур, холбоос) байж болно. inlineSafe нь зөвхөн
+  // эдгээрийг үлдээж бусдыг нь текст болгон задална — хуучин энгийн текст
+  // нийтлэлүүд өөрчлөлтгүй ажиллана.
+  function inlineSafe(s) {
+    const tpl = document.createElement('template');
+    tpl.innerHTML = String(s == null ? '' : s);
+    function walk(node) {
+      let r = '';
+      node.childNodes.forEach(n => {
+        if (n.nodeType === 3) { r += esc(n.nodeValue); return; }
+        if (n.nodeType !== 1) return;
+        const tag = n.tagName.toLowerCase();
+        const inner = walk(n);
+        if (tag === 'b' || tag === 'strong') r += inner ? '<b>' + inner + '</b>' : '';
+        else if (tag === 'i' || tag === 'em') r += inner ? '<i>' + inner + '</i>' : '';
+        else if (tag === 'u') r += inner ? '<u>' + inner + '</u>' : '';
+        else if (tag === 'br') r += '<br>';
+        else if (tag === 'a') {
+          const href = String(n.getAttribute('href') || '').trim();
+          r += (/^(https?:\/\/|mailto:)/i.test(href) && inner)
+            ? '<a href="' + esc(href) + '" target="_blank" rel="noopener">' + inner + '</a>'
+            : inner;
+        }
+        else r += inner;
+      });
+      return r;
+    }
+    return walk(tpl.content);
+  }
   function renderBody(blocks) {
     return blocks.map(b => {
-      if (b[0] === 'p') return '<p>' + esc(b[1]) + '</p>';
-      if (b[0] === 'h3') return '<h3>' + esc(b[1]) + '</h3>';
-      if (b[0] === 'blockquote') return '<blockquote>' + esc(b[1]) + '</blockquote>';
-      if (b[0] === 'ul') return '<ul>' + b[1].map(li => '<li>' + esc(li) + '</li>').join('') + '</ul>';
+      if (b[0] === 'p') return '<p>' + inlineSafe(b[1]) + '</p>';
+      if (b[0] === 'h3') return '<h3>' + inlineSafe(b[1]) + '</h3>';
+      if (b[0] === 'blockquote') return '<blockquote>' + inlineSafe(b[1]) + '</blockquote>';
+      if (b[0] === 'ul') return '<ul>' + b[1].map(li => '<li>' + inlineSafe(li) + '</li>').join('') + '</ul>';
       if (b[0] === 'img') return '<figure><img src="' + safeUrl(b[1]) + '" alt="' + esc(b[2] || '') + '"><figcaption>' + esc(b[2] || '') + '</figcaption></figure>';
       return '';
     }).join('');
