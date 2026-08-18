@@ -705,6 +705,14 @@
   .pd-dl-card .nm { font-size: 15px; font-weight: 700; color: #111; }
   .pd-dl-card .ty { font-size: 12.5px; color: #777; flex: 1; }
   .pd-dl-card .badge.dl { align-self: flex-start; margin-top: 4px; }
+  /* «Бүх нийтлэл» хуудас — цайвар дэвсгэр дээрх шүүлтүүр, картууд */
+  #allOverlay .filter-bar { margin-bottom: 26px; }
+  #allOverlay .chip { background: #fff; border-color: #d9dce4; color: #4a5160; }
+  #allOverlay .chip:hover { color: #06213c; border-color: #9aa2b1; }
+  #allOverlay .chip.active { background: var(--bg); border-color: var(--bg); color: #fff; }
+  #allOverlay .article { box-shadow: 0 1px 3px rgba(0,0,0,.08), 0 8px 22px -14px rgba(0,0,0,.22); }
+  #allOverlay .insights-empty { color: #666; }
+
   /* ===== Манай баг ===== */
   /* Багийн дэлгэрэнгүй хуудас (цайвар, pd-overlay бүрхүүлийг ашиглана) */
   .tm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
@@ -1127,6 +1135,22 @@
   </div>
 </div>
 
+<!-- ===== Бүх нийтлэл — тусдаа хуудас ===== -->
+<div class="pd-overlay" id="allOverlay" onclick="if(event.target===this) closeAllArticles()">
+  <div class="pd-panel">
+    <div class="pd-hero">
+      <a class="pd-back" href="#" onclick="event.preventDefault(); closeAllArticles()">‹ Буцах</a>
+      <div class="tag" id="allEyebrow"></div>
+      <h2 id="allTitle"></h2>
+      <div class="lead" id="allCount"></div>
+    </div>
+    <div class="pd-body">
+      <div class="filter-bar" id="allFilterBar"></div>
+      <div class="insights-grid" id="allGrid"></div>
+    </div>
+  </div>
+</div>
+
 <!-- ===== Quote (questionnaire) modal ===== -->
 <div class="modal-overlay" id="quoteModal" style="z-index:130;" onclick="if(event.target===this) closeQuote()">
   <div class="modal">
@@ -1382,7 +1406,6 @@
 
   let CATS = ['Бүгд', ...Array.from(new Set(ARTICLES.map(a => a.cat)))];
   let activeFilter = 'Бүгд';
-  let showAll = false;
   const VISIBLE_LIMIT = 6;
 
   function renderFilters() {
@@ -1402,9 +1425,9 @@
       if (foot) foot.style.display = 'none';
       return;
     }
-    const list = showAll ? full : full.slice(0, VISIBLE_LIMIT);
+    const list = full.slice(0, VISIBLE_LIMIT);
     if (foot) {
-      if (!showAll && full.length >= VISIBLE_LIMIT) {
+      if (full.length > VISIBLE_LIMIT) {
         foot.style.display = '';
         document.getElementById('showAllBtn').innerHTML = 'Дэлгэрэнгүй <span class="arr">↓</span>';
       } else {
@@ -1412,30 +1435,31 @@
       }
     }
     const saved = getSaved();
-    const BM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>';
-    const SH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.4 13.4l7.2 4.2M15.6 6.4l-7.2 4.2"/></svg>';
-    grid.innerHTML = list.map(a => {
-      const t = THEMES[a.cat] || THEMES._default;
-      const isFeature = a.feature && activeFilter === 'Бүгд';
-      const author = a.author || 'KPI consulting';
-      const media = a.image
-        ? '<img src="' + safeUrl(a.image) + '" alt="">'
-        : '<span style="filter:drop-shadow(0 10px 24px rgba(0,0,0,.35))">' + esc(a.icon) + '</span>';
-      return '<div class="article' + (isFeature ? ' feature' : '') + '" onclick="openArticle(\'' + esc(a.id) + '\')">'
-        + '<div class="thumb" style="background:' + t.bg + '">' + media + '</div>'
-        + '<div class="body">'
-        + '<div class="eyebrow">' + esc(a.cat) + ' | KPI consulting</div>'
-        + '<h3>' + esc(a.title) + '</h3>'
-        + '<div class="byline">By <a onclick="event.stopPropagation()">' + esc(author) + '</a></div>'
-        + '<p>' + esc(a.excerpt) + '</p>'
-        + '<div class="meta-foot">'
-        + '<span class="info">' + [a.date, a.read].filter(Boolean).join(' | ') + '</span>'
-        + '<span class="acts">'
-        + '<button class="' + (saved.has(a.id) ? 'saved' : '') + '" title="Хадгалах" onclick="event.stopPropagation(); toggleSaveArticle(\'' + a.id + '\', this)">' + BM + '</button>'
-        + '<button title="Хуваалцах" onclick="event.stopPropagation(); shareArticle(\'' + a.id + '\', this)">' + SH + '</button>'
-        + '</span></div>'
-        + '</div></div>';
-    }).join('');
+    grid.innerHTML = list.map(a => articleCardHtml(a, a.feature && activeFilter === 'Бүгд', saved)).join('');
+  }
+  // Нийтлэлийн карт — нүүр хуудасны хэсэг болон «Бүх нийтлэл» хуудсанд хоёуланд нь
+  const CARD_BM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>';
+  const CARD_SH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18" cy="5" r="2.6"/><circle cx="6" cy="12" r="2.6"/><circle cx="18" cy="19" r="2.6"/><path d="M8.4 13.4l7.2 4.2M15.6 6.4l-7.2 4.2"/></svg>';
+  function articleCardHtml(a, isFeature, saved) {
+    const t = THEMES[a.cat] || THEMES._default;
+    const author = a.author || 'KPI consulting';
+    const media = a.image
+      ? '<img src="' + safeUrl(a.image) + '" alt="">'
+      : '<span style="filter:drop-shadow(0 10px 24px rgba(0,0,0,.35))">' + esc(a.icon) + '</span>';
+    return '<div class="article' + (isFeature ? ' feature' : '') + '" onclick="openArticle(\'' + esc(a.id) + '\')">'
+      + '<div class="thumb" style="background:' + t.bg + '">' + media + '</div>'
+      + '<div class="body">'
+      + '<div class="eyebrow">' + esc(a.cat) + ' | KPI consulting</div>'
+      + '<h3>' + esc(a.title) + '</h3>'
+      + '<div class="byline">By <a onclick="event.stopPropagation()">' + esc(author) + '</a></div>'
+      + '<p>' + esc(a.excerpt) + '</p>'
+      + '<div class="meta-foot">'
+      + '<span class="info">' + [a.date, a.read].filter(Boolean).join(' | ') + '</span>'
+      + '<span class="acts">'
+      + '<button class="' + (saved.has(a.id) ? 'saved' : '') + '" title="Хадгалах" onclick="event.stopPropagation(); toggleSaveArticle(\'' + a.id + '\', this)">' + CARD_BM + '</button>'
+      + '<button title="Хуваалцах" onclick="event.stopPropagation(); shareArticle(\'' + a.id + '\', this)">' + CARD_SH + '</button>'
+      + '</span></div>'
+      + '</div></div>';
   }
 
   function getSaved() {
@@ -1512,16 +1536,44 @@
 
   function setFilter(cat) {
     activeFilter = cat;
-    showAll = false;
     renderFilters();
     renderArticles();
     document.getElementById('insights').scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
+  // «Дэлгэрэнгүй» — бүх нийтлэлийг тусдаа хуудсаар нээнэ (өөрийн шүүлтүүртэй,
+  // нүүр хуудасны хэсгийн шүүлтэд нөлөөлөхгүй).
+  const allOverlay = document.getElementById('allOverlay');
+  let allFilter = 'Бүгд';
   function showAllArticles() {
-    showAll = true;
-    renderArticles();
+    allFilter = activeFilter;
+    const sec = SECTIONS.insights || {};
+    document.getElementById('allEyebrow').textContent = sec.eyebrow || '';
+    document.getElementById('allTitle').textContent = sec.title || 'Бүх нийтлэл';
+    renderAllArticles();
+    allOverlay.scrollTop = 0; window.scrollTo(0, 0);
+    allOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
   }
+  function closeAllArticles() {
+    allOverlay.classList.remove('open');
+    document.body.style.overflow = '';
+  }
+  function setAllFilter(cat) { allFilter = cat; renderAllArticles(); allOverlay.scrollTop = 0; }
+  function renderAllArticles() {
+    document.getElementById('allFilterBar').innerHTML = CATS.map(c => {
+      const n = c === 'Бүгд' ? ARTICLES.length : ARTICLES.filter(a => a.cat === c).length;
+      return '<button class="chip' + (c === allFilter ? ' active' : '') + '" onclick="setAllFilter(\'' + esc(c) + '\')">'
+        + esc(c) + '<span class="count">' + n + '</span></button>';
+    }).join('');
+    const list = allFilter === 'Бүгд' ? ARTICLES : ARTICLES.filter(a => a.cat === allFilter);
+    document.getElementById('allCount').textContent = list.length + ' нийтлэл';
+    const saved = getSaved();
+    document.getElementById('allGrid').innerHTML = list.length
+      ? list.map(a => articleCardHtml(a, false, saved)).join('')
+      : '<div class="insights-empty">Энэ ангилалд нийтлэл алга.</div>';
+  }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && allOverlay.classList.contains('open')) closeAllArticles(); });
 
   const arOverlay = document.getElementById('arOverlay');
   // Блок доторх текст нь админы WYSIWYG-ээс ирсэн ХЯЗГААРЛАГДСАН inline
