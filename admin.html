@@ -191,6 +191,8 @@
   .fmt-tip { margin-top:12px; padding-top:10px; border-top:1px dashed var(--line); font-size:12px; }
   /* Панел доторх дэд цэс (бүтээгдэхүүн сонгох) */
   .empty { color:var(--muted); text-align:center; padding:30px; border:1px dashed var(--line); border-radius:12px; }
+  /* «Хэрэглэгч» хуудасны дэд хэсгүүд (захиалагч, санал хүсэлт) тусгаарлагчтай */
+  #tab-subs:not(.hidden), #tab-feedback:not(.hidden) { margin-top:32px; padding-top:28px; border-top:1px solid var(--line); }
   .book-label { font-size:13px; font-weight:600; color:var(--muted); }
   .av-toggles { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:18px; max-width:420px; }
   .bulk-days { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; margin-bottom:18px; }
@@ -316,18 +318,9 @@
       <div class="tab" data-tab="why" onclick="switchTab('why')">Бидний тухай</div>
       <div class="tab" data-tab="pricing" onclick="switchTab('pricing')">Үнийн санал</div>
       <div class="tab" data-tab="schedule" onclick="switchTab('schedule')">Цаг товлолт</div>
-      <!-- Хэрэглэгч — мэйл бүртгүүлсэн хүн бүр хэрэглэгч; тэдний захиалга,
-           санал хүсэлтийг нэг бүлэгт цуглууллав -->
-      <div class="tab tab-group" id="peopleToggle" onclick="togglePeople()" role="button" tabindex="0"
-           aria-expanded="false" aria-controls="peopleSub"
-           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); togglePeople();}">
-        Хэрэглэгч<span class="caret" aria-hidden="true">›</span>
-      </div>
-      <div class="tab-sub" id="peopleSub">
-        <div class="tab" data-tab="users" onclick="switchTab('users')">Бүртгэлтэй хэрэглэгч</div>
-        <div class="tab" data-tab="subs" onclick="switchTab('subs')">Захиалагчид</div>
-        <div class="tab" data-tab="feedback" onclick="switchTab('feedback')">Санал хүсэлт</div>
-      </div>
+      <!-- Хэрэглэгч — мэйл бүртгүүлсэн хүн бүр хэрэглэгч. Тэдний захиалга,
+           санал хүсэлтийг нэг хуудсанд цуг харуулна. -->
+      <div class="tab" data-tab="users" onclick="switchTab('users')">Хэрэглэгч</div>
 
       <!-- Тохиргоо — цөөн ашигладаг тохиргоог задардаг бүлэгт хийв -->
       <div class="tab tab-group" id="settingsToggle" onclick="toggleSettings()" role="button" tabindex="0"
@@ -374,7 +367,7 @@
             <button class="btn" onclick="switchTab('articles'); newArticle();">📝 Шинэ нийтлэл бичих</button>
             <button class="btn" onclick="switchTab('schedule')">📅 Уулзалтын цаг нээх</button>
             <button class="btn" onclick="switchTab('users')">👥 Хэрэглэгч / CRM</button>
-            <button class="btn" onclick="switchTab('subs')">✉️ Захиалагчид</button>
+            <button class="btn" onclick="switchTab('users')">✉️ Захиалагчид</button>
             <button class="btn" onclick="exportSubs()">⬇️ Захиалагчдын CSV татах</button>
             <a class="btn" href="/" target="_blank">🌐 Сайтыг шинэ цонхонд нээх</a>
           </div>
@@ -1347,42 +1340,27 @@
     // Анх задлахад жагсаалт хоосон байж болзошгүй тул зурна
     if (willOpen) renderProductMenu();
   }
-  // «Хэрэглэгч» бүлэгт багтах дэд цэсүүд
-  const PEOPLE_TABS = ['users', 'subs', 'feedback'];
-  function setPeopleOpen(open) {
-    document.getElementById('peopleSub').classList.toggle('open', open);
-    const tog = document.getElementById('peopleToggle');
-    tog.classList.toggle('open', open);
-    tog.setAttribute('aria-expanded', open ? 'true' : 'false');
-  }
-  function togglePeople() {
-    setPeopleOpen(!document.getElementById('peopleSub').classList.contains('open'));
-  }
   function switchTab(t) {
     document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.dataset.tab === t));
     // Тохиргооны дэд цэс сонгосон бол бүлгийг нээлттэй байлгаж, бүлгийг тэмдэглэнэ
     const inSettings = SETTINGS_TABS.indexOf(t) !== -1;
     if (inSettings) setSettingsOpen(true);
     document.getElementById('settingsToggle').classList.toggle('has-active', inSettings);
-    // «Хэрэглэгч» бүлгийн дэд цэс сонгосон бол бүлгийг нээлттэй байлгаж тэмдэглэнэ
-    const inPeople = PEOPLE_TABS.indexOf(t) !== -1;
-    if (inPeople) setPeopleOpen(true);
-    document.getElementById('peopleToggle').classList.toggle('has-active', inPeople);
     // Бүтээгдэхүүний хуудас дээр байхад бүлэг нээлттэй, тэмдэглэгдсэн байна
     if (t === 'products') setProductsOpen(true);
     document.getElementById('productsToggle').classList.toggle('has-active', t === 'products');
+    // «Хэрэглэгч» нэг хуудсан дээр бүртгэлтэй хэрэглэгч + захиалагч + санал хүсэлтийг цуг харуулна
+    const visible = t === 'users' ? ['users', 'subs', 'feedback'] : [t];
     ['home','products','articles','why','pricing','schedule','users','subs','feedback','sections','authors','register','admins','contact'].forEach(name =>
-      document.getElementById('tab-' + name).classList.toggle('hidden', name !== t));
+      document.getElementById('tab-' + name).classList.toggle('hidden', visible.indexOf(name) === -1));
     if (t === 'home') renderHome();
     if (t === 'products') renderProductsAdmin();
     if (t === 'schedule') { renderBulkControls(); renderAvList(); renderBookings(); }
     if (t === 'pricing') { renderQuestions(); renderQuoteRequests(); }
-    if (t === 'users') { renderUsers(); clearUserMsg(); }
-    if (t === 'subs') renderSubs();
+    if (t === 'users') { renderUsers(); clearUserMsg(); renderSubs(); renderFeedback(); }
     if (t === 'register') renderRegisterForm();
     if (t === 'sections') renderSectionsForm();
     if (t === 'authors') renderAuthors();
-    if (t === 'feedback') renderFeedback();
     if (t === 'admins') { renderAdmins(); clearAdminMsg(); }
   }
   function confirmDelete(message) {
