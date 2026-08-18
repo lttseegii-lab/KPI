@@ -316,9 +316,18 @@
       <div class="tab" data-tab="why" onclick="switchTab('why')">Бидний тухай</div>
       <div class="tab" data-tab="pricing" onclick="switchTab('pricing')">Үнийн санал</div>
       <div class="tab" data-tab="schedule" onclick="switchTab('schedule')">Цаг товлолт</div>
-      <div class="tab" data-tab="users" onclick="switchTab('users')">Хэрэглэгч</div>
-      <div class="tab" data-tab="subs" onclick="switchTab('subs')">Захиалагчид</div>
-      <div class="tab" data-tab="feedback" onclick="switchTab('feedback')">Санал хүсэлт</div>
+      <!-- Хэрэглэгч — мэйл бүртгүүлсэн хүн бүр хэрэглэгч; тэдний захиалга,
+           санал хүсэлтийг нэг бүлэгт цуглууллав -->
+      <div class="tab tab-group" id="peopleToggle" onclick="togglePeople()" role="button" tabindex="0"
+           aria-expanded="false" aria-controls="peopleSub"
+           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); togglePeople();}">
+        Хэрэглэгч<span class="caret" aria-hidden="true">›</span>
+      </div>
+      <div class="tab-sub" id="peopleSub">
+        <div class="tab" data-tab="users" onclick="switchTab('users')">Бүртгэлтэй хэрэглэгч</div>
+        <div class="tab" data-tab="subs" onclick="switchTab('subs')">Захиалагчид</div>
+        <div class="tab" data-tab="feedback" onclick="switchTab('feedback')">Санал хүсэлт</div>
+      </div>
 
       <!-- Тохиргоо — цөөн ашигладаг тохиргоог задардаг бүлэгт хийв -->
       <div class="tab tab-group" id="settingsToggle" onclick="toggleSettings()" role="button" tabindex="0"
@@ -1338,12 +1347,27 @@
     // Анх задлахад жагсаалт хоосон байж болзошгүй тул зурна
     if (willOpen) renderProductMenu();
   }
+  // «Хэрэглэгч» бүлэгт багтах дэд цэсүүд
+  const PEOPLE_TABS = ['users', 'subs', 'feedback'];
+  function setPeopleOpen(open) {
+    document.getElementById('peopleSub').classList.toggle('open', open);
+    const tog = document.getElementById('peopleToggle');
+    tog.classList.toggle('open', open);
+    tog.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  function togglePeople() {
+    setPeopleOpen(!document.getElementById('peopleSub').classList.contains('open'));
+  }
   function switchTab(t) {
     document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.dataset.tab === t));
     // Тохиргооны дэд цэс сонгосон бол бүлгийг нээлттэй байлгаж, бүлгийг тэмдэглэнэ
     const inSettings = SETTINGS_TABS.indexOf(t) !== -1;
     if (inSettings) setSettingsOpen(true);
     document.getElementById('settingsToggle').classList.toggle('has-active', inSettings);
+    // «Хэрэглэгч» бүлгийн дэд цэс сонгосон бол бүлгийг нээлттэй байлгаж тэмдэглэнэ
+    const inPeople = PEOPLE_TABS.indexOf(t) !== -1;
+    if (inPeople) setPeopleOpen(true);
+    document.getElementById('peopleToggle').classList.toggle('has-active', inPeople);
     // Бүтээгдэхүүний хуудас дээр байхад бүлэг нээлттэй, тэмдэглэгдсэн байна
     if (t === 'products') setProductsOpen(true);
     document.getElementById('productsToggle').classList.toggle('has-active', t === 'products');
