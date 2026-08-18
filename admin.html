@@ -2565,12 +2565,12 @@
         + (single
             ? '<div class="field"><label>Үнэ (₮)</label><input type="number" min="0" step="1000" value="'
               + (Number(b.amount) || 0) + '" oninput="products[\'' + k + '\'].buy.amount = Number(this.value)||0"></div>'
-            : '<div class="field"><label>Нийт үнэ — автоматаар тооцно</label>'
+            : '<div class="field"><label>Нийт үнэ — нэгж үнүүдийн нийлбэрээр автоматаар бодогдоно</label>'
               + '<input value="' + esc(money(partsTotal(k))) + '" disabled></div>')
         + '</div>'
         + '<div class="field"><label>Үнийн тайлбар (заавал биш)</label>'
         + '<input value="' + esc(b.note || '') + '" placeholder="Жишээ: НӨАТ багтсан, нэг удаагийн төлбөр" oninput="products[\'' + k + '\'].buy.note = this.value"></div>'
-        + (single ? '' : '<div class="hint" style="margin:0;">Хэрэгсэл тус бүрийн үнийг доорх «Үе шат, хэрэгслүүд» хэсэгт оруулна. Нийт үнэ нь тэдгээрийн нийлбэрээр бодогдоно.</div>');
+        + (single ? '' : partsHelpHtml(k));
     } else {
       body = '<div class="hint" style="margin:6px 0 0;">Шууд худалдан авалтгүй — хэрэглэгч асуулга бөглөж, та үнийн санал боловсруулж илгээнэ.</div>';
     }
@@ -2587,6 +2587,30 @@
     if (!box) return;
     const inp = box.querySelector('input[disabled]');
     if (inp) inp.value = money(partsTotal(prodSelected));
+  }
+  // Хэсэгчилсэн горимын тайлбар. Хэрэгсэл огт байхгүй бол хаана бичихийг
+  // хэлээд, тэндээс нь шууд нэмэх боломж өгнө — эс бөгөөс хэрэглэгч ₮0 хараад гацна.
+  function partsHelpHtml(k) {
+    const phases = productTemplates[k] || [];
+    const toolCount = phases.reduce(function (n, ph) { return n + ((ph.tools || []).length); }, 0);
+    if (!toolCount) {
+      return '<div class="hint" style="margin:0; color:var(--danger);">'
+        + '<b>Энэ бүтээгдэхүүнд хэрэгсэл алга.</b> Хэсэгчилсэн үнэ нь хэрэгсэл тус бүрийн '
+        + '«Нэгж үнэ»-ийн нийлбэр тул эхлээд доорх «Үе шат, хэрэгслүүд» хэсэгт хэрэгсэл нэмнэ үү. '
+        + '<button class="btn btn-sm" style="margin-left:8px;" onclick="addPhaseAndTool()">+ Үе шат ба хэрэгсэл нэмэх</button>'
+        + '</div>';
+    }
+    const priced = phases.reduce(function (n, ph) {
+      return n + (ph.tools || []).filter(function (t) { return Number(t.price) > 0; }).length;
+    }, 0);
+    return '<div class="hint" style="margin:0;">Нэгж үнийг доорх «Үе шат, хэрэгслүүд» хэсэгт хэрэгсэл бүр дээр бичнэ. '
+      + 'Одоогоор <b>' + toolCount + '</b> хэрэгслээс <b>' + priced + '</b> нь үнэтэй.</div>';
+  }
+  // Хоосон бүтээгдэхүүн дээр нэг товчоор эхлүүлнэ
+  function addPhaseAndTool() {
+    const list = productTemplates[prodSelected] || (productTemplates[prodSelected] = []);
+    list.push({ title: '', desc: '', tools: [{ name: 'Шинэ хэрэгсэл', type: '', file: null, price: 0 }] });
+    renderProductsAdmin();
   }
   function toggleBuy(on) {
     products[prodSelected].buy.enabled = on;
