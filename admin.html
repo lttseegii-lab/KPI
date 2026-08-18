@@ -193,6 +193,24 @@
   .empty { color:var(--muted); text-align:center; padding:30px; border:1px dashed var(--line); border-radius:12px; }
   /* «Хэрэглэгч» хуудасны дэд хэсгүүд (захиалагч, санал хүсэлт) тусгаарлагчтай */
   #tab-subs:not(.hidden), #tab-feedback:not(.hidden) { margin-top:32px; padding-top:28px; border-top:1px solid var(--line); }
+  /* CRM — хайлт, эрэмбэ, төлөвөөр шүүх, төлөвийн тэмдэг */
+  .crm-toolbar2 { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
+  .crm-toolbar2 input { flex:1; min-width:240px; }
+  .crm-toolbar2 select { max-width:220px; }
+  .crm-filterbar { display:flex; gap:8px; flex-wrap:wrap; margin-bottom:16px; }
+  .crm-chip {
+    padding:6px 13px; border-radius:999px; font-size:12.5px; font-weight:600; cursor:pointer;
+    background:var(--card); border:1px solid var(--line); color:var(--muted);
+    transition:color .15s, border-color .15s, background .15s;
+  }
+  .crm-chip:hover { color:var(--text); border-color:var(--muted); }
+  .crm-chip.active { color:#fff; background:var(--accent); border-color:var(--accent); }
+  .crm-chip .n { opacity:.65; margin-left:5px; font-variant-numeric:tabular-nums; }
+  .crm-badge {
+    display:inline-block; font-size:11px; font-weight:700; padding:2px 9px; border-radius:999px;
+    color:#fff; background:var(--c,#6b7280); vertical-align:middle;
+  }
+  .usr-sub { font-size:12px; color:var(--muted); margin-top:3px; }
   .book-label { font-size:13px; font-weight:600; color:var(--muted); }
   .av-toggles { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:18px; max-width:420px; }
   .bulk-days { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; margin-bottom:18px; }
@@ -609,6 +627,15 @@
           <div id="crmTimeline"></div>
         </div>
       </div>
+      <div class="crm-toolbar2">
+        <input id="usrSearchBox" placeholder="🔍 Нэр, мэйл, утас, байгууллагаар хайх" oninput="onUserSearch(this.value)">
+        <select id="usrSortSel" onchange="onUserSort(this.value)">
+          <option value="new">Шинээр нь</option>
+          <option value="activity">Сүүлийн харилцаагаар</option>
+          <option value="status">Төлөвөөр</option>
+        </select>
+      </div>
+      <div class="crm-filterbar" id="usrFilterBar"></div>
       <div class="list" id="usrList"></div>
     </section>
 
@@ -1708,11 +1735,19 @@
     const admin = KPICloud.authUser && KPICloud.authUser();
     return admin ? (admin.displayName || admin.email || '') : '';
   }
-  function currentCrmStatus() {
-    const latest = crmActivities.filter(a => a.contactId === selectedCrmUserId && a.activityType === 'status')
+  // CRM төлөвийн дараалал ба өнгө (карт дээрх тэмдэг, шүүлтэд ашиглана)
+  const CRM_STATUSES = ['Шинэ', 'Холбогдсон', 'Санал илгээсэн', 'Хэлэлцэж байгаа', 'Амжилттай', 'Хаагдсан'];
+  const CRM_STATUS_COLOR = {
+    'Шинэ': '#6b7280', 'Холбогдсон': '#2563eb', 'Санал илгээсэн': '#7c3aed',
+    'Хэлэлцэж байгаа': '#d97706', 'Амжилттай': '#059669', 'Хаагдсан': '#9ca3af'
+  };
+  // Тухайн хэрэглэгчийн одоогийн CRM төлөв (сүүлийн status үйлдлээр)
+  function userStatus(id) {
+    const latest = crmActivities.filter(a => a.contactId === id && a.activityType === 'status')
       .sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')))[0];
     return latest && latest.status ? latest.status : 'Шинэ';
   }
+  function currentCrmStatus() { return userStatus(selectedCrmUserId); }
   function localDateTimeValue(date) {
     const d = date || new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
@@ -1749,6 +1784,37 @@
       document.getElementById('crmNoteBody').focus();
     }
   }
+  // Хэрэглэгчийн БҮХ харилцааны түүх — бүртгэл, үнийн санал, цаг товлолт,
+  // САНАЛ ХҮСЭЛТ, ХУДАЛДАН АВАЛТ, CRM үйлдлүүдийг мэйл/утсаар нь холбож цуглуулна.
+  function crmEventsForUser(user) {
+    if (!user) return [];
+    const events = [];
+    if (user.at) events.push({ at: user.at, title: 'Сайтад бүртгүүлсэн', meta: '', body: '' });
+    quoteReqs.filter(q => sameCrmContact(q, user)).forEach(q => {
+      const answers = (q.answers || []).map(a => (a.q || 'Асуулт') + ': ' + (a.a || '—')).join('\n');
+      events.push({ at: q.at, title: 'Үнийн санал хүссэн', meta: q.product || 'Бүтээгдэхүүн тодорхойгүй', body: answers });
+    });
+    bookingsList.filter(b => sameCrmContact(b, user)).forEach(b => {
+      events.push({ at: b.at || (b.date + 'T' + b.time), title: 'Цаг товлосон', meta: (b.date || '') + ' ' + (b.time || ''), body: b.product || '' });
+    });
+    feedbackList.filter(f => sameCrmContact(f, user)).forEach(f => {
+      events.push({ at: f.at, title: 'Санал хүсэлт илгээсэн', meta: f.product || '', body: f.message || '' });
+    });
+    paymentsList.filter(pm => sameCrmContact(pm, user)).forEach(pm => {
+      events.push({ at: pm.at, title: 'Худалдан авалт хийсэн', meta: pm.product || '', body: '₮' + (Number(pm.amount) || 0).toLocaleString('en-US') });
+    });
+    crmActivities.filter(a => a.contactId === user.id).forEach(a => {
+      let title = 'CRM үйлдэл';
+      if (a.activityType === 'email') title = 'Мэйл илгээсэн' + (a.subject ? ': ' + a.subject : '');
+      else if (a.activityType === 'call') title = 'Утсаар холбогдсон';
+      else if (a.activityType === 'note') title = 'Дотоод тэмдэглэл';
+      else if (a.activityType === 'status') title = 'CRM төлөв: ' + (a.status || '');
+      const actor = [a.byName, a.byEmail].filter(Boolean).join(' · ');
+      events.push({ at: a.occurredAt || a.at, title: title, meta: actor, body: a.message || '' });
+    });
+    events.sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+    return events;
+  }
   function renderCrmDetail() {
     const user = selectedCrmUser();
     const detail = document.getElementById('crmDetail');
@@ -1759,24 +1825,7 @@
     document.getElementById('crmEmailTo').value = user.email || '';
     document.getElementById('crmStatus').value = currentCrmStatus();
 
-    const events = [];
-    quoteReqs.filter(q => sameCrmContact(q, user)).forEach(q => {
-      const answers = (q.answers || []).map(a => (a.q || 'Асуулт') + ': ' + (a.a || '—')).join('\n');
-      events.push({ at:q.at, title:'Үнийн санал хүссэн', meta:q.product || 'Бүтээгдэхүүн тодорхойгүй', body:answers });
-    });
-    bookingsList.filter(b => sameCrmContact(b, user)).forEach(b => {
-      events.push({ at:b.at || (b.date + 'T' + b.time), title:'Цаг товлосон', meta:(b.date || '') + ' ' + (b.time || ''), body:b.product || '' });
-    });
-    crmActivities.filter(a => a.contactId === user.id).forEach(a => {
-      let title = 'CRM үйлдэл';
-      if (a.activityType === 'email') title = 'Мэйл илгээсэн' + (a.subject ? ': ' + a.subject : '');
-      else if (a.activityType === 'call') title = 'Утсаар холбогдсон';
-      else if (a.activityType === 'note') title = 'Дотоод тэмдэглэл';
-      else if (a.activityType === 'status') title = 'CRM төлөв: ' + (a.status || '');
-      const actor = [a.byName, a.byEmail].filter(Boolean).join(' · ');
-      events.push({ at:a.occurredAt || a.at, title:title, meta:actor, body:a.message || '' });
-    });
-    events.sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+    const events = crmEventsForUser(user);
     document.getElementById('crmTimeline').innerHTML = events.length ? events.map(event =>
       '<div class="crm-event">'
       + '<div class="crm-event-time">' + esc(crmDateLabel(event.at)) + '</div>'
@@ -1894,20 +1943,80 @@
       btn.textContent = 'Нэмэх'; btn.style.pointerEvents = ''; btn.style.opacity = '';
     });
   }
+  let usrSearch = '';
+  let usrStatusFilter = 'Бүгд';
+  let usrSort = 'new';
+  function onUserSearch(v) { usrSearch = v; renderUsers(); }
+  function onUserSort(v) { usrSort = v; renderUsers(); }
+  function setUserStatusFilter(s) { usrStatusFilter = s; renderUsers(); }
+
   function renderUsers() {
-    const users = usersList.slice().reverse(); // шинэ нь эхэнд
-    document.getElementById('usrCount').textContent = users.length ? users.length + ' хэрэглэгч' : '';
-    if (!users.length) { document.getElementById('usrList').innerHTML = '<div class="empty">Хэрэглэгч алга.</div>'; return; }
-    document.getElementById('usrList').innerHTML = users.map((u) => {
-      const contact = [u.email, u.phone, u.org, u.role].filter(Boolean).join(' · ');
-      return '<div class="tpl-card">'
-        + '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">'
-        + '<div><b>' + esc(u.name || 'Хэрэглэгч') + '</b><div class="ct" style="font-size:12.5px; color:var(--muted); margin-top:2px;">' + esc(contact) + ' · ' + esc(String(u.at || '').slice(0,10)) + '</div></div>'
-        + '<div class="actions"><button class="btn btn-sm" onclick="openCrm(\'' + u.id + '\')">CRM нээх</button>'
-        + '<button class="btn btn-danger btn-sm" onclick="delUser(\'' + u.id + '\')">Устгах</button></div>'
-        + '</div></div>';
-    }).join('');
+    // Хэрэглэгч бүрийг төлөв, харилцааны түүхээр баяжуулна
+    const enriched = usersList.map(u => {
+      const events = crmEventsForUser(u);
+      return { u: u, status: userStatus(u.id), events: events,
+               last: events.length ? events[0].at : u.at, count: events.length };
+    });
+    // Хайлт
+    const q = usrSearch.trim().toLowerCase();
+    let list = q ? enriched.filter(e =>
+      [e.u.name, e.u.email, e.u.phone, e.u.org, e.u.role]
+        .some(v => String(v || '').toLowerCase().indexOf(q) !== -1)) : enriched.slice();
+    // Төлөвийн тоолуур (хайлтын дараах олонлог дээр)
+    const counts = {}; CRM_STATUSES.forEach(s => counts[s] = 0);
+    list.forEach(e => { counts[e.status] = (counts[e.status] || 0) + 1; });
+    const totalFound = list.length;
+    // Төлөвөөр шүүх
+    if (usrStatusFilter !== 'Бүгд') list = list.filter(e => e.status === usrStatusFilter);
+    // Эрэмбэ
+    if (usrSort === 'status') {
+      list.sort((a, b) => (CRM_STATUSES.indexOf(a.status) - CRM_STATUSES.indexOf(b.status))
+        || String(b.last || '').localeCompare(String(a.last || '')));
+    } else if (usrSort === 'activity') {
+      list.sort((a, b) => String(b.last || '').localeCompare(String(a.last || '')));
+    } else {
+      list.sort((a, b) => String(b.u.at || '').localeCompare(String(a.u.at || '')));
+    }
+
+    document.getElementById('usrCount').textContent = usersList.length ? usersList.length + ' хэрэглэгч' : '';
+    renderUserFilterBar(counts, totalFound);
+
+    const box = document.getElementById('usrList');
+    if (!usersList.length) { box.innerHTML = '<div class="empty">Хэрэглэгч алга.</div>'; }
+    else if (!list.length) { box.innerHTML = '<div class="empty">Тохирох хэрэглэгч олдсонгүй.</div>'; }
+    else {
+      box.innerHTML = list.map(e => {
+        const u = e.u;
+        const contact = [u.email, u.phone, u.org, u.role].filter(Boolean).join(' · ');
+        const badge = '<span class="crm-badge" style="--c:' + (CRM_STATUS_COLOR[e.status] || '#6b7280') + '">' + esc(e.status) + '</span>';
+        const acts = e.count > 1
+          ? (e.count - 1) + ' харилцаа · сүүлд ' + esc(String(e.last || '').slice(0, 10))
+          : 'Харилцаа бүртгээгүй';
+        return '<div class="tpl-card">'
+          + '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">'
+          + '<div style="min-width:0;">'
+          + '<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;"><b>' + esc(u.name || 'Хэрэглэгч') + '</b>' + badge + '</div>'
+          + '<div class="ct" style="font-size:12.5px; color:var(--muted); margin-top:3px;">' + esc(contact) + ' · ' + esc(String(u.at || '').slice(0, 10)) + '</div>'
+          + '<div class="usr-sub">' + acts + '</div>'
+          + '</div>'
+          + '<div class="actions"><button class="btn btn-sm" onclick="openCrm(\'' + u.id + '\')">CRM нээх</button>'
+          + '<button class="btn btn-danger btn-sm" onclick="delUser(\'' + u.id + '\')">Устгах</button></div>'
+          + '</div></div>';
+      }).join('');
+    }
     if (selectedCrmUserId) renderCrmDetail();
+  }
+  function renderUserFilterBar(counts, total) {
+    const bar = document.getElementById('usrFilterBar');
+    if (!bar) return;
+    let html = '<span class="crm-chip' + (usrStatusFilter === 'Бүгд' ? ' active' : '')
+      + '" onclick="setUserStatusFilter(\'Бүгд\')">Бүгд<span class="n">' + total + '</span></span>';
+    CRM_STATUSES.forEach(s => {
+      if (!counts[s]) return; // хоосон шатыг харуулахгүй
+      html += '<span class="crm-chip' + (usrStatusFilter === s ? ' active' : '')
+        + '" onclick="setUserStatusFilter(\'' + s + '\')">' + esc(s) + '<span class="n">' + counts[s] + '</span></span>';
+    });
+    bar.innerHTML = html;
   }
   function delUser(id) {
     if (!confirmDelete()) return;
@@ -2992,12 +3101,12 @@
   let feedbackList = [];
   function startAdminWatches() {
     if (!unsubSubs)    unsubSubs    = KPICloud.watchSubmissions('subscribe', arr => { subsList = visibleSubmissions(arr); if (appShown) { renderSubs(); renderHome(); } });
-    if (!unsubPay)     unsubPay     = KPICloud.watchSubmissions('payment',   arr => { paymentsList = visibleSubmissions(arr); if (appShown) renderHome(); });
-    if (!unsubFb)      unsubFb      = KPICloud.watchSubmissions('feedback',  arr => { feedbackList = visibleSubmissions(arr); if (appShown) { renderFeedback(); renderHome(); } });
-    if (!unsubQuote)   unsubQuote   = KPICloud.watchSubmissions('quote',   arr => { quoteReqs = visibleSubmissions(arr);    if (appShown) { renderQuoteRequests(); renderHome(); if (selectedCrmUserId) renderCrmDetail(); } });
-    if (!unsubBooking) unsubBooking = KPICloud.watchSubmissions('booking', arr => { bookingsList = visibleSubmissions(arr); if (appShown) { renderBookings(); renderHome(); if (selectedCrmUserId) renderCrmDetail(); } });
+    if (!unsubPay)     unsubPay     = KPICloud.watchSubmissions('payment',   arr => { paymentsList = visibleSubmissions(arr); if (appShown) { renderHome(); renderUsers(); } });
+    if (!unsubFb)      unsubFb      = KPICloud.watchSubmissions('feedback',  arr => { feedbackList = visibleSubmissions(arr); if (appShown) { renderFeedback(); renderHome(); renderUsers(); } });
+    if (!unsubQuote)   unsubQuote   = KPICloud.watchSubmissions('quote',   arr => { quoteReqs = visibleSubmissions(arr);    if (appShown) { renderQuoteRequests(); renderHome(); renderUsers(); } });
+    if (!unsubBooking) unsubBooking = KPICloud.watchSubmissions('booking', arr => { bookingsList = visibleSubmissions(arr); if (appShown) { renderBookings(); renderHome(); renderUsers(); } });
     if (!unsubUser)    unsubUser    = KPICloud.watchSubmissions('user',    arr => { usersList = visibleSubmissions(arr);    if (appShown) { renderUsers(); renderHome(); } });
-    if (!unsubCrm)     unsubCrm     = KPICloud.watchSubmissions('crm',     arr => { crmActivities = arr;                    if (appShown && selectedCrmUserId) renderCrmDetail(); });
+    if (!unsubCrm)     unsubCrm     = KPICloud.watchSubmissions('crm',     arr => { crmActivities = arr;                    if (appShown) renderUsers(); });
     if (!unsubAdmins)  unsubAdmins  = KPICloud.watchAdmins(arr => { adminsList = visibleAdmins(arr); if (appShown) renderAdmins(); });
   }
   function stopAdminWatches() {
