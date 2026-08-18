@@ -61,7 +61,9 @@
   .tab-group.has-active { color:var(--text); }
   .tab-sub { display:none; flex-direction:column; gap:4px; margin:2px 0 2px 10px; padding-left:8px; border-left:1px solid var(--line); }
   .tab-sub.open { display:flex; }
-  .tab-sub .tab { font-size:13.5px; padding:8px 10px; }
+  .tab-sub .tab { font-size:13.5px; padding:8px 10px; line-height:1.35; }
+  /* Бүтээгдэхүүний нэр урт байж болох тул 2 мөрөөр таслана */
+  #productsSub .tab { display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
   .admin-content { min-width:0; }
   @media (max-width:760px) {
     .wrap { padding-left:16px; padding-right:16px; }
@@ -169,15 +171,6 @@
   .fmt-help code { font-family:ui-monospace,SFMono-Regular,Menlo,monospace; font-size:12px; background:var(--card); border:1px solid var(--line); border-radius:5px; padding:2px 6px; color:var(--text); }
   .fmt-tip { margin-top:12px; padding-top:10px; border-top:1px dashed var(--line); font-size:12px; }
   /* Панел доторх дэд цэс (бүтээгдэхүүн сонгох) */
-  .sub-tabs { display:flex; flex-wrap:wrap; gap:8px; margin-bottom:4px; padding-bottom:16px; border-bottom:1px solid var(--line); }
-  .sub-tab {
-    padding:8px 14px; border-radius:999px; font-size:13.5px; font-weight:600; cursor:pointer;
-    background:var(--card); border:1px solid var(--line); color:var(--muted);
-    transition:color .15s, border-color .15s, background .15s; max-width:260px;
-    overflow:hidden; text-overflow:ellipsis; white-space:nowrap;
-  }
-  .sub-tab:hover { color:var(--text); border-color:var(--accent); }
-  .sub-tab.active { background:var(--accent); border-color:var(--accent); color:#fff; }
   .empty { color:var(--muted); text-align:center; padding:30px; border:1px dashed var(--line); border-radius:12px; }
   .book-label { font-size:13px; font-weight:600; color:var(--muted); }
   .av-toggles { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:18px; max-width:420px; }
@@ -293,7 +286,13 @@
   <main class="wrap admin-layout">
     <div class="tabs">
       <div class="tab active" data-tab="home" onclick="switchTab('home')">Нүүр</div>
-      <div class="tab" data-tab="products" onclick="switchTab('products')">Бүтээгдэхүүн</div>
+      <!-- Бүтээгдэхүүн — бүтээгдэхүүн бүр дэд цэс болно (жагсаалтыг JS зурна) -->
+      <div class="tab tab-group" id="productsToggle" onclick="toggleProducts()" role="button" tabindex="0"
+           aria-expanded="false" aria-controls="productsSub"
+           onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault(); toggleProducts();}">
+        Бүтээгдэхүүн<span class="caret" aria-hidden="true">›</span>
+      </div>
+      <div class="tab-sub" id="productsSub"></div>
       <div class="tab" data-tab="articles" onclick="switchTab('articles')">Мэдээ нийтлэл</div>
       <div class="tab" data-tab="why" onclick="switchTab('why')">Яагаад бид</div>
       <div class="tab" data-tab="pricing" onclick="switchTab('pricing')">Үнийн санал</div>
@@ -366,8 +365,7 @@
           <span class="saved-msg" id="prodSaved">✓ Хадгалагдлаа</span>
         </div>
       </div>
-      <div class="hint">Нүүр хуудасны «Бүтээгдэхүүн, үйлчилгээ» хэсгийн карт болон дэлгэрэнгүй цонхны агуулга. Доорх цэснээс бүтээгдэхүүнээ сонгож тохируулна. Жагсаалтын мөр бүрийг тусад нь мөрөнд бичнэ.</div>
-      <div class="sub-tabs" id="prodTabs"></div>
+      <div class="hint">Нүүр хуудасны «Бүтээгдэхүүн, үйлчилгээ» хэсгийн карт болон дэлгэрэнгүй цонхны агуулга. Зүүн талын «Бүтээгдэхүүн» цэснээс аль нэгийг сонгож тохируулна. Жагсаалтын мөр бүрийг тусад нь мөрөнд бичнэ.</div>
       <div id="prodList"></div>
     </section>
 
@@ -1177,12 +1175,27 @@
   function toggleSettings() {
     setSettingsOpen(!document.getElementById('settingsSub').classList.contains('open'));
   }
+  function setProductsOpen(open) {
+    document.getElementById('productsSub').classList.toggle('open', open);
+    const tog = document.getElementById('productsToggle');
+    tog.classList.toggle('open', open);
+    tog.setAttribute('aria-expanded', open ? 'true' : 'false');
+  }
+  function toggleProducts() {
+    const willOpen = !document.getElementById('productsSub').classList.contains('open');
+    setProductsOpen(willOpen);
+    // Анх задлахад жагсаалт хоосон байж болзошгүй тул зурна
+    if (willOpen) renderProductMenu();
+  }
   function switchTab(t) {
     document.querySelectorAll('.tab').forEach(el => el.classList.toggle('active', el.dataset.tab === t));
     // Тохиргооны дэд цэс сонгосон бол бүлгийг нээлттэй байлгаж, бүлгийг тэмдэглэнэ
     const inSettings = SETTINGS_TABS.indexOf(t) !== -1;
     if (inSettings) setSettingsOpen(true);
     document.getElementById('settingsToggle').classList.toggle('has-active', inSettings);
+    // Бүтээгдэхүүний хуудас дээр байхад бүлэг нээлттэй, тэмдэглэгдсэн байна
+    if (t === 'products') setProductsOpen(true);
+    document.getElementById('productsToggle').classList.toggle('has-active', t === 'products');
     ['home','products','articles','why','pricing','schedule','users','subs','feedback','authors','register','admins','contact'].forEach(name =>
       document.getElementById('tab-' + name).classList.toggle('hidden', name !== t));
     if (t === 'home') renderHome();
@@ -2239,30 +2252,36 @@
   // Аль бүтээгдэхүүнийг засварлаж байгаа нь. Түлхүүр нь тогтвортой (blueprints,
   // diagnostics...) тул ГАРЧГИЙГ нь өөрчилсөн ч дотоод холбоос эвдрэхгүй.
   let prodSelected = '';
-  function selectProduct(k) { prodSelected = k; renderProductsAdmin(); }
+  // Зүүн цэснээс сонгоно — өөр таб дээр байсан ч бүтээгдэхүүний хуудас руу шилжинэ
+  function selectProduct(k) { prodSelected = k; switchTab('products'); }
   // Гарчиг бичиж байхад дэд цэсний шошго шууд дагаж өөрчлөгдөнө
   function onProductTitle(k, value) {
     products[k].title = value;
-    const tab = document.querySelector('.sub-tab[data-key="' + k + '"]');
-    if (tab) tab.textContent = value.trim() || k;
+    const tab = document.querySelector('#productsSub .tab[data-key="' + k + '"]');
+    if (tab) { tab.textContent = value.trim() || k; tab.title = value.trim() || k; }
+  }
+  // Зүүн цэс дэх бүтээгдэхүүний дэд жагсаалт
+  function renderProductMenu() {
+    const sub = document.getElementById('productsSub');
+    if (!sub) return;
+    const keys = Object.keys(products);
+    sub.innerHTML = keys.map(k =>
+      '<div class="tab' + (k === prodSelected ? ' active' : '') + '" data-key="' + esc(k) + '"'
+      + ' title="' + esc(products[k].title || k) + '"'
+      + ' onclick="selectProduct(\'' + esc(k) + '\')">' + esc(products[k].title || k) + '</div>'
+    ).join('') || '<div class="empty" style="padding:8px 10px;">Бүтээгдэхүүн алга.</div>';
   }
   function renderProductsAdmin() {
-    const tabs = document.getElementById('prodTabs');
     const el = document.getElementById('prodList');
-    if (!tabs || !el) return;
+    if (!el) return;
     const keys = Object.keys(products);
     if (!keys.length) {
-      tabs.innerHTML = '';
+      renderProductMenu();
       el.innerHTML = '<div class="empty">Бүтээгдэхүүн алга.</div>';
       return;
     }
     if (!products[prodSelected]) prodSelected = keys[0];
-
-    tabs.innerHTML = keys.map(k =>
-      '<div class="sub-tab' + (k === prodSelected ? ' active' : '') + '" data-key="' + esc(k) + '"'
-      + ' title="' + esc(products[k].title || k) + '"'
-      + ' onclick="selectProduct(\'' + esc(k) + '\')">' + esc(products[k].title || k) + '</div>'
-    ).join('');
+    renderProductMenu();
 
     const k = prodSelected;
     const p = products[k] || {};
