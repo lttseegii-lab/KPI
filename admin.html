@@ -211,6 +211,19 @@
     color:#fff; background:var(--c,#6b7280); vertical-align:middle;
   }
   .usr-sub { font-size:12px; color:var(--muted); margin-top:3px; }
+  /* Pipeline тойм — нийт, идэвхтэй, амжилттай, хөрвөлт */
+  .crm-overview { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:16px; }
+  .crm-stat { flex:1; min-width:120px; background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px 14px; }
+  .crm-stat .k { font-size:11.5px; color:var(--muted); font-weight:600; }
+  .crm-stat .v { font-size:22px; font-weight:800; margin-top:2px; }
+  .crm-stat.warn { border-color:#f0c9a0; background:#fdf6ee; }
+  .crm-stat.warn .v { color:#c2760a; }
+  .crm-chip.warn { border-color:#f0c9a0; color:#c2760a; }
+  .crm-chip.warn.active { background:#d97706; border-color:#d97706; color:#fff; }
+  /* Контактын хураангуй мөр */
+  .crm-summary { display:flex; gap:22px; flex-wrap:wrap; margin:14px 0 4px; padding:14px 16px; background:var(--bg-soft); border:1px solid var(--line); border-radius:12px; }
+  .crm-summary .item { font-size:13px; color:var(--muted); }
+  .crm-summary .item b { display:block; font-size:16px; color:var(--text); font-weight:800; margin-top:2px; }
   .book-label { font-size:13px; font-weight:600; color:var(--muted); }
   .av-toggles { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:18px; max-width:420px; }
   .bulk-days { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; margin-bottom:18px; }
@@ -547,6 +560,7 @@
         </div>
       </div>
       <div class="hint">Сайтад бүртгүүлсэн хүмүүсийн мэдээлэл энд харагдана — эдгээр нь боломжит үйлчлүүлэгчид (лид) юм.</div>
+      <div class="crm-overview" id="usrSummary"></div>
       <div class="editor hidden" id="userEditor" style="margin-bottom:20px;">
         <h3>Шинэ хэрэглэгч нэмэх</h3>
         <div class="row2">
@@ -622,6 +636,7 @@
           </div>
         </div>
 
+        <div class="crm-summary" id="crmSummary"></div>
         <div class="crm-timeline">
           <div class="panel-head" style="margin:20px 0 4px;"><h3>Харилцааны түүх</h3></div>
           <div id="crmTimeline"></div>
@@ -1826,6 +1841,17 @@
     document.getElementById('crmStatus').value = currentCrmStatus();
 
     const events = crmEventsForUser(user);
+    // Хураангуй мөр — худалдан авалт, харилцааны тоо, сүүлийн холбоо
+    const paid = contactPaid(user);
+    const lastAt = events.length ? events[0].at : user.at;
+    const days = daysSince(lastAt);
+    const lastLabel = !isFinite(days) ? '—' : (days === 0 ? 'өнөөдөр' : days + ' хоногийн өмнө');
+    const item = (k, v) => '<div class="item">' + k + '<b>' + v + '</b></div>';
+    document.getElementById('crmSummary').innerHTML =
+      item('💳 Худалдан авалт', '₮' + paid.toLocaleString('en-US'))
+      + item('💬 Харилцаа', Math.max(0, events.length - 1))
+      + item('🕒 Сүүлд холбогдсон', lastLabel)
+      + item('📌 Төлөв', esc(userStatus(user.id)));
     document.getElementById('crmTimeline').innerHTML = events.length ? events.map(event =>
       '<div class="crm-event">'
       + '<div class="crm-event-time">' + esc(crmDateLabel(event.at)) + '</div>'
@@ -1950,24 +1976,45 @@
   function onUserSort(v) { usrSort = v; renderUsers(); }
   function setUserStatusFilter(s) { usrStatusFilter = s; renderUsers(); }
 
+  const STALE_DAYS = 7; // идэвхтэй лид ийм өдрөөс дээш хөдөлгөөнгүй бол «анхаарах»
+  function isActiveStatus(s) { return s !== 'Амжилттай' && s !== 'Хаагдсан'; }
+  function daysSince(at) {
+    if (!at) return Infinity;
+    const t = Date.parse(at); if (isNaN(t)) return Infinity;
+    return Math.floor((Date.now() - t) / 86400000);
+  }
+  function contactPaid(user) {
+    return paymentsList.filter(pm => sameCrmContact(pm, user))
+      .reduce((s, pm) => s + (Number(pm.amount) || 0), 0);
+  }
   function renderUsers() {
-    // Хэрэглэгч бүрийг төлөв, харилцааны түүхээр баяжуулна
-    const enriched = usersList.map(u => {
+    // Хэрэглэгч бүрийг төлөв, харилцааны түүх, идэвхгүй байдлаар баяжуулна
+    const enrichedAll = usersList.map(u => {
       const events = crmEventsForUser(u);
-      return { u: u, status: userStatus(u.id), events: events,
-               last: events.length ? events[0].at : u.at, count: events.length };
+      const status = userStatus(u.id);
+      const last = events.length ? events[0].at : u.at;
+      return { u: u, status: status, events: events, last: last, count: events.length,
+               stale: isActiveStatus(status) && daysSince(last) >= STALE_DAYS };
     });
+    // Дээд тойм (бүх лид дээр)
+    const total = enrichedAll.length;
+    const won = enrichedAll.filter(e => e.status === 'Амжилттай').length;
+    const active = enrichedAll.filter(e => isActiveStatus(e.status)).length;
+    const staleAll = enrichedAll.filter(e => e.stale).length;
+    renderUserSummary(total, active, won, staleAll);
     // Хайлт
     const q = usrSearch.trim().toLowerCase();
-    let list = q ? enriched.filter(e =>
+    let list = q ? enrichedAll.filter(e =>
       [e.u.name, e.u.email, e.u.phone, e.u.org, e.u.role]
-        .some(v => String(v || '').toLowerCase().indexOf(q) !== -1)) : enriched.slice();
+        .some(v => String(v || '').toLowerCase().indexOf(q) !== -1)) : enrichedAll.slice();
     // Төлөвийн тоолуур (хайлтын дараах олонлог дээр)
     const counts = {}; CRM_STATUSES.forEach(s => counts[s] = 0);
-    list.forEach(e => { counts[e.status] = (counts[e.status] || 0) + 1; });
+    let staleFound = 0;
+    list.forEach(e => { counts[e.status] = (counts[e.status] || 0) + 1; if (e.stale) staleFound++; });
     const totalFound = list.length;
-    // Төлөвөөр шүүх
-    if (usrStatusFilter !== 'Бүгд') list = list.filter(e => e.status === usrStatusFilter);
+    // Шүүх — төлөвөөр эсвэл «анхаарах» (идэвхгүй)
+    if (usrStatusFilter === '__stale__') list = list.filter(e => e.stale);
+    else if (usrStatusFilter !== 'Бүгд') list = list.filter(e => e.status === usrStatusFilter);
     // Эрэмбэ
     if (usrSort === 'status') {
       list.sort((a, b) => (CRM_STATUSES.indexOf(a.status) - CRM_STATUSES.indexOf(b.status))
@@ -1979,7 +2026,7 @@
     }
 
     document.getElementById('usrCount').textContent = usersList.length ? usersList.length + ' хэрэглэгч' : '';
-    renderUserFilterBar(counts, totalFound);
+    renderUserFilterBar(counts, totalFound, staleFound);
 
     const box = document.getElementById('usrList');
     if (!usersList.length) { box.innerHTML = '<div class="empty">Хэрэглэгч алга.</div>'; }
@@ -1989,9 +2036,11 @@
         const u = e.u;
         const contact = [u.email, u.phone, u.org, u.role].filter(Boolean).join(' · ');
         const badge = '<span class="crm-badge" style="--c:' + (CRM_STATUS_COLOR[e.status] || '#6b7280') + '">' + esc(e.status) + '</span>';
-        const acts = e.count > 1
+        const days = daysSince(e.last);
+        const acts = (e.count > 1
           ? (e.count - 1) + ' харилцаа · сүүлд ' + esc(String(e.last || '').slice(0, 10))
-          : 'Харилцаа бүртгээгүй';
+          : 'Харилцаа бүртгээгүй')
+          + (e.stale ? ' · <b style="color:#c2760a;">⚠️ ' + (isFinite(days) ? days + ' хоног хөдөлгөөнгүй' : 'удаан хөдөлгөөнгүй') + '</b>' : '');
         return '<div class="tpl-card">'
           + '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">'
           + '<div style="min-width:0;">'
@@ -2006,17 +2055,33 @@
     }
     if (selectedCrmUserId) renderCrmDetail();
   }
-  function renderUserFilterBar(counts, total) {
+  function renderUserFilterBar(counts, total, staleFound) {
     const bar = document.getElementById('usrFilterBar');
     if (!bar) return;
     let html = '<span class="crm-chip' + (usrStatusFilter === 'Бүгд' ? ' active' : '')
       + '" onclick="setUserStatusFilter(\'Бүгд\')">Бүгд<span class="n">' + total + '</span></span>';
+    if (staleFound) {
+      html += '<span class="crm-chip warn' + (usrStatusFilter === '__stale__' ? ' active' : '')
+        + '" onclick="setUserStatusFilter(\'__stale__\')">⚠️ Анхаарах<span class="n">' + staleFound + '</span></span>';
+    }
     CRM_STATUSES.forEach(s => {
       if (!counts[s]) return; // хоосон шатыг харуулахгүй
       html += '<span class="crm-chip' + (usrStatusFilter === s ? ' active' : '')
         + '" onclick="setUserStatusFilter(\'' + s + '\')">' + esc(s) + '<span class="n">' + counts[s] + '</span></span>';
     });
     bar.innerHTML = html;
+  }
+  function renderUserSummary(total, active, won, stale) {
+    const box = document.getElementById('usrSummary');
+    if (!box) return;
+    if (!total) { box.innerHTML = ''; return; }
+    const rate = total ? Math.round(won / total * 100) : 0;
+    const stat = (k, v, cls) => '<div class="crm-stat' + (cls ? ' ' + cls : '') + '"><div class="k">' + k + '</div><div class="v">' + v + '</div></div>';
+    box.innerHTML = stat('Нийт лид', total)
+      + stat('Идэвхтэй', active)
+      + stat('Амжилттай', won)
+      + stat('Хөрвөлт', rate + '%')
+      + stat('Анхаарах', stale, stale ? 'warn' : '');
   }
   function delUser(id) {
     if (!confirmDelete()) return;
