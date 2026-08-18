@@ -295,7 +295,7 @@
       </div>
       <div class="tab-sub" id="productsSub"></div>
       <div class="tab" data-tab="articles" onclick="switchTab('articles')">Мэдээ нийтлэл</div>
-      <div class="tab" data-tab="why" onclick="switchTab('why')">Яагаад бид</div>
+      <div class="tab" data-tab="why" onclick="switchTab('why')">Бидний тухай</div>
       <div class="tab" data-tab="pricing" onclick="switchTab('pricing')">Үнийн санал</div>
       <div class="tab" data-tab="schedule" onclick="switchTab('schedule')">Цаг товлолт</div>
       <div class="tab" data-tab="users" onclick="switchTab('users')">Хэрэглэгч</div>
@@ -438,15 +438,15 @@
     <!-- ===== Why-us panel ===== -->
     <section id="tab-why" class="hidden">
       <div class="panel-head">
-        <h2>«Яагаад бид» — Танилцуулга</h2>
+        <h2>«Бидний тухай» — Танилцуулга</h2>
         <div class="actions">
           <button class="btn btn-sm" onclick="resetWhy()">Анхны төлөвт</button>
         </div>
       </div>
-      <div class="hint">Хэсгийн гарчиг, өөрсдийн танилцуулга текст, зураг болон давуу талуудын картуудыг оруулна. Хадгалсны дараа сайтын «Яагаад бид» хэсэгт шинэчлэгдэнэ.</div>
+      <div class="hint">Хэсгийн гарчиг, өөрсдийн танилцуулга текст, зураг болон давуу талуудын картуудыг оруулна. Хадгалсны дараа сайтын «Бидний тухай» хэсэгт шинэчлэгдэнэ.</div>
       <div class="editor">
         <div class="row2">
-          <div class="field"><label>Дээд гарчиг (eyebrow)</label><input id="w-eyebrow" placeholder="Яагаад бид"></div>
+          <div class="field"><label>Дээд гарчиг (eyebrow)</label><input id="w-eyebrow" placeholder="Бидний тухай"></div>
           <div class="field"><label>Гол гарчиг</label><input id="w-title" placeholder="Хэмжилтийг тааварлахаа боль"></div>
         </div>
         <div class="field"><label>Танилцуулга текст</label><textarea id="w-intro" style="min-height:120px" placeholder="Бидний тухай..."></textarea></div>
@@ -853,7 +853,7 @@
   };
 
   const DEFAULT_WHY = {
-    eyebrow: 'Яагаад бид',
+    eyebrow: 'Бидний тухай',
     title: 'Хэмжилтийг тааварлахаа боль',
     intro: 'Бид байгууллагуудад KPI хэмжилтийн системээ зөв бүтээж, төлөвшүүлэхэд нь тусалдаг мэргэжлийн баг юм. Гарын авлагаас эхлээд стратегийн зөвлөгөө хүртэл бүх шатанд дэмжинэ.',
     image: '',
@@ -2008,7 +2008,7 @@
     save('kpihub_why', why).then(ok => { if (ok) flash('whySaved'); });
   }
   function resetWhy() {
-    if (!confirm('«Яагаад бид» хэсгийг анхны төлөвт буцаах уу?')) return;
+    if (!confirm('«Бидний тухай» хэсгийг анхны төлөвт буцаах уу?')) return;
     why = JSON.parse(JSON.stringify(DEFAULT_WHY)); save('kpihub_why', why); renderWhyForm();
   }
 
