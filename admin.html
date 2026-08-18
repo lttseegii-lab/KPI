@@ -59,12 +59,21 @@
     .tabs { position:static; display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); padding:0 0 18px; border-right:0; border-bottom:1px solid var(--line); }
   }
 
-  /* ===== Substack маягийн нийтлэлийн засварлагч ===== */
-  .se-toolbar {
-    position:sticky; top:63px; z-index:7; background:#fff; border:1px solid var(--line);
-    border-radius:10px; padding:6px 10px; display:flex; gap:2px; align-items:center; flex-wrap:wrap;
-    box-shadow:0 4px 14px rgba(0,0,0,.05);
+  /* ===== Substack маягийн нийтлэлийн засварлагч — бүтэн хуудас ===== */
+  #artEditor {
+    position:fixed; inset:0; z-index:60; background:#fff; overflow-y:auto;
+    margin:0; padding:0; border:none; border-radius:0; box-shadow:none;
   }
+  #artEditor.hidden { display:none; }
+  .se-topbar {
+    position:sticky; top:0; z-index:5; background:rgba(255,255,255,.96);
+    backdrop-filter:blur(8px); border-bottom:1px solid var(--line);
+  }
+  .se-toolbar {
+    max-width:780px; margin:0 auto; padding:10px 20px;
+    display:flex; gap:2px; align-items:center; flex-wrap:wrap;
+  }
+  .se-page { max-width:780px; margin:0 auto; padding:6px 20px 100px; }
   .se-toolbar > button, .se-imgbtn {
     border:none; background:none; padding:7px 10px; border-radius:6px; cursor:pointer;
     font-size:14px; color:var(--text); line-height:1; font-family:inherit;
@@ -356,6 +365,7 @@
         <h3 id="artEditorTitle" class="sr-only-title" style="display:none;">Шинэ нийтлэл</h3>
 
         <!-- Substack маягийн бичих туршлага: toolbar + том гарчиг + дэд гарчиг + WYSIWYG бие -->
+        <div class="se-topbar">
         <div class="se-toolbar">
           <button type="button" title="Дэд гарчиг" onclick="seHeading()"><b>T</b></button>
           <span class="se-sep"></span>
@@ -372,7 +382,9 @@
           <button type="button" class="btn btn-sm" onclick="cancelArticle()">Болих</button>
           <span class="saved-msg" id="artSaved">Хадгалагдлаа</span>
         </div>
+        </div>
 
+        <div class="se-page">
         <input id="e-title" class="se-title" placeholder="Гарчиг">
         <input id="e-excerpt" class="se-subtitle" placeholder="Дэд гарчиг (товч тайлбар) нэмэх…">
         <div id="e-body" class="se-body" contenteditable="true" data-ph="Бичиж эхлэх…"></div>
@@ -397,6 +409,7 @@
             </div>
             <img id="e-imgPreview" style="display:none; margin-top:12px; max-width:280px; width:100%; border-radius:10px; border:1px solid var(--line);">
           </div>
+        </div>
         </div>
       </div>
     </section>
@@ -1111,6 +1124,9 @@
     document.getElementById('gate').classList.remove('hidden');
     document.getElementById('pw').value = '';
     appShown = false;
+    // Нийтлэлийн засварлагч нээлттэй байхад гарвал гүйлтийн түгжээ үлдэхээс сэргийлнэ
+    document.getElementById('artEditor').classList.add('hidden');
+    document.body.style.overflow = '';
     // Гарсны дараа хувийн мэдээллийг DOM-оос цэвэрлэх (хуваалцсан компьютерээс сэргийлэх)
     ['qrList', 'bookingList', 'usrList', 'subList', 'fbList', 'admList', 'homeFeed', 'homeBookings', 'homeStats'].forEach(id => {
       const el = document.getElementById(id); if (el) el.innerHTML = '';
@@ -2383,21 +2399,31 @@
     if (!confirmDelete('Та энэ зургийг устгахдаа итгэлтэй байна уу?')) return;
     editImage = ''; renderArticleImage();
   }
+  // Засварлагч нь бүтэн хуудсаар нээгддэг тул ард талын гүйлтийг түгжинэ
+  function openArtEditor() {
+    const el = document.getElementById('artEditor');
+    el.classList.remove('hidden');
+    el.scrollTop = 0;
+    document.body.style.overflow = 'hidden';
+  }
   function newArticle() {
     editIndex = -1;
     document.getElementById('artEditorTitle').textContent = 'Шинэ нийтлэл';
     fillEditor({ icon:'📝', cat:'Судалгаа', date:'', read:'5 мин', title:'', excerpt:'', body:[] });
-    document.getElementById('artEditor').classList.remove('hidden');
-    document.getElementById('artEditor').scrollIntoView({ behavior:'smooth' });
+    openArtEditor();
+    document.getElementById('e-title').focus();
   }
   function editArticle(i) {
     editIndex = i;
     document.getElementById('artEditorTitle').textContent = 'Нийтлэл засах';
     fillEditor(articles[i]);
-    document.getElementById('artEditor').classList.remove('hidden');
-    document.getElementById('artEditor').scrollIntoView({ behavior:'smooth' });
+    openArtEditor();
   }
-  function cancelArticle() { document.getElementById('artEditor').classList.add('hidden'); editIndex = -1; }
+  function cancelArticle() {
+    document.getElementById('artEditor').classList.add('hidden');
+    document.body.style.overflow = '';
+    editIndex = -1;
+  }
   function delArticle(i) {
     if (!confirmDelete()) return;
     const removed = articles.splice(i, 1)[0];
