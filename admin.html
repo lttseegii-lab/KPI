@@ -359,9 +359,11 @@
         <h2>Мэдээ, судалгааны нийтлэлүүд</h2>
         <div class="actions">
           <button class="btn btn-sm" onclick="newArticle()">+ Шинэ нийтлэл</button>
+          <button class="btn btn-sm" id="artShrinkBtn" onclick="compressArticleImages()">Зураг шахах</button>
           <button class="btn btn-sm" onclick="resetArticles()">Анхны төлөвт</button>
         </div>
       </div>
+      <div class="hint" id="artUsage"></div>
       <div class="list" id="artList"></div>
 
       <div class="editor hidden" id="artEditor">
@@ -813,8 +815,11 @@
     return KPICloud.set(k, v).then(() => true).catch(err => {
       if (onFail) { try { onFail(err); } catch (e) {} }
       const msg = String((err && (err.message || err.code)) || '');
-      alert(/size|exceeds|maximum|too large|quota/i.test(msg)
-        ? 'Хадгалж чадсангүй — өгөгдөл хэт том байна (зураг/файлаа жижигрүүлээд дахин оролдоно уу).'
+      // Firestore-ийн 1MB хязгаар: «The value of property "json" is longer than … bytes»
+      alert(/size|exceeds|maximum|too large|quota|longer than/i.test(msg)
+        ? 'Хадгалж чадсангүй — өгөгдөл 1MB хязгаараас хэтэрлээ.\n\n'
+          + 'Зургууд ихэнх зайг эзэлдэг. «Мэдээ нийтлэл» хэсгийн дээд талын '
+          + '«Зураг шахах» товчийг дарж зай чөлөөлөөд дахин оролдоно уу.'
         : (msg || 'Хадгалах үед алдаа гарлаа.'));
       return false;
     });
@@ -1886,13 +1891,60 @@
   }
   const MAX_UPLOAD = 5 * 1024 * 1024; // 5MB
   const MAX_IMG = MAX_UPLOAD;
+
+  // ---------- Зураг шахах ----------
+  // Firestore-ийн НЭГ БАРИМТ дээд тал нь 1MB. Зураг нь base64 болж контентын
+  // доторх JSON-д ордог тул шахаагүй зураг хэдхэн нийтлэлээр хязгаарыг дүүргэнэ
+  // («The value of property "json" is longer than 1048487 bytes» алдаа).
+  // Иймд байршуулах бүрд browser дээр хэмжээг багасгаж, JPEG болгон шахна.
+  const IMG_MAX_W = 1200;        // уншигч дээр хамгийн ихдээ ~1000px өргөнөөр харагдана
+  const IMG_TARGET = 70 * 1024;  // нэг зургийн зорилтот урт (base64 тэмдэгт)
+  // SVG/GIF-ийг canvas дээр дахин зурвал вектор/хөдөлгөөн алдагдах тул хэвээр үлдээнэ
+  function isRasterPhoto(dataUrl) {
+    return /^data:image\/(jpeg|jpg|png|webp|avif|bmp)/i.test(String(dataUrl || ''));
+  }
+  function compressDataUrl(dataUrl, maxW, target) {
+    maxW = maxW || IMG_MAX_W; target = target || IMG_TARGET;
+    return new Promise(resolve => {
+      if (!isRasterPhoto(dataUrl)) { resolve(dataUrl); return; }
+      const img = new Image();
+      img.onerror = () => resolve(dataUrl); // задалж чадсангүй — хэвээр нь үлдээнэ
+      img.onload = () => {
+        const iw = img.naturalWidth || maxW, ih = img.naturalHeight || maxW;
+        const scale = Math.min(1, maxW / iw);
+        const w = Math.max(1, Math.round(iw * scale));
+        const h = Math.max(1, Math.round(ih * scale));
+        const cv = document.createElement('canvas');
+        cv.width = w; cv.height = h;
+        const cx = cv.getContext('2d');
+        // JPEG ил тод байдлыг дэмждэггүй — тунгалаг хэсгийг хараар биш цагаанаар дүүргэнэ
+        cx.fillStyle = '#fff'; cx.fillRect(0, 0, w, h);
+        cx.drawImage(img, 0, 0, w, h);
+        let out = '';
+        for (let q = 0.82; q >= 0.4; q -= 0.12) {
+          out = cv.toDataURL('image/jpeg', q);
+          if (out.length <= target) break;
+        }
+        // Шахсан нь эхнийхээсээ том болвол эхнийхийг нь хэвээр үлдээнэ
+        resolve(out && out.length < dataUrl.length ? out : dataUrl);
+      };
+      img.src = dataUrl;
+    });
+  }
+  function compressFile(file, maxW, target) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onerror = () => reject(new Error('Зураг уншиж чадсангүй'));
+      reader.onload = () => compressDataUrl(reader.result, maxW, target).then(resolve);
+      reader.readAsDataURL(file);
+    });
+  }
+
   function onWhyImage(input) {
     const f = input.files && input.files[0];
     if (!f) return;
     if (f.size > MAX_IMG) { alert('Зураг хэт том байна (дээд тал нь 5MB).'); input.value=''; return; }
-    const reader = new FileReader();
-    reader.onload = () => { why.image = reader.result; renderWhyForm(); };
-    reader.readAsDataURL(f);
+    compressFile(f).then(data => { why.image = data; renderWhyForm(); });
   }
   function removeWhyImage() {
     if (!confirmDelete('Та энэ зургийг устгахдаа итгэлтэй байна уу?')) return;
@@ -1995,9 +2047,8 @@
   function onAuthorPhoto(input, i) {
     const f = input.files && input.files[0]; if (!f) return;
     if (f.size > MAX_IMG) { alert('Зураг хэт том байна (дээд тал нь 5MB).'); input.value = ''; return; }
-    const reader = new FileReader();
-    reader.onload = () => { authors[i].photo = reader.result; renderAuthors(); };
-    reader.readAsDataURL(f);
+    // Зохиогчийн зураг жижиг тойрог хэлбэрээр харагддаг тул илүү бага хэмжээ хангалттай
+    compressFile(f, 400, 40 * 1024).then(data => { authors[i].photo = data; renderAuthors(); });
   }
   function removeAuthorPhoto(i) {
     if (!confirmDelete('Энэ зургийг устгах уу?')) return;
@@ -2242,9 +2293,7 @@
     if (!f) return;
     if (f.size > MAX_IMG) { alert('Зураг хэт том байна (дээд тал нь 5MB). Жижиг зураг сонгоно уу.'); input.value = ''; return; }
     const k = prodSelected;
-    const reader = new FileReader();
-    reader.onload = () => { products[k].image = reader.result; renderProductsAdmin(); };
-    reader.readAsDataURL(f);
+    compressFile(f).then(data => { products[k].image = data; renderProductsAdmin(); });
   }
   function removeProductImage() {
     if (!confirmDelete('Энэ зургийг устгах уу?')) return;
@@ -2293,7 +2342,50 @@
     save('kpihub_products', products);
   }
 
+  // Firestore-ийн нэг баримтын хязгаар. Хэр дүүрснийг админд харуулж,
+  // хязгаарт ойртохоос өмнө «Зураг шахах» хийхийг сануулна.
+  const DOC_LIMIT = 1048487;
+  function renderArticleUsage() {
+    const el = document.getElementById('artUsage');
+    if (!el) return;
+    const used = new Blob([JSON.stringify(articles)]).size;
+    const pct = Math.round(used / DOC_LIMIT * 100);
+    const warn = pct >= 80;
+    el.innerHTML = 'Хадгалалт: <b>' + Math.round(used / 1024) + 'KB</b> / '
+      + Math.round(DOC_LIMIT / 1024) + 'KB (' + pct + '%)'
+      + (warn ? ' — <b style="color:var(--danger,#c0392b);">хязгаарт ойрхон. «Зураг шахах» дарж зай чөлөөлнө үү.</b>' : '');
+  }
+  async function compressArticleImages() {
+    const btn = document.getElementById('artShrinkBtn');
+    const before = new Blob([JSON.stringify(articles)]).size;
+    if (!confirm('Бүх нийтлэлийн зургийг шахах уу?\n\nОдоогийн хэмжээ: ' + Math.round(before / 1024) + 'KB\n'
+      + 'Зургууд жижигрэх тул харагдах чанар багассан ч зай их чөлөөлөгдөнө.')) return;
+    btn.disabled = true; const prevLabel = btn.textContent; btn.textContent = 'Шахаж байна…';
+    let n = 0;
+    for (const a of articles) {
+      if (a.image) {
+        const out = await compressDataUrl(a.image);
+        if (out !== a.image) { a.image = out; n++; }
+      }
+      for (const b of (a.body || [])) {
+        if (b[0] === 'img' && b[1]) {
+          const out = await compressDataUrl(b[1]);
+          if (out !== b[1]) { b[1] = out; n++; }
+        }
+      }
+    }
+    const after = new Blob([JSON.stringify(articles)]).size;
+    btn.disabled = false; btn.textContent = prevLabel;
+    if (!n) { alert('Шахах зураг олдсонгүй — бүгд аль хэдийн шахагдсан байна.'); return; }
+    const ok = await save('kpihub_articles', articles);
+    renderArticles();
+    if (ok) {
+      alert(n + ' зураг шахагдлаа.\n' + Math.round(before / 1024) + 'KB → ' + Math.round(after / 1024) + 'KB'
+        + ' (' + Math.round((before - after) / 1024) + 'KB чөлөөлөгдлөө)');
+    }
+  }
   function renderArticles() {
+    renderArticleUsage();
     document.getElementById('artList').innerHTML = articles.map((a, i) =>
       '<div class="item">'
       + '<div class="grow"><div class="nm">' + esc(a.title) + '</div>'
@@ -2350,9 +2442,7 @@
   function onArticleImage(input) {
     const f = input.files && input.files[0]; if (!f) return;
     if (f.size > MAX_IMG) { alert('Зураг хэт том байна (дээд тал нь 5MB).'); input.value = ''; return; }
-    const reader = new FileReader();
-    reader.onload = () => { editImage = reader.result; renderArticleImage(); };
-    reader.readAsDataURL(f);
+    compressFile(f).then(data => { editImage = data; renderArticleImage(); });
   }
   // ---------- WYSIWYG туслахууд ----------
   // Toolbar дарахад сонголт (selection) алдагддаг тул биед хийсэн сүүлийн
@@ -2395,15 +2485,13 @@
   function onBodyImage(input) {
     const f = input.files && input.files[0]; if (!f) return;
     if (f.size > MAX_IMG) { alert('Зураг хэт том байна (дээд тал нь 5MB).'); input.value = ''; return; }
-    const reader = new FileReader();
-    reader.onload = () => {
+    compressFile(f).then(data => {
       seRestoreSel();
       document.execCommand('insertHTML', false,
-        '<figure contenteditable="false"><img src="' + reader.result + '" alt=""></figure><p><br></p>');
+        '<figure contenteditable="false"><img src="' + data + '" alt=""></figure><p><br></p>');
       input.value = '';
       seSaveSel();
-    };
-    reader.readAsDataURL(f);
+    });
   }
   function removeArticleImage() {
     if (!confirmDelete('Та энэ зургийг устгахдаа итгэлтэй байна уу?')) return;
