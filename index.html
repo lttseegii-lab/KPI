@@ -705,6 +705,43 @@
   .pd-dl-card .nm { font-size: 15px; font-weight: 700; color: #111; }
   .pd-dl-card .ty { font-size: 12.5px; color: #777; flex: 1; }
   .pd-dl-card .badge.dl { align-self: flex-start; margin-top: 4px; }
+  /* ===== Манай баг ===== */
+  /* «Бидний тухай» доторх багийн карт — давхарласан зурагнууд */
+  .tm-avs { display: flex; margin-bottom: 20px; }
+  .tm-av {
+    width: 44px; height: 44px; border-radius: 50%; overflow: hidden; flex: none;
+    display: grid; place-items: center; margin-left: -10px;
+    background: var(--accent-soft); border: 2px solid var(--bg);
+    color: var(--accent-2); font-weight: 800; font-size: 16px;
+  }
+  .tm-av:first-child { margin-left: 0; }
+  .tm-av img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  /* Багийн дэлгэрэнгүй хуудас (цайвар, pd-overlay бүрхүүлийг ашиглана) */
+  .tm-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 22px; }
+  @media (max-width: 760px) { .tm-grid { grid-template-columns: 1fr; } }
+  .tm-card { border: 1px solid #e3e5ec; border-radius: 14px; background: #fff; padding: 26px; }
+  .tm-top { display: flex; gap: 18px; align-items: center; margin-bottom: 16px; }
+  .tm-photo {
+    width: 84px; height: 84px; border-radius: 50%; overflow: hidden; flex: none;
+    background: #eef1f7; border: 1px solid #dfe2ea; display: grid; place-items: center;
+  }
+  .tm-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .tm-photo span { font-size: 30px; font-weight: 800; color: #5a6273; }
+  .tm-name { font-size: 19px; font-weight: 800; color: #111; line-height: 1.25; }
+  .tm-role { font-size: 13.5px; font-weight: 600; color: var(--accent); margin-top: 5px; }
+  .tm-bio { font-size: 14.5px; color: #444; line-height: 1.65; }
+  .tm-projects { margin-top: 18px; padding-top: 16px; border-top: 1px solid #eceef2; }
+  .tm-projects h4 {
+    font-size: 11.5px; letter-spacing: .6px; text-transform: uppercase;
+    color: #6b7280; font-weight: 700; margin-bottom: 11px;
+  }
+  .tm-projects li {
+    list-style: none; font-size: 14px; color: #333; line-height: 1.5;
+    padding-left: 20px; position: relative; margin-bottom: 8px;
+  }
+  .tm-projects li:last-child { margin-bottom: 0; }
+  .tm-projects li::before { content: "→"; position: absolute; left: 0; color: var(--accent); font-weight: 700; }
+
   /* Замын зураг — зорилт бүр хяналтын цэгүүдтэй */
   .pd-milestone { border: 1px solid #e3e5ec; border-radius: 10px; padding: 20px 22px; margin-bottom: 14px; background: #fff; }
   .pd-milestone h4 { font-size: 15px; font-weight: 700; color: #111; margin-bottom: 14px; display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
@@ -1080,6 +1117,25 @@
       <div class="pd-cta">
         <a href="#" class="btn btn-primary" onclick="requestQuote(event)">Үнийн санал авах</a>
         <a href="#" class="btn btn-ghost" onclick="closeProduct(); openBooking(event);">Зөвлөгөө авах</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Манай баг — нийтлэл бичдэг мэргэжилтнүүд ===== -->
+<div class="pd-overlay" id="teamOverlay" onclick="if(event.target===this) closeTeam()">
+  <div class="pd-panel">
+    <div class="pd-hero">
+      <a class="pd-back" href="#" onclick="event.preventDefault(); closeTeam()">‹ Буцах</a>
+      <div class="tag">Манай баг</div>
+      <h2>Нийтлэл бичдэг мэргэжилтнүүд</h2>
+      <div class="lead">Гүйцэтгэлийн удирдлагын чиглэлээр бодит төсөл хэрэгжүүлсэн туршлагатай баг. Хүн бүрийн мэргэшсэн чиглэл, ажилласан төслүүдтэй танилцана уу.</div>
+    </div>
+    <div class="pd-body">
+      <div class="tm-grid" id="teamGrid"></div>
+      <div class="pd-cta">
+        <a href="#" class="btn btn-primary" onclick="closeTeam(); openBooking(event);">Зөвлөгөө авах</a>
+        <a href="#insights" class="btn btn-ghost" onclick="closeTeam()">Нийтлэлүүд унших</a>
       </div>
     </div>
   </div>
@@ -2615,8 +2671,48 @@
     }
     document.getElementById('whyGrid').innerHTML = (WHY.features || []).map(f =>
       '<article class="card"><h3>' + esc(f[1]) + '</h3><p>' + esc(f[2]) + '</p></article>'
-    ).join('');
+    ).join('') + teamCardHtml();
   }
+  // «Манай баг» карт — «Нийтлэл бичсэн» бүртгэлтэй хүмүүс байвал харагдана.
+  // Давхарласан зурагнууд + нэг товч: дарахад багийн дэлгэрэнгүй хуудас нээгдэнэ.
+  function teamCardHtml() {
+    if (!AUTHORS.length) return '';
+    const avs = AUTHORS.slice(0, 4).map(a =>
+      '<span class="tm-av">'
+      + (a.photo ? '<img src="' + safeUrl(a.photo) + '" alt="">' : esc(String(a.name || '?').trim().charAt(0)))
+      + '</span>'
+    ).join('');
+    const extra = AUTHORS.length > 4 ? '<span class="tm-av">+' + (AUTHORS.length - 4) + '</span>' : '';
+    return '<article class="card clickable" onclick="openTeam()">'
+      + '<div class="tm-avs">' + avs + extra + '</div>'
+      + '<h3>Манай баг</h3>'
+      + '<p>Нийтлэл бичдэг мэргэжилтнүүдийн танилцуулга, туршлага, хэрэгжүүлсэн төслүүд.</p>'
+      + '<span class="more">Багтай танилцах →</span>'
+      + '</article>';
+  }
+  const teamOverlay = document.getElementById('teamOverlay');
+  function openTeam() {
+    document.getElementById('teamGrid').innerHTML = AUTHORS.map(a => {
+      const name = String(a.name || '').trim() || '—';
+      const projects = (Array.isArray(a.projects) ? a.projects : []).filter(Boolean);
+      return '<div class="tm-card">'
+        + '<div class="tm-top">'
+        + '<div class="tm-photo">' + (a.photo ? '<img src="' + safeUrl(a.photo) + '" alt="">' : '<span>' + esc(name.charAt(0)) + '</span>') + '</div>'
+        + '<div><div class="tm-name">' + esc(name) + '</div>'
+        + (a.role ? '<div class="tm-role">' + esc(a.role) + '</div>' : '')
+        + '</div></div>'
+        + (a.bio ? '<div class="tm-bio">' + esc(a.bio) + '</div>' : '')
+        + (projects.length
+            ? '<div class="tm-projects"><h4>Ажилласан төслүүд</h4><ul>' + projects.map(p => '<li>' + esc(p) + '</li>').join('') + '</ul></div>'
+            : '')
+        + '</div>';
+    }).join('');
+    teamOverlay.scrollTop = 0; window.scrollTo(0, 0);
+    teamOverlay.classList.add('open');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeTeam() { teamOverlay.classList.remove('open'); document.body.style.overflow = ''; }
+  document.addEventListener('keydown', e => { if (e.key === 'Escape' && teamOverlay.classList.contains('open')) closeTeam(); });
   renderWhy();
 
   const contactModal = document.getElementById('contactModal');
