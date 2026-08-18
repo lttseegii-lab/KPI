@@ -61,6 +61,8 @@
 
   .panel-head { display:flex; align-items:center; justify-content:space-between; margin-bottom:18px; flex-wrap:wrap; gap:12px; }
   .panel-head h2 { font-size:20px; }
+  /* Бүтээгдэхүүн хэсэгт «Хадгалах» товч гүйхэд байнга дээр харагдана */
+  #tab-products > .panel-head { position:sticky; top:63px; z-index:8; background:var(--bg); margin:0 0 14px; padding:12px 0; border-bottom:1px solid var(--line); }
   .actions { display:flex; gap:8px; flex-wrap:wrap; }
   .panel-head .actions { display:flex; gap:8px; flex-wrap:wrap; }
   .hint { font-size:12.5px; color:var(--muted); margin-bottom:18px; }
@@ -2122,6 +2124,14 @@
     const editorHtml = '<div class="editor" style="margin-top:16px;">'
       + '<div class="field"><label>Гарчиг — карт болон дэлгэрэнгүй цонх хоёуланд харагдана</label>'
       + '<input value="' + esc(p.title || '') + '" oninput="onProductTitle(\'' + k + '\', this.value)"></div>'
+      + '<div class="field"><label>Зураг — дэлгэрэнгүй цонхны танилцуулгын хажууд харагдана (заавал биш)</label>'
+      + '<div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">'
+      + '<label class="file-btn">Зураг сонгох<input type="file" accept="image/*" hidden onchange="onProductImage(this)"></label>'
+      + (p.image
+          ? '<img src="' + esc(p.image) + '" alt="" style="height:56px; border-radius:8px; border:1px solid var(--line);">'
+            + '<button class="file-rm" onclick="removeProductImage()">Устгах</button>'
+          : '<span style="font-size:13px; color:var(--muted);">Зураг оруулаагүй — мэдээлэл бүтэн өргөнөөр харагдана</span>')
+      + '</div></div>'
       + '<div class="row2">'
       + '<div class="field"><label>Карт дээрх шошго</label><input value="' + esc(p.cardTag || '') + '" oninput="products[\'' + k + '\'].cardTag = this.value"></div>'
       + '<div class="field"><label>Дэлгэрэнгүй цонхны шошго</label><input value="' + esc(p.tag || '') + '" oninput="products[\'' + k + '\'].tag = this.value"></div>'
@@ -2160,6 +2170,19 @@
         + '</div>';
     }).join('') || '<div class="empty" style="padding:8px 0;">Зорилт алга. «+ Зорилт нэмэх» дарна уу.</div>';
   }
+  function onProductImage(input) {
+    const f = input.files && input.files[0];
+    if (!f) return;
+    if (f.size > MAX_IMG) { alert('Зураг хэт том байна (дээд тал нь 5MB). Жижиг зураг сонгоно уу.'); input.value = ''; return; }
+    const k = prodSelected;
+    const reader = new FileReader();
+    reader.onload = () => { products[k].image = reader.result; renderProductsAdmin(); };
+    reader.readAsDataURL(f);
+  }
+  function removeProductImage() {
+    if (!confirmDelete('Энэ зургийг устгах уу?')) return;
+    products[prodSelected].image = ''; renderProductsAdmin();
+  }
   function addMilestone() {
     const k = prodSelected;
     if (!products[k].roadmap) products[k].roadmap = [];
@@ -2178,23 +2201,23 @@
       + '<button class="btn btn-sm" onclick="addPhase()">+ Үе шат нэмэх</button>'
       + '<button class="btn btn-sm" onclick="resetTemplates()">Анхны төлөвт</button>'
       + '</div></div>'
-      + '<div class="hint">Үе шат бүрд хэрэгсэл (нэр, төрөл) нэмнэ. Хэрэгсэлд <b>файл хавсаргах нь заавал биш</b> — файлтай бол сайт дээр «Татах» товч гарч, доор нь «Татан авах файлууд» хэсэгт орно; файлгүй бол зүгээр жагсаалтад харагдана. Үе шатны гарчиг хоосон бол дугааргүй энгийн жагсаалт болно. (Файл ≤5MB)</div>'
+      + '<div class="hint">Үе шат бүрд хэрэгсэл (нэр, төрөл) нэмнэ. Хэрэгсэлд <b>файл хавсаргах нь заавал биш</b> — файлтай бол сайт дээр «Татах» товч гарч, доор нь «Татан авах файлууд» хэсэгт орно; файлгүй бол зүгээр жагсаалтад харагдана. Үе шатны гарчиг хоосон бол дугааргүй энгийн жагсаалт болно. (Файл ≤5MB) — дээд талын «Хадгалах» товчоор бүгд хамт хадгалагдана.</div>'
       + '<div class="list" id="tplList"></div>'
-      + '<div class="save-bar">'
-      + '<button class="btn btn-primary" onclick="saveTemplates()">Хэрэгсэл хадгалах</button>'
-      + '<span class="saved-msg" id="tplSaved">Хадгалагдлаа</span>'
-      + '</div></div>';
+      + '</div>';
   }
   function saveProducts() {
-    // Темплэйтийн жагсаалт нь kpihub_templates түлхүүрээр тусад нь удирдагддаг
-    // тул энд давхардуулж хадгалахгүй.
+    // Нэг «Хадгалах» товч БҮГДИЙГ хадгална: бүтээгдэхүүний текст/замын зураг
+    // (kpihub_products) БОЛОН сонгосон бүтээгдэхүүний үе шат/хэрэгсэл (тусдаа түлхүүр).
     const clean = {};
     Object.keys(products).forEach(k => {
       const c = Object.assign({}, products[k]);
-      delete c.templates;
+      delete c.templates; // хэрэгслүүд тусдаа түлхүүрт хадгалагдана
       clean[k] = c;
     });
-    save('kpihub_products', clean).then(ok => { if (ok) flash('prodSaved'); });
+    const jobs = [ save('kpihub_products', clean) ];
+    const pk = prodSelected;
+    if (TEMPLATE_PRODUCT_KEYS[pk]) jobs.push(save(TEMPLATE_PRODUCT_KEYS[pk], productTemplates[pk] || []));
+    Promise.all(jobs).then(oks => { if (oks.every(Boolean)) flash('prodSaved'); });
   }
   function resetProducts() {
     if (!confirm('Бүтээгдэхүүний мэдээллийг анхны төлөвт буцаах уу?')) return;

@@ -664,6 +664,11 @@
   .pd-hero .tag { font-size: 12.5px; font-weight: 700; letter-spacing: .5px; color: var(--accent); text-transform: uppercase; }
   .pd-hero h2 { font-size: clamp(28px, 4vw, 40px); font-weight: 800; letter-spacing: -.5px; margin: 8px 0 14px; color: #111; }
   .pd-hero .lead { color: #555; font-size: clamp(15.5px, 1.6vw, 18px); max-width: 720px; }
+  /* Зурагтай бол текст зүүн, зураг баруун талд; зураггүй бол текст бүтэн өргөн */
+  .pd-hero-row { display: grid; grid-template-columns: 1fr; gap: 30px; align-items: center; }
+  .pd-hero-row.has-img { grid-template-columns: 1.5fr 1fr; }
+  .pd-hero-media img { width: 100%; max-height: 320px; object-fit: cover; border-radius: 14px; border: 1px solid #e2e4ea; display: block; background: #eef0f5; }
+  @media (max-width: 760px) { .pd-hero-row.has-img { grid-template-columns: 1fr; } }
 
   .pd-body { padding: 34px 40px 70px; }
   @media (max-width: 680px) { .pd-hero, .pd-body { padding-left: 22px; padding-right: 22px; } }
@@ -1028,9 +1033,16 @@
   <div class="pd-panel">
     <div class="pd-hero">
       <a class="pd-back" href="#" onclick="event.preventDefault(); closeProduct()">‹ Буцах</a>
-      <div class="tag" id="pdTag">Blueprints</div>
-      <h2 id="pdTitle">Гарчиг</h2>
-      <div class="lead" id="pdLead">Тайлбар</div>
+      <div class="pd-hero-row" id="pdHeroRow">
+        <div class="pd-hero-text">
+          <div class="tag" id="pdTag">Blueprints</div>
+          <h2 id="pdTitle">Гарчиг</h2>
+          <div class="lead" id="pdLead">Тайлбар</div>
+        </div>
+        <div class="pd-hero-media" id="pdHeroMedia" style="display:none;">
+          <img id="pdHeroImg" src="" alt="">
+        </div>
+      </div>
     </div>
     <div class="pd-body">
 
@@ -2017,6 +2029,19 @@
     document.getElementById('pdTag').textContent = p.tag || '';
     document.getElementById('pdTitle').textContent = p.title || '';
     document.getElementById('pdLead').textContent = p.lead || '';
+    // Зураг байвал дэлгэрэнгүйн хажууд харуулна; байхгүй бол текст бүтэн өргөнөөр
+    const heroImg = document.getElementById('pdHeroImg');
+    const heroMedia = document.getElementById('pdHeroMedia');
+    const heroRow = document.getElementById('pdHeroRow');
+    if (p.image) {
+      heroImg.src = safeUrl(p.image);
+      heroMedia.style.display = '';
+      heroRow.classList.add('has-img');
+    } else {
+      heroImg.removeAttribute('src');
+      heroMedia.style.display = 'none';
+      heroRow.classList.remove('has-img');
+    }
     fillList('pdFor', p.forWho || []);
     fillList('pdIncludes', p.includes || []);
     fillList('pdOutcomes', p.outcomes || []);
