@@ -556,8 +556,10 @@
         <h2>Хэрэглэгчид</h2>
         <div class="actions">
           <button class="btn btn-sm" onclick="toggleUserEditor()">+ Хэрэглэгч нэмэх</button>
+          <button class="btn btn-sm" id="hsSyncAllBtn" onclick="syncAllToHubspot()" title="Бүх лидийг HubSpot CRM руу илгээх">🔗 HubSpot руу синк</button>
           <span id="usrCount" style="font-size:13px; color:var(--muted);"></span>
         </div>
+        <span class="form-msg" id="hsSyncMsg" style="display:block; margin-top:6px;"></span>
       </div>
       <div class="hint">Сайтад бүртгүүлсэн хүмүүсийн мэдээлэл энд харагдана — эдгээр нь боломжит үйлчлүүлэгчид (лид) юм.</div>
       <div class="crm-overview" id="usrSummary"></div>
@@ -2049,12 +2051,72 @@
           + '<div class="usr-sub">' + acts + '</div>'
           + '</div>'
           + '<div class="actions"><button class="btn btn-sm" onclick="openCrm(\'' + u.id + '\')">CRM нээх</button>'
+          + '<button class="btn btn-sm" onclick="syncOneToHubspot(\'' + u.id + '\')" title="Энэ лидийг HubSpot руу илгээх">🔗 HubSpot</button>'
           + '<button class="btn btn-danger btn-sm" onclick="delUser(\'' + u.id + '\')">Устгах</button></div>'
           + '</div></div>';
       }).join('');
     }
     if (selectedCrmUserId) renderCrmDetail();
   }
+  // ---------- HubSpot синк ----------
+  // Лидийг серверийн /api/hubspot proxy-д ойлгогдох хэлбэрт хөрвүүлнэ
+  function leadFromUser(u) {
+    return {
+      email: u.email || '',
+      name: u.name || '',
+      phone: u.phone || '',
+      org: u.org || '',
+      role: u.role || '',
+      status: userStatus(u.id)
+    };
+  }
+  // Бүх лидийг HubSpot руу
+  function syncAllToHubspot() {
+    const leads = usersList.map(leadFromUser);
+    const withEmail = leads.filter(l => l.email && l.email.indexOf('@') !== -1).length;
+    if (!leads.length) { setHsMsg('Синк хийх лид алга.', 'err'); return; }
+    if (!confirm('И-мэйлтэй ' + withEmail + ' лидийг HubSpot CRM руу илгээх үү?\n(И-мэйлгүй лид алгасагдана.)')) return;
+    hubspotSync(leads, document.getElementById('hsSyncAllBtn'), '🔗 HubSpot руу синк');
+  }
+  // Нэг лидийг HubSpot руу
+  function syncOneToHubspot(id) {
+    const u = usersList.find(x => x.id === id);
+    if (!u) return;
+    if (!u.email || u.email.indexOf('@') === -1) { setHsMsg(esc(u.name || 'Лид') + ' — и-мэйлгүй тул илгээх боломжгүй.', 'err'); return; }
+    hubspotSync([leadFromUser(u)], null, null);
+  }
+  // Серверийн proxy руу — админы Firebase ID token-той хамт
+  function hubspotSync(leads, btn, btnLabel) {
+    const me = KPICloud.authUser && KPICloud.authUser();
+    if (!me) { setHsMsg('Эхлээд админаар нэвтэрнэ үү.', 'err'); return; }
+    if (btn) { btn.disabled = true; btn.textContent = 'Илгээж байна…'; }
+    setHsMsg('HubSpot руу илгээж байна…', '');
+    me.getIdToken()
+      .then(token => fetch('/api/hubspot', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ leads: leads })
+      }))
+      .then(r => r.json().then(d => ({ ok: r.ok, d: d })))
+      .then(res => {
+        if (!res.ok) { setHsMsg('Алдаа: ' + (res.d && res.d.error || 'тодорхойгүй'), 'err'); return; }
+        const d = res.d;
+        let msg = '✅ HubSpot: ' + (d.synced || 0) + ' лид синк хийлээ';
+        if (d.skipped) msg += ' · ' + d.skipped + ' алгассан (и-мэйлгүй)';
+        if (d.failed) msg += ' · ' + d.failed + ' амжилтгүй';
+        setHsMsg(msg, d.failed ? 'err' : 'ok');
+        if (d.errors && d.errors.length) console.warn('[HubSpot] алдаанууд:', d.errors);
+      })
+      .catch(err => setHsMsg('Сүлжээний алдаа: ' + (err && err.message || err), 'err'))
+      .finally(() => { if (btn && btnLabel) { btn.disabled = false; btn.textContent = btnLabel; } });
+  }
+  function setHsMsg(text, cls) {
+    const el = document.getElementById('hsSyncMsg');
+    if (!el) return;
+    el.textContent = text;
+    el.style.color = cls === 'ok' ? 'var(--accent-2, #16a34a)' : cls === 'err' ? '#dc2626' : 'var(--muted)';
+  }
+
   function renderUserFilterBar(counts, total, staleFound) {
     const bar = document.getElementById('usrFilterBar');
     if (!bar) return;
