@@ -146,6 +146,8 @@
   .buy-badge { font-size:11.5px; font-weight:700; padding:2px 9px; border-radius:999px; white-space:nowrap;
     color:#047857; background:#d1fae5; border:1px solid #6ee7b7; }
   .buy-badge.none { color:#9ca3af; background:transparent; border:1px solid var(--line); font-weight:600; }
+  .btn.hs-done { color:#047857; background:#d1fae5; border-color:#6ee7b7; }
+  .btn.hs-done:hover { background:#a7f3d0; }
   /* Хэрэглэгч дээр дарахад дэлгэрэнгүй нь тусдаа бүтэн дэлгэц болж, жагсаалтыг нууна */
   #tab-users.detail-mode > :not(#crmDetail) { display:none !important; }
   #tab-users.detail-mode #crmDetail { margin-top:0; }
@@ -1777,6 +1779,12 @@
     return latest && latest.status ? latest.status : 'Шинэ';
   }
   function currentCrmStatus() { return userStatus(selectedCrmUserId); }
+  // Тухайн лидийг HubSpot руу хамгийн сүүлд илгээсэн огноо ('' бол илгээгээгүй)
+  function lastHubspotAt(id) {
+    const a = crmActivities.filter(x => x.contactId === id && x.activityType === 'hubspot')
+      .sort((p, q) => String(q.occurredAt || q.at || '').localeCompare(String(p.occurredAt || p.at || '')))[0];
+    return a ? String(a.occurredAt || a.at || '').slice(0, 10) : '';
+  }
   function localDateTimeValue(date) {
     const d = date || new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0')
@@ -1866,9 +1874,7 @@
     const lastAt = events.length ? events[0].at : user.at;
     const days = daysSince(lastAt);
     const lastLabel = !isFinite(days) ? '—' : (days === 0 ? 'өнөөдөр' : days + ' хоногийн өмнө');
-    const lastHs = crmActivities.filter(a => a.contactId === user.id && a.activityType === 'hubspot')
-      .sort((a, b) => String(b.occurredAt || b.at || '').localeCompare(String(a.occurredAt || a.at || '')))[0];
-    const hsLabel = lastHs ? String(lastHs.occurredAt || lastHs.at || '').slice(0, 10) : 'Илгээгээгүй';
+    const hsLabel = lastHubspotAt(user.id) || 'Илгээгээгүй';
     const item = (k, v) => '<div class="item">' + k + '<b>' + v + '</b></div>';
     document.getElementById('crmSummary').innerHTML =
       item('💳 Худалдан авалт', '₮' + paid.toLocaleString('en-US'))
@@ -2082,6 +2088,11 @@
         const buyBadge = paid > 0
           ? '<span class="buy-badge" title="' + buyCount + ' удаа худалдан авсан">💳 ₮' + paid.toLocaleString('en-US') + '</span>'
           : '<span class="buy-badge none" title="Худалдан авалт хийгээгүй">Худалдаж аваагүй</span>';
+        // HubSpot товч — илгээсэн бол ногоон «илгээсэн», үгүй бол энгийн
+        const hsAt = lastHubspotAt(u.id);
+        const hsBtn = hsAt
+          ? '<button class="btn btn-sm hs-done" onclick="event.stopPropagation(); syncOneToHubspot(\'' + u.id + '\')" title="Сүүлд илгээсэн: ' + esc(hsAt) + '. Дахин илгээх бол дарна уу.">✅ HubSpot илгээсэн</button>'
+          : '<button class="btn btn-sm" onclick="event.stopPropagation(); syncOneToHubspot(\'' + u.id + '\')" title="Энэ лидийг HubSpot руу илгээх">🔗 HubSpot</button>';
         const days = daysSince(e.last);
         const acts = (e.count > 1
           ? (e.count - 1) + ' харилцаа · сүүлд ' + esc(String(e.last || '').slice(0, 10))
@@ -2095,7 +2106,7 @@
           + '<div class="usr-sub">' + acts + '</div>'
           + '</div>'
           + '<div class="actions">'
-          + '<button class="btn btn-sm" onclick="event.stopPropagation(); syncOneToHubspot(\'' + u.id + '\')" title="Энэ лидийг HubSpot руу илгээх">🔗 HubSpot</button>'
+          + hsBtn
           + '<button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); delUser(\'' + u.id + '\')">Устгах</button></div>'
           + '</div></div>';
       }).join('');
