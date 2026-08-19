@@ -229,9 +229,11 @@
   .crm-chip.warn { border-color:#f0c9a0; color:#c2760a; }
   .crm-chip.warn.active { background:#d97706; border-color:#d97706; color:#fff; }
   /* Контактын хураангуй мөр */
-  .crm-summary { display:flex; gap:22px; flex-wrap:wrap; margin:14px 0 4px; padding:14px 16px; background:var(--bg-soft); border:1px solid var(--line); border-radius:12px; }
-  .crm-summary .item { font-size:13px; color:var(--muted); }
-  .crm-summary .item b { display:block; font-size:16px; color:var(--text); font-weight:800; margin-top:2px; }
+  .crm-summary { display:grid; grid-template-columns:repeat(auto-fit, minmax(150px, 1fr)); gap:10px; margin:16px 0 4px; }
+  .crm-summary .item { flex-direction:column; align-items:flex-start; gap:7px; padding:14px 16px;
+    font-size:12.5px; color:var(--muted); font-weight:600; border-radius:14px; transition:border-color .15s, box-shadow .15s; }
+  .crm-summary .item:hover { border-color:var(--muted); box-shadow:0 2px 8px rgba(0,0,0,.05); }
+  .crm-summary .item b { display:block; font-size:19px; color:var(--text); font-weight:800; line-height:1.15; }
   .book-label { font-size:13px; font-weight:600; color:var(--muted); }
   .av-toggles { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:18px; max-width:420px; }
   .bulk-days { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; margin-bottom:18px; }
@@ -640,7 +642,7 @@
         <div class="crm-summary" id="crmSummary"></div>
         <div id="crmPurchases"></div>
         <div class="crm-timeline">
-          <div class="panel-head" style="margin:20px 0 4px;"><h3>Харилцааны түүх</h3></div>
+          <div class="panel-head" style="margin:20px 0 4px;"><h3>Түүх</h3></div>
           <div id="crmTimeline"></div>
         </div>
       </div>
@@ -1901,7 +1903,7 @@
       + (event.meta ? '<div class="crm-event-meta">' + esc(event.meta) + '</div>' : '')
       + (event.body ? '<div class="crm-event-body">' + esc(event.body) + '</div>' : '')
       + '</div></div>'
-    ).join('') : '<div class="empty" style="margin-top:16px;">Харилцааны түүх алга.</div>';
+    ).join('') : '<div class="empty" style="margin-top:16px;">Түүх алга.</div>';
   }
   function crmBusy(buttonId, busy, label) {
     const button = document.getElementById(buttonId);
