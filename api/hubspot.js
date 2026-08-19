@@ -61,6 +61,7 @@ module.exports = async (req, res) => {
     // ---- HubSpot руу багц багцаар upsert ----
     let synced = 0, failed = 0;
     const errors = [];
+    const syncedEmails = []; // амжилттай илгээгдсэн и-мэйлүүд (клиент талд лог хөтлөхөд)
     for (let i = 0; i < inputs.length; i += BATCH_SIZE) {
       const chunk = inputs.slice(i, i + BATCH_SIZE);
       const r = await fetch(HUBSPOT_BASE + "/crm/v3/objects/contacts/batch/upsert", {
@@ -74,11 +75,17 @@ module.exports = async (req, res) => {
       const data = await r.json().catch(() => ({}));
       if (r.status === 200 || r.status === 201) {
         synced += (data.results && data.results.length) || chunk.length;
+        chunk.forEach((c) => syncedEmails.push(c.id)); // c.id = и-мэйл (idProperty)
       } else if (r.status === 207) {
         // Хэсэгчилсэн амжилт — амжилттай/алдаатайг тусад нь тоолно
         const ok = (data.results && data.results.length) || 0;
         synced += ok;
         failed += chunk.length - ok;
+        // Амжилттай мөрүүдийн и-мэйлийг үр дүнгээс салгана
+        (data.results || []).forEach((rr) => {
+          const em = rr && rr.properties && rr.properties.email;
+          if (em) syncedEmails.push(String(em).toLowerCase());
+        });
         if (data.message) errors.push(data.message);
       } else {
         failed += chunk.length;
@@ -92,6 +99,7 @@ module.exports = async (req, res) => {
       synced: synced,
       skipped: skipped,
       failed: failed,
+      syncedEmails: syncedEmails,
       errors: errors.slice(0, 5), // хэт урт болгохгүй
     });
   } catch (err) {

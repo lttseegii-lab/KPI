@@ -141,6 +141,14 @@
 
   /* Template inline editor grid */
   .tpl-card { padding:12px; background:var(--card); border:1px solid var(--line); border-radius:12px; display:flex; flex-direction:column; gap:10px; }
+  .usr-card { cursor:pointer; transition:border-color .15s, background .15s; }
+  .usr-card:hover { border-color:var(--accent); background:var(--bg-soft); }
+  .buy-badge { font-size:11.5px; font-weight:700; padding:2px 9px; border-radius:999px; white-space:nowrap;
+    color:#047857; background:#d1fae5; border:1px solid #6ee7b7; }
+  .buy-badge.none { color:#9ca3af; background:transparent; border:1px solid var(--line); font-weight:600; }
+  /* Хэрэглэгч дээр дарахад дэлгэрэнгүй нь тусдаа бүтэн дэлгэц болж, жагсаалтыг нууна */
+  #tab-users.detail-mode > :not(#crmDetail) { display:none !important; }
+  #tab-users.detail-mode #crmDetail { margin-top:0; }
   .tpl-top { display:grid; grid-template-columns:1fr 1fr auto; gap:10px; align-items:center; }
   .tpl-top input { padding:8px 10px; }
   @media (max-width:620px){ .tpl-top { grid-template-columns:1fr auto; } .tpl-top .ty { grid-column:1; } }
@@ -191,8 +199,6 @@
   .fmt-tip { margin-top:12px; padding-top:10px; border-top:1px dashed var(--line); font-size:12px; }
   /* Панел доторх дэд цэс (бүтээгдэхүүн сонгох) */
   .empty { color:var(--muted); text-align:center; padding:30px; border:1px dashed var(--line); border-radius:12px; }
-  /* «Хэрэглэгч» хуудасны дэд хэсгүүд (захиалагч, санал хүсэлт) тусгаарлагчтай */
-  #tab-subs:not(.hidden), #tab-feedback:not(.hidden) { margin-top:32px; padding-top:28px; border-top:1px solid var(--line); }
   /* CRM — хайлт, эрэмбэ, төлөвөөр шүүх, төлөвийн тэмдэг */
   .crm-toolbar2 { display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px; }
   .crm-toolbar2 input { flex:1; min-width:240px; }
@@ -398,8 +404,7 @@
             <button class="btn" onclick="switchTab('articles'); newArticle();">📝 Шинэ нийтлэл бичих</button>
             <button class="btn" onclick="switchTab('schedule')">📅 Уулзалтын цаг нээх</button>
             <button class="btn" onclick="switchTab('users')">👥 Хэрэглэгч / CRM</button>
-            <button class="btn" onclick="switchTab('users')">✉️ Захиалагчид</button>
-            <button class="btn" onclick="exportSubs()">⬇️ Захиалагчдын CSV татах</button>
+            <button class="btn" onclick="exportLeads()">⬇️ Лидүүдийн CSV татах</button>
             <a class="btn" href="/" target="_blank">🌐 Сайтыг шинэ цонхонд нээх</a>
           </div>
         </div>
@@ -556,12 +561,13 @@
         <h2>Хэрэглэгчид</h2>
         <div class="actions">
           <button class="btn btn-sm" onclick="toggleUserEditor()">+ Хэрэглэгч нэмэх</button>
+          <button class="btn btn-sm" onclick="exportLeads()">⬇️ CSV татах</button>
           <button class="btn btn-sm" id="hsSyncAllBtn" onclick="syncAllToHubspot()" title="Бүх лидийг HubSpot CRM руу илгээх">🔗 HubSpot руу синк</button>
           <span id="usrCount" style="font-size:13px; color:var(--muted);"></span>
         </div>
         <span class="form-msg" id="hsSyncMsg" style="display:block; margin-top:6px;"></span>
       </div>
-      <div class="hint">Сайтад бүртгүүлсэн хүмүүсийн мэдээлэл энд харагдана — эдгээр нь боломжит үйлчлүүлэгчид (лид) юм.</div>
+      <div class="hint">Сайтад бүртгүүлсэн, мэдээлэл захиалсан, эсвэл санал хүсэлт илгээсэн — <b>и-мэйлтэй хүн бүр</b> энд нэг лидээр харагдана (давхардсаныг и-мэйлээр нь нэгтгэнэ). Эдгээр нь боломжит үйлчлүүлэгчид (лид) юм.</div>
       <div class="crm-overview" id="usrSummary"></div>
       <div class="editor hidden" id="userEditor" style="margin-bottom:20px;">
         <h3>Шинэ хэрэглэгч нэмэх</h3>
@@ -586,7 +592,7 @@
             <h3 id="crmName">Хэрэглэгч</h3>
             <div class="crm-contact" id="crmContact"></div>
           </div>
-          <button class="btn btn-sm" onclick="closeCrm()">Хаах</button>
+          <button class="btn btn-sm" onclick="closeCrm()">← Буцах</button>
         </div>
         <div class="crm-toolbar">
           <div class="field">
@@ -639,6 +645,7 @@
         </div>
 
         <div class="crm-summary" id="crmSummary"></div>
+        <div id="crmPurchases"></div>
         <div class="crm-timeline">
           <div class="panel-head" style="margin:20px 0 4px;"><h3>Харилцааны түүх</h3></div>
           <div id="crmTimeline"></div>
@@ -656,29 +663,9 @@
       <div class="list" id="usrList"></div>
     </section>
 
-    <!-- ===== Newsletter subscribers panel ===== -->
-    <section id="tab-subs" class="hidden">
-      <div class="panel-head">
-        <h2>Захиалагчид</h2>
-        <div class="actions">
-          <button class="btn btn-sm" onclick="exportSubs()">CSV татах</button>
-          <span id="subCount" style="font-size:13px; color:var(--muted);"></span>
-        </div>
-      </div>
-      <div class="hint">Нүүр хуудасны «Мэдээллийн захиалга» хэсгээс и-мэйл хаягаа үлдээсэн хүмүүс. Шинэ нийтлэл гарахад эдгээр хаяг руу мэдэгдэл илгээнэ.</div>
-      <div class="list" id="subList"></div>
-    </section>
-
-    <!-- ===== Admin users panel ===== -->
-    <!-- ===== Feedback panel ===== -->
-    <section id="tab-feedback" class="hidden">
-      <div class="panel-head">
-        <h2>Санал хүсэлт</h2>
-        <div class="actions"><span id="fbCount" style="font-size:13px; color:var(--muted);"></span></div>
-      </div>
-      <div class="hint">Уншигчид нийтлэлийн доорх мессежийн товчоор илгээсэн санал хүсэлт. И-мэйл үлдээсэн бол шууд хариу бичиж болно.</div>
-      <div class="list" id="fbList"></div>
-    </section>
+    <!-- Захиалагчид ба Санал хүсэлт нь тусдаа хэсэг байхгүй — и-мэйлтэй нь дээрх
+         «Хэрэглэгчид» лидийн жагсаалтад нэгдэж, харилцааны түүх нь CRM дэлгэц дээр
+         (нийтлэлийн санал хүсэлт зэрэг) харагдана. -->
 
     <!-- ===== Authors panel ===== -->
     <!-- ===== Хуудасны текст ===== -->
@@ -1393,15 +1380,16 @@
     // Бүтээгдэхүүний хуудас дээр байхад бүлэг нээлттэй, тэмдэглэгдсэн байна
     if (t === 'products') setProductsOpen(true);
     document.getElementById('productsToggle').classList.toggle('has-active', t === 'products');
-    // «Хэрэглэгч» нэг хуудсан дээр бүртгэлтэй хэрэглэгч + захиалагч + санал хүсэлтийг цуг харуулна
-    const visible = t === 'users' ? ['users', 'subs', 'feedback'] : [t];
-    ['home','products','articles','why','pricing','schedule','users','subs','feedback','sections','authors','register','admins','contact'].forEach(name =>
+    // «Хэрэглэгч» хуудсан дээр бүртгэлтэй хэрэглэгч, захиалагч, санал хүсэлтийг и-мэйлээр
+    // нь нэгтгэн НЭГ лидийн жагсаалтад харуулна (тусдаа хэсэг байхгүй).
+    const visible = [t];
+    ['home','products','articles','why','pricing','schedule','users','sections','authors','register','admins','contact'].forEach(name =>
       document.getElementById('tab-' + name).classList.toggle('hidden', visible.indexOf(name) === -1));
     if (t === 'home') renderHome();
     if (t === 'products') renderProductsAdmin();
     if (t === 'schedule') { renderBulkControls(); renderAvList(); renderBookings(); }
     if (t === 'pricing') { renderQuestions(); renderQuoteRequests(); }
-    if (t === 'users') { renderUsers(); clearUserMsg(); renderSubs(); renderFeedback(); }
+    if (t === 'users') { closeCrm(); renderUsers(); clearUserMsg(); }
     if (t === 'register') renderRegisterForm();
     if (t === 'sections') renderSectionsForm();
     if (t === 'authors') renderAuthors();
@@ -1742,7 +1730,31 @@
     return (email && normalizeEmail(record && record.email) === email)
       || (phone && normalizePhone(record && record.phone) === phone);
   }
-  function selectedCrmUser() { return usersList.find(u => u.id === selectedCrmUserId) || null; }
+  // Бүх лид: бүртгэлтэй хэрэглэгч + и-мэйлтэй захиалагч + и-мэйлтэй санал хүсэлтийг
+  // и-мэйл (эсвэл утас)-аар нь давхцуулж НЭГ лид болгон нэгтгэнэ. И-мэйлгүй захиалагч/
+  // санал хүсэлтийг лид гэж тооцохгүй. Нэг хүн олон эх сурвалжид байвал талбаруудыг нь
+  // нөхөж, доод баримтуудын id-г _ids дотор хадгална (устгахад бүгдийг нь цэвэрлэнэ).
+  function allLeads() {
+    const byKey = new Map();
+    const keyOf = r => normalizeEmail(r.email) || (normalizePhone(r.phone) ? 'p:' + normalizePhone(r.phone) : '');
+    function add(rec, kind) {
+      const email = normalizeEmail(rec.email);
+      if ((kind === 'subscribe' || kind === 'feedback') && !email) return; // и-мэйлгүй бол лид биш
+      const key = keyOf(rec);
+      if (!key) return;
+      let lead = byKey.get(key);
+      if (!lead) { lead = { id: rec.id, name:'', email:'', phone:'', org:'', role:'', at: rec.at, _ids: [], _kinds: [] }; byKey.set(key, lead); }
+      if (kind === 'user') lead.id = rec.id; // CRM төлөв/түүхийн түлхүүр болгож 'user' баримтыг эрхэмлэнэ
+      lead._ids.push(rec.id); lead._kinds.push(kind);
+      ['name','email','phone','org','role'].forEach(f => { if (!lead[f] && rec[f]) lead[f] = rec[f]; });
+      if (rec.at && (!lead.at || String(rec.at) < String(lead.at))) lead.at = rec.at; // эртний огноо = анх бүртгүүлсэн
+    }
+    usersList.forEach(r => add(r, 'user'));
+    subsList.forEach(r => add(r, 'subscribe'));
+    feedbackList.forEach(r => add(r, 'feedback'));
+    return Array.from(byKey.values());
+  }
+  function selectedCrmUser() { return allLeads().find(u => u.id === selectedCrmUserId) || null; }
   function crmDateLabel(value) {
     if (!value) return '';
     const date = new Date(value);
@@ -1774,12 +1786,14 @@
     selectedCrmUserId = id;
     toggleCrmForm();
     renderCrmDetail();
-    const detail = document.getElementById('crmDetail');
-    detail.classList.remove('hidden');
-    detail.scrollIntoView({ behavior:'smooth', block:'start' });
+    document.getElementById('crmDetail').classList.remove('hidden');
+    // Дэлгэрэнгүйг тусдаа бүтэн дэлгэц болгож жагсаалтыг нууна
+    document.getElementById('tab-users').classList.add('detail-mode');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }
   function closeCrm() {
     selectedCrmUserId = '';
+    document.getElementById('tab-users').classList.remove('detail-mode');
     document.getElementById('crmDetail').classList.add('hidden');
     toggleCrmForm();
   }
@@ -1826,6 +1840,7 @@
       else if (a.activityType === 'call') title = 'Утсаар холбогдсон';
       else if (a.activityType === 'note') title = 'Дотоод тэмдэглэл';
       else if (a.activityType === 'status') title = 'CRM төлөв: ' + (a.status || '');
+      else if (a.activityType === 'hubspot') title = '🔗 HubSpot руу илгээсэн';
       const actor = [a.byName, a.byEmail].filter(Boolean).join(' · ');
       events.push({ at: a.occurredAt || a.at, title: title, meta: actor, body: a.message || '' });
     });
@@ -1843,17 +1858,39 @@
     document.getElementById('crmStatus').value = currentCrmStatus();
 
     const events = crmEventsForUser(user);
-    // Хураангуй мөр — худалдан авалт, харилцааны тоо, сүүлийн холбоо
+    // Худалдан авсан бүтээгдэхүүн (мэйл/утсаар нь холбож) — шинэ нь дээр
+    const purchases = paymentsList.filter(pm => sameCrmContact(pm, user))
+      .sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')));
+    // Хураангуй мөр — худалдан авалт, харилцааны тоо, сүүлийн холбоо, HubSpot
     const paid = contactPaid(user);
     const lastAt = events.length ? events[0].at : user.at;
     const days = daysSince(lastAt);
     const lastLabel = !isFinite(days) ? '—' : (days === 0 ? 'өнөөдөр' : days + ' хоногийн өмнө');
+    const lastHs = crmActivities.filter(a => a.contactId === user.id && a.activityType === 'hubspot')
+      .sort((a, b) => String(b.occurredAt || b.at || '').localeCompare(String(a.occurredAt || a.at || '')))[0];
+    const hsLabel = lastHs ? String(lastHs.occurredAt || lastHs.at || '').slice(0, 10) : 'Илгээгээгүй';
     const item = (k, v) => '<div class="item">' + k + '<b>' + v + '</b></div>';
     document.getElementById('crmSummary').innerHTML =
       item('💳 Худалдан авалт', '₮' + paid.toLocaleString('en-US'))
       + item('💬 Харилцаа', Math.max(0, events.length - 1))
       + item('🕒 Сүүлд холбогдсон', lastLabel)
+      + item('🔗 HubSpot', esc(hsLabel))
       + item('📌 Төлөв', esc(userStatus(user.id)));
+    // Худалдан авсан бүтээгдэхүүний дэлгэрэнгүй задаргаа
+    const pBox = document.getElementById('crmPurchases');
+    if (!purchases.length) {
+      pBox.innerHTML = '';
+    } else {
+      const total = purchases.reduce((s, p) => s + (Number(p.amount) || 0), 0);
+      pBox.innerHTML =
+        '<div class="panel-head" style="margin:18px 0 8px;"><h3 style="font-size:15px;">🛒 Худалдан авсан бүтээгдэхүүн</h3>'
+        + '<div class="actions"><span style="font-size:13px; color:var(--muted);">' + purchases.length + ' гүйлгээ · нийт <b style="color:var(--text);">₮' + total.toLocaleString('en-US') + '</b></span></div></div>'
+        + '<div class="list">' + purchases.map(p =>
+            '<div class="item"><div class="grow"><div class="nm">' + esc(p.product || 'Бүтээгдэхүүн') + '</div>'
+            + '<div class="meta">' + esc(String(p.at || '').slice(0, 10)) + '</div></div>'
+            + '<div class="ops"><b style="font-size:14.5px;">₮' + (Number(p.amount) || 0).toLocaleString('en-US') + '</b></div></div>'
+          ).join('') + '</div>';
+    }
     document.getElementById('crmTimeline').innerHTML = events.length ? events.map(event =>
       '<div class="crm-event">'
       + '<div class="crm-event-time">' + esc(crmDateLabel(event.at)) + '</div>'
@@ -1991,7 +2028,8 @@
   }
   function renderUsers() {
     // Хэрэглэгч бүрийг төлөв, харилцааны түүх, идэвхгүй байдлаар баяжуулна
-    const enrichedAll = usersList.map(u => {
+    const leads = allLeads();
+    const enrichedAll = leads.map(u => {
       const events = crmEventsForUser(u);
       const status = userStatus(u.id);
       const last = events.length ? events[0].at : u.at;
@@ -2027,32 +2065,38 @@
       list.sort((a, b) => String(b.u.at || '').localeCompare(String(a.u.at || '')));
     }
 
-    document.getElementById('usrCount').textContent = usersList.length ? usersList.length + ' хэрэглэгч' : '';
+    document.getElementById('usrCount').textContent = leads.length ? leads.length + ' хэрэглэгч' : '';
     renderUserFilterBar(counts, totalFound, staleFound);
 
     const box = document.getElementById('usrList');
-    if (!usersList.length) { box.innerHTML = '<div class="empty">Хэрэглэгч алга.</div>'; }
+    if (!leads.length) { box.innerHTML = '<div class="empty">Хэрэглэгч алга.</div>'; }
     else if (!list.length) { box.innerHTML = '<div class="empty">Тохирох хэрэглэгч олдсонгүй.</div>'; }
     else {
       box.innerHTML = list.map(e => {
         const u = e.u;
         const contact = [u.email, u.phone, u.org, u.role].filter(Boolean).join(' · ');
         const badge = '<span class="crm-badge" style="--c:' + (CRM_STATUS_COLOR[e.status] || '#6b7280') + '">' + esc(e.status) + '</span>';
+        // Худалдан авалтын тэмдэг — тухайн хүн бүтээгдэхүүн авсан бол дүнг харуулна
+        const paid = contactPaid(u);
+        const buyCount = paymentsList.filter(pm => sameCrmContact(pm, u)).length;
+        const buyBadge = paid > 0
+          ? '<span class="buy-badge" title="' + buyCount + ' удаа худалдан авсан">💳 ₮' + paid.toLocaleString('en-US') + '</span>'
+          : '<span class="buy-badge none" title="Худалдан авалт хийгээгүй">Худалдаж аваагүй</span>';
         const days = daysSince(e.last);
         const acts = (e.count > 1
           ? (e.count - 1) + ' харилцаа · сүүлд ' + esc(String(e.last || '').slice(0, 10))
           : 'Харилцаа бүртгээгүй')
           + (e.stale ? ' · <b style="color:#c2760a;">⚠️ ' + (isFinite(days) ? days + ' хоног хөдөлгөөнгүй' : 'удаан хөдөлгөөнгүй') + '</b>' : '');
-        return '<div class="tpl-card">'
+        return '<div class="tpl-card usr-card" onclick="openCrm(\'' + u.id + '\')" title="Дэлгэрэнгүйг нээх">'
           + '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">'
           + '<div style="min-width:0;">'
-          + '<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;"><b>' + esc(u.name || 'Хэрэглэгч') + '</b>' + badge + '</div>'
+          + '<div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;"><b>' + esc(u.name || 'Хэрэглэгч') + '</b>' + badge + buyBadge + '</div>'
           + '<div class="ct" style="font-size:12.5px; color:var(--muted); margin-top:3px;">' + esc(contact) + ' · ' + esc(String(u.at || '').slice(0, 10)) + '</div>'
           + '<div class="usr-sub">' + acts + '</div>'
           + '</div>'
-          + '<div class="actions"><button class="btn btn-sm" onclick="openCrm(\'' + u.id + '\')">CRM нээх</button>'
-          + '<button class="btn btn-sm" onclick="syncOneToHubspot(\'' + u.id + '\')" title="Энэ лидийг HubSpot руу илгээх">🔗 HubSpot</button>'
-          + '<button class="btn btn-danger btn-sm" onclick="delUser(\'' + u.id + '\')">Устгах</button></div>'
+          + '<div class="actions">'
+          + '<button class="btn btn-sm" onclick="event.stopPropagation(); syncOneToHubspot(\'' + u.id + '\')" title="Энэ лидийг HubSpot руу илгээх">🔗 HubSpot</button>'
+          + '<button class="btn btn-danger btn-sm" onclick="event.stopPropagation(); delUser(\'' + u.id + '\')">Устгах</button></div>'
           + '</div></div>';
       }).join('');
     }
@@ -2072,7 +2116,7 @@
   }
   // Бүх лидийг HubSpot руу
   function syncAllToHubspot() {
-    const leads = usersList.map(leadFromUser);
+    const leads = allLeads().map(leadFromUser);
     const withEmail = leads.filter(l => l.email && l.email.indexOf('@') !== -1).length;
     if (!leads.length) { setHsMsg('Синк хийх лид алга.', 'err'); return; }
     if (!confirm('И-мэйлтэй ' + withEmail + ' лидийг HubSpot CRM руу илгээх үү?\n(И-мэйлгүй лид алгасагдана.)')) return;
@@ -2080,7 +2124,7 @@
   }
   // Нэг лидийг HubSpot руу
   function syncOneToHubspot(id) {
-    const u = usersList.find(x => x.id === id);
+    const u = allLeads().find(x => x.id === id);
     if (!u) return;
     if (!u.email || u.email.indexOf('@') === -1) { setHsMsg(esc(u.name || 'Лид') + ' — и-мэйлгүй тул илгээх боломжгүй.', 'err'); return; }
     hubspotSync([leadFromUser(u)], null, null);
@@ -2106,6 +2150,7 @@
         if (d.failed) msg += ' · ' + d.failed + ' амжилтгүй';
         setHsMsg(msg, d.failed ? 'err' : 'ok');
         if (d.errors && d.errors.length) console.warn('[HubSpot] алдаанууд:', d.errors);
+        logHubspotSync(d.syncedEmails || []); // амжилттай илгээгдсэн лид бүрт лог хөтөлнө
       })
       .catch(err => setHsMsg('Сүлжээний алдаа: ' + (err && err.message || err), 'err'))
       .finally(() => { if (btn && btnLabel) { btn.disabled = false; btn.textContent = btnLabel; } });
@@ -2115,6 +2160,19 @@
     if (!el) return;
     el.textContent = text;
     el.style.color = cls === 'ok' ? 'var(--accent-2, #16a34a)' : cls === 'err' ? '#dc2626' : 'var(--muted)';
+  }
+  // HubSpot руу амжилттай илгээгдсэн лид бүрт «HubSpot руу илгээсэн» түүх бичнэ.
+  // Түүх нь тухайн лидийн CRM дэлгэрэнгүйд болон хамгийн сүүлд илгээсэн огноонд харагдана.
+  function logHubspotSync(syncedEmails) {
+    if (!syncedEmails || !syncedEmails.length) return;
+    const set = new Set(syncedEmails.map(e => normalizeEmail(e)));
+    const now = new Date().toISOString();
+    allLeads().forEach(lead => {
+      if (set.has(normalizeEmail(lead.email))) {
+        KPICloud.addCrmActivity({ contactId: lead.id, activityType: 'hubspot', occurredAt: now, message: 'HubSpot CRM руу илгээв' })
+          .catch(() => {}); // лог бичих амжилтгүй болвол синкийн үр дүнд нөлөөлөхгүй
+      }
+    });
   }
 
   function renderUserFilterBar(counts, total, staleFound) {
@@ -2147,14 +2205,20 @@
   }
   function delUser(id) {
     if (!confirmDelete()) return;
+    // Нэгдсэн лид нь хэд хэдэн эх баримтаас (хэрэглэгч/захиалагч/санал хүсэлт) бүрдэж
+    // болох тул бүгдийг нь устгана — эс бөгөөс устгасан лид дахин гарч ирнэ.
+    const lead = allLeads().find(u => u.id === id);
+    const ids = lead ? lead._ids.slice() : [id];
     if (selectedCrmUserId === id) closeCrm();
-    const prev = usersList.slice();
-    pendingDeletedSubmissions.add(id);
-    usersList = usersList.filter(u => u.id !== id);
+    const prevU = usersList.slice(), prevS = subsList.slice(), prevF = feedbackList.slice();
+    ids.forEach(x => pendingDeletedSubmissions.add(x));
+    usersList = usersList.filter(u => ids.indexOf(u.id) === -1);
+    subsList = subsList.filter(s => ids.indexOf(s.id) === -1);
+    feedbackList = feedbackList.filter(f => ids.indexOf(f.id) === -1);
     renderUsers(); renderHome();
-    KPICloud.deleteSubmission(id).catch(err => {
-      pendingDeletedSubmissions.delete(id);
-      usersList = prev;
+    Promise.all(ids.map(x => KPICloud.deleteSubmission(x))).catch(err => {
+      ids.forEach(x => pendingDeletedSubmissions.delete(x));
+      usersList = prevU; subsList = prevS; feedbackList = prevF;
       renderUsers();
       alert((err && err.message) ? err.message : 'Мэдээлэл устгах үед алдаа гарлаа.');
     });
@@ -2169,6 +2233,7 @@
     return Array.from(seen.values()).reverse(); // шинэ нь эхэнд
   }
   function renderSubs() {
+    if (!document.getElementById('subList')) return; // тусдаа хэсэг байхгүй болсон
     const subs = uniqueSubs();
     document.getElementById('subCount').textContent = subs.length ? subs.length + ' захиалагч' : '';
     if (!subs.length) { document.getElementById('subList').innerHTML = '<div class="empty">Захиалагч алга.</div>'; return; }
@@ -2193,16 +2258,17 @@
       alert((err && err.message) ? err.message : 'Мэдээлэл устгах үед алдаа гарлаа.');
     });
   }
-  function exportSubs() {
-    const subs = uniqueSubs();
-    if (!subs.length) { alert('Татах захиалагч алга.'); return; }
-    const rows = [['И-мэйл', 'Бүртгүүлсэн огноо']].concat(
-      subs.map(s => [s.email || '', String(s.at || '').slice(0, 10)])
+  // Бүх лидийг (нэгтгэсэн) CSV болгож татна — и-мэйл, нэр, утас, байгууллага, төлөв
+  function exportLeads() {
+    const leads = allLeads();
+    if (!leads.length) { alert('Татах лид алга.'); return; }
+    const rows = [['И-мэйл', 'Нэр', 'Утас', 'Байгууллага', 'Албан тушаал', 'CRM төлөв', 'Бүртгүүлсэн огноо']].concat(
+      leads.map(l => [l.email || '', l.name || '', l.phone || '', l.org || '', l.role || '', userStatus(l.id), String(l.at || '').slice(0, 10)])
     );
     const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
     const url = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' }));
     const a = document.createElement('a');
-    a.href = url; a.download = 'kpi-subscribers.csv';
+    a.href = url; a.download = 'kpi-leads.csv';
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
   }
@@ -3227,9 +3293,9 @@
   let paymentsList = [];
   let feedbackList = [];
   function startAdminWatches() {
-    if (!unsubSubs)    unsubSubs    = KPICloud.watchSubmissions('subscribe', arr => { subsList = visibleSubmissions(arr); if (appShown) { renderSubs(); renderHome(); } });
+    if (!unsubSubs)    unsubSubs    = KPICloud.watchSubmissions('subscribe', arr => { subsList = visibleSubmissions(arr); if (appShown) { renderUsers(); renderHome(); } });
     if (!unsubPay)     unsubPay     = KPICloud.watchSubmissions('payment',   arr => { paymentsList = visibleSubmissions(arr); if (appShown) { renderHome(); renderUsers(); } });
-    if (!unsubFb)      unsubFb      = KPICloud.watchSubmissions('feedback',  arr => { feedbackList = visibleSubmissions(arr); if (appShown) { renderFeedback(); renderHome(); renderUsers(); } });
+    if (!unsubFb)      unsubFb      = KPICloud.watchSubmissions('feedback',  arr => { feedbackList = visibleSubmissions(arr); if (appShown) { renderHome(); renderUsers(); } });
     if (!unsubQuote)   unsubQuote   = KPICloud.watchSubmissions('quote',   arr => { quoteReqs = visibleSubmissions(arr);    if (appShown) { renderQuoteRequests(); renderHome(); renderUsers(); } });
     if (!unsubBooking) unsubBooking = KPICloud.watchSubmissions('booking', arr => { bookingsList = visibleSubmissions(arr); if (appShown) { renderBookings(); renderHome(); renderUsers(); } });
     if (!unsubUser)    unsubUser    = KPICloud.watchSubmissions('user',    arr => { usersList = visibleSubmissions(arr);    if (appShown) { renderUsers(); renderHome(); } });
