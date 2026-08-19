@@ -712,6 +712,8 @@
           <div class="field"><label>Талбарын түр текст</label><input id="s-sub-ph" oninput="sections.subscribe.placeholder = this.value"></div>
           <div class="field"><label>Товчны бичиг</label><input id="s-sub-btn" oninput="sections.subscribe.button = this.value"></div>
         </div>
+        <div class="field"><label>«Дагах» цонхны тайлбар</label><textarea id="s-sub-follownote" rows="2" oninput="sections.subscribe.followNote = this.value"></textarea>
+          <div class="hint" style="margin-top:6px;"><b>{name}</b> гэж бичсэн газар сайт/зохиогчийн нэр орно.</div></div>
       </div>
     </section>
 
@@ -1232,7 +1234,8 @@
       title: '✏️ Үнэ цэнтэй, утга учиртай бас хүнд хэрэгтэй контентыг эндээс',
       sub: 'Шинэ нийтлэл, KPI-ийн зөвлөмжийг и-мэйлээр хүлээн авна уу. Хүссэн үедээ цуцалж болно.',
       placeholder: 'И-мэйл хаягаа оруулна уу',
-      button: 'Захиалах',
+      button: 'Бүртгүүлэх',
+      followNote: '{name}-ийн шинэ нийтлэл гармагц и-мэйлээр мэдэгдэнэ. Хүссэн үедээ цуцалж болно.',
     },
   };
   // Шинэ талбар нэмэгдвэл хуучин хадгалсан өгөгдөл дээр дутуу үлдэхээс сэргийлж давхарлана
@@ -2363,6 +2366,7 @@
     document.getElementById('s-sub-sub').value = sections.subscribe.sub || '';
     document.getElementById('s-sub-ph').value = sections.subscribe.placeholder || '';
     document.getElementById('s-sub-btn').value = sections.subscribe.button || '';
+    document.getElementById('s-sub-follownote').value = sections.subscribe.followNote || '';
     renderStats();
   }
   function renderStats() {

@@ -1856,8 +1856,9 @@
     if (followedAlready()) return;
     const name = currentAuthorName();
     document.getElementById('followHead').textContent = name + '-г дагах';
-    document.getElementById('followIntro').textContent =
-      name + '-ийн шинэ нийтлэл гармагц и-мэйлээр мэдэгдэнэ. Хүссэн үедээ цуцалж болно.';
+    const note = (SECTIONS.subscribe && SECTIONS.subscribe.followNote)
+      || '{name}-ийн шинэ нийтлэл гармагц и-мэйлээр мэдэгдэнэ. Хүссэн үедээ цуцалж болно.';
+    document.getElementById('followIntro').textContent = note.replace(/\{name\}/g, name);
     const inp = document.getElementById('followEmail');
     inp.value = (currentUser() || {}).email || '';
     document.getElementById('followMsg').textContent = '';
@@ -2818,6 +2819,7 @@
       sub: 'Шинэ нийтлэл, KPI-ийн зөвлөмжийг и-мэйлээр хүлээн авна уу. Хүссэн үедээ цуцалж болно.',
       placeholder: 'И-мэйл хаягаа оруулна уу',
       button: 'Бүртгүүлэх',
+      followNote: '{name}-ийн шинэ нийтлэл гармагц и-мэйлээр мэдэгдэнэ. Хүссэн үедээ цуцалж болно.',
     },
   };
   let SECTIONS = JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
