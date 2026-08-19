@@ -598,15 +598,8 @@
         </div>
         <div class="crm-toolbar">
           <div class="field">
-            <label>CRM төлөв</label>
-            <select id="crmStatus" onchange="saveCrmStatus()">
-              <option value="Шинэ">Шинэ</option>
-              <option value="Холбогдсон">Холбогдсон</option>
-              <option value="Санал илгээсэн">Санал илгээсэн</option>
-              <option value="Хэлэлцэж байгаа">Хэлэлцэж байгаа</option>
-              <option value="Амжилттай">Амжилттай</option>
-              <option value="Хаагдсан">Хаагдсан</option>
-            </select>
+            <label>Эх сурвалж (автомат)</label>
+            <div id="crmSource"></div>
           </div>
           <button class="btn btn-primary" onclick="toggleCrmForm('email')">Мэйл бичих</button>
           <button class="btn" onclick="toggleCrmForm('call')">Дуудлага бүртгэх</button>
@@ -658,7 +651,7 @@
         <select id="usrSortSel" onchange="onUserSort(this.value)">
           <option value="new">Шинээр нь</option>
           <option value="activity">Сүүлийн харилцаагаар</option>
-          <option value="status">Төлөвөөр</option>
+          <option value="status">Эх сурвалжаар</option>
         </select>
       </div>
       <div class="crm-filterbar" id="usrFilterBar"></div>
@@ -1766,19 +1759,23 @@
     const admin = KPICloud.authUser && KPICloud.authUser();
     return admin ? (admin.displayName || admin.email || '') : '';
   }
-  // CRM төлөвийн дараалал ба өнгө (карт дээрх тэмдэг, шүүлтэд ашиглана)
-  const CRM_STATUSES = ['Шинэ', 'Холбогдсон', 'Санал илгээсэн', 'Хэлэлцэж байгаа', 'Амжилттай', 'Хаагдсан'];
+  // Лидийн эх сурвалж (автоматаар тодорхойлогдоно) — карт дээрх тэмдэг, шүүлтэд ашиглана
+  const CRM_STATUSES = ['Бүртгэл', 'Имэйл', 'Санал хүсэлт'];
   const CRM_STATUS_COLOR = {
-    'Шинэ': '#6b7280', 'Холбогдсон': '#2563eb', 'Санал илгээсэн': '#7c3aed',
-    'Хэлэлцэж байгаа': '#d97706', 'Амжилттай': '#059669', 'Хаагдсан': '#9ca3af'
+    'Бүртгэл': '#2563eb', 'Имэйл': '#0891b2', 'Санал хүсэлт': '#7c3aed'
   };
-  // Тухайн хэрэглэгчийн одоогийн CRM төлөв (сүүлийн status үйлдлээр)
-  function userStatus(id) {
-    const latest = crmActivities.filter(a => a.contactId === id && a.activityType === 'status')
-      .sort((a, b) => String(b.at || '').localeCompare(String(a.at || '')))[0];
-    return latest && latest.status ? latest.status : 'Шинэ';
+  // Лид хэрхэн бүртгэгдснийг доод баримтуудаас автоматаар тодорхойлно:
+  //   Бүртгэл — вэб дээр бүх мэдээллээ бөглөж бүртгүүлсэн (kind: user)
+  //   Имэйл    — зөвхөн имэйл захиалга (kind: subscribe)
+  //   Санал хүсэлт — санал хүсэлт илгээсэн (kind: feedback)
+  // Нэг хүн олон эх сурвалжтай бол хамгийн дэлгэрэнгүйг эрхэмлэнэ (user > subscribe > feedback).
+  function leadSource(lead) {
+    const k = (lead && lead._kinds) || [];
+    if (k.indexOf('user') !== -1) return 'Бүртгэл';
+    if (k.indexOf('subscribe') !== -1) return 'Имэйл';
+    if (k.indexOf('feedback') !== -1) return 'Санал хүсэлт';
+    return 'Бүртгэл';
   }
-  function currentCrmStatus() { return userStatus(selectedCrmUserId); }
   // Тухайн лидийг HubSpot руу хамгийн сүүлд илгээсэн огноо ('' бол илгээгээгүй)
   function lastHubspotAt(id) {
     const a = crmActivities.filter(x => x.contactId === id && x.activityType === 'hubspot')
@@ -1863,7 +1860,9 @@
     document.getElementById('crmName').textContent = user.name || 'Хэрэглэгч';
     document.getElementById('crmContact').textContent = [user.email, user.phone, user.org, user.role].filter(Boolean).join(' · ');
     document.getElementById('crmEmailTo').value = user.email || '';
-    document.getElementById('crmStatus').value = currentCrmStatus();
+    const src = leadSource(user);
+    document.getElementById('crmSource').innerHTML =
+      '<span class="crm-badge" style="--c:' + (CRM_STATUS_COLOR[src] || '#6b7280') + '; font-size:13px; padding:4px 12px;">' + esc(src) + '</span>';
 
     const events = crmEventsForUser(user);
     // Худалдан авсан бүтээгдэхүүн (мэйл/утсаар нь холбож) — шинэ нь дээр
@@ -1881,7 +1880,7 @@
       + item('💬 Харилцаа', Math.max(0, events.length - 1))
       + item('🕒 Сүүлд холбогдсон', lastLabel)
       + item('🔗 HubSpot', esc(hsLabel))
-      + item('📌 Төлөв', esc(userStatus(user.id)));
+      + item('📌 Эх сурвалж', esc(leadSource(user)));
     // Худалдан авсан бүтээгдэхүүний дэлгэрэнгүй задаргаа
     const pBox = document.getElementById('crmPurchases');
     if (!purchases.length) {
@@ -1912,12 +1911,6 @@
     button.textContent = busy ? 'Хадгалж байна…' : label;
     button.disabled = busy;
     button.style.opacity = busy ? '.65' : '';
-  }
-  function saveCrmStatus() {
-    const user = selectedCrmUser();
-    if (!user) return;
-    KPICloud.addCrmActivity({ contactId:user.id, activityType:'status', status:document.getElementById('crmStatus').value })
-      .catch(err => { alert((err && err.message) || 'CRM төлөв хадгалахад алдаа гарлаа.'); renderCrmDetail(); });
   }
   function sendCrmEmail() {
     const user = selectedCrmUser();
@@ -2021,8 +2014,6 @@
   function onUserSort(v) { usrSort = v; renderUsers(); }
   function setUserStatusFilter(s) { usrStatusFilter = s; renderUsers(); }
 
-  const STALE_DAYS = 7; // идэвхтэй лид ийм өдрөөс дээш хөдөлгөөнгүй бол «анхаарах»
-  function isActiveStatus(s) { return s !== 'Амжилттай' && s !== 'Хаагдсан'; }
   function daysSince(at) {
     if (!at) return Infinity;
     const t = Date.parse(at); if (isNaN(t)) return Infinity;
@@ -2037,30 +2028,26 @@
     const leads = allLeads();
     const enrichedAll = leads.map(u => {
       const events = crmEventsForUser(u);
-      const status = userStatus(u.id);
+      const status = leadSource(u); // эх сурвалж (Бүртгэл/Имэйл/Санал хүсэлт)
       const last = events.length ? events[0].at : u.at;
-      return { u: u, status: status, events: events, last: last, count: events.length,
-               stale: isActiveStatus(status) && daysSince(last) >= STALE_DAYS };
+      return { u: u, status: status, events: events, last: last, count: events.length };
     });
-    // Дээд тойм (бүх лид дээр)
+    // Дээд тойм — нийт ба эх сурвалж бүрээр
     const total = enrichedAll.length;
-    const won = enrichedAll.filter(e => e.status === 'Амжилттай').length;
-    const active = enrichedAll.filter(e => isActiveStatus(e.status)).length;
-    const staleAll = enrichedAll.filter(e => e.stale).length;
-    renderUserSummary(total, active, won, staleAll);
+    const bySource = {}; CRM_STATUSES.forEach(s => bySource[s] = 0);
+    enrichedAll.forEach(e => { bySource[e.status] = (bySource[e.status] || 0) + 1; });
+    renderUserSummary(total, bySource);
     // Хайлт
     const q = usrSearch.trim().toLowerCase();
     let list = q ? enrichedAll.filter(e =>
       [e.u.name, e.u.email, e.u.phone, e.u.org, e.u.role]
         .some(v => String(v || '').toLowerCase().indexOf(q) !== -1)) : enrichedAll.slice();
-    // Төлөвийн тоолуур (хайлтын дараах олонлог дээр)
+    // Эх сурвалжийн тоолуур (хайлтын дараах олонлог дээр)
     const counts = {}; CRM_STATUSES.forEach(s => counts[s] = 0);
-    let staleFound = 0;
-    list.forEach(e => { counts[e.status] = (counts[e.status] || 0) + 1; if (e.stale) staleFound++; });
+    list.forEach(e => { counts[e.status] = (counts[e.status] || 0) + 1; });
     const totalFound = list.length;
-    // Шүүх — төлөвөөр эсвэл «анхаарах» (идэвхгүй)
-    if (usrStatusFilter === '__stale__') list = list.filter(e => e.stale);
-    else if (usrStatusFilter !== 'Бүгд') list = list.filter(e => e.status === usrStatusFilter);
+    // Шүүх — эх сурвалжаар
+    if (usrStatusFilter !== 'Бүгд') list = list.filter(e => e.status === usrStatusFilter);
     // Эрэмбэ
     if (usrSort === 'status') {
       list.sort((a, b) => (CRM_STATUSES.indexOf(a.status) - CRM_STATUSES.indexOf(b.status))
@@ -2072,7 +2059,7 @@
     }
 
     document.getElementById('usrCount').textContent = leads.length ? leads.length + ' хэрэглэгч' : '';
-    renderUserFilterBar(counts, totalFound, staleFound);
+    renderUserFilterBar(counts, totalFound);
 
     const box = document.getElementById('usrList');
     if (!leads.length) { box.innerHTML = '<div class="empty">Хэрэглэгч алга.</div>'; }
@@ -2093,11 +2080,9 @@
         const hsBtn = hsAt
           ? '<button class="btn btn-sm hs-done" onclick="event.stopPropagation(); syncOneToHubspot(\'' + u.id + '\')" title="Сүүлд илгээсэн: ' + esc(hsAt) + '. Дахин илгээх бол дарна уу.">✅ HubSpot илгээсэн</button>'
           : '<button class="btn btn-sm" onclick="event.stopPropagation(); syncOneToHubspot(\'' + u.id + '\')" title="Энэ лидийг HubSpot руу илгээх">🔗 HubSpot</button>';
-        const days = daysSince(e.last);
-        const acts = (e.count > 1
+        const acts = e.count > 1
           ? (e.count - 1) + ' харилцаа · сүүлд ' + esc(String(e.last || '').slice(0, 10))
-          : 'Харилцаа бүртгээгүй')
-          + (e.stale ? ' · <b style="color:#c2760a;">⚠️ ' + (isFinite(days) ? days + ' хоног хөдөлгөөнгүй' : 'удаан хөдөлгөөнгүй') + '</b>' : '');
+          : 'Харилцаа бүртгээгүй';
         return '<div class="tpl-card usr-card" onclick="openCrm(\'' + u.id + '\')" title="Дэлгэрэнгүйг нээх">'
           + '<div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:8px;">'
           + '<div style="min-width:0;">'
@@ -2122,7 +2107,7 @@
       phone: u.phone || '',
       org: u.org || '',
       role: u.role || '',
-      status: userStatus(u.id)
+      status: leadSource(u)
     };
   }
   // Бүх лидийг HubSpot руу
@@ -2186,33 +2171,25 @@
     });
   }
 
-  function renderUserFilterBar(counts, total, staleFound) {
+  function renderUserFilterBar(counts, total) {
     const bar = document.getElementById('usrFilterBar');
     if (!bar) return;
     let html = '<span class="crm-chip' + (usrStatusFilter === 'Бүгд' ? ' active' : '')
       + '" onclick="setUserStatusFilter(\'Бүгд\')">Бүгд<span class="n">' + total + '</span></span>';
-    if (staleFound) {
-      html += '<span class="crm-chip warn' + (usrStatusFilter === '__stale__' ? ' active' : '')
-        + '" onclick="setUserStatusFilter(\'__stale__\')">⚠️ Анхаарах<span class="n">' + staleFound + '</span></span>';
-    }
     CRM_STATUSES.forEach(s => {
-      if (!counts[s]) return; // хоосон шатыг харуулахгүй
+      if (!counts[s]) return; // хоосон эх сурвалжийг харуулахгүй
       html += '<span class="crm-chip' + (usrStatusFilter === s ? ' active' : '')
         + '" onclick="setUserStatusFilter(\'' + s + '\')">' + esc(s) + '<span class="n">' + counts[s] + '</span></span>';
     });
     bar.innerHTML = html;
   }
-  function renderUserSummary(total, active, won, stale) {
+  function renderUserSummary(total, bySource) {
     const box = document.getElementById('usrSummary');
     if (!box) return;
     if (!total) { box.innerHTML = ''; return; }
-    const rate = total ? Math.round(won / total * 100) : 0;
-    const stat = (k, v, cls) => '<div class="crm-stat' + (cls ? ' ' + cls : '') + '"><div class="k">' + k + '</div><div class="v">' + v + '</div></div>';
+    const stat = (k, v) => '<div class="crm-stat"><div class="k">' + k + '</div><div class="v">' + v + '</div></div>';
     box.innerHTML = stat('Нийт лид', total)
-      + stat('Идэвхтэй', active)
-      + stat('Амжилттай', won)
-      + stat('Хөрвөлт', rate + '%')
-      + stat('Анхаарах', stale, stale ? 'warn' : '');
+      + CRM_STATUSES.map(s => stat(s, bySource[s] || 0)).join('');
   }
   function delUser(id) {
     if (!confirmDelete()) return;
@@ -2273,8 +2250,8 @@
   function exportLeads() {
     const leads = allLeads();
     if (!leads.length) { alert('Татах лид алга.'); return; }
-    const rows = [['И-мэйл', 'Нэр', 'Утас', 'Байгууллага', 'Албан тушаал', 'CRM төлөв', 'Бүртгүүлсэн огноо']].concat(
-      leads.map(l => [l.email || '', l.name || '', l.phone || '', l.org || '', l.role || '', userStatus(l.id), String(l.at || '').slice(0, 10)])
+    const rows = [['И-мэйл', 'Нэр', 'Утас', 'Байгууллага', 'Албан тушаал', 'Эх сурвалж', 'Бүртгүүлсэн огноо']].concat(
+      leads.map(l => [l.email || '', l.name || '', l.phone || '', l.org || '', l.role || '', leadSource(l), String(l.at || '').slice(0, 10)])
     );
     const csv = rows.map(r => r.map(v => '"' + String(v).replace(/"/g, '""') + '"').join(',')).join('\n');
     const url = URL.createObjectURL(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' }));
