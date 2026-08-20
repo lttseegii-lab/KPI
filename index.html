@@ -2136,12 +2136,13 @@
     if (!grid) return;
     grid.innerHTML = Object.keys(PRODUCTS).map(k => {
       const p = PRODUCTS[k];
-      return '<article class="card clickable" onclick="openProduct(\'' + k + '\')">'
+      // Бүтээгдэхүүн эцэслээгүй тул дэлгэрэнгүйг ТҮР хаав — картыг мэдээллийн
+      // байдлаар (дарахгүй, «Дэлгэрэнгүй» товчгүй) харуулна. Эцэслэгдэхэд буцаана.
+      return '<article class="card">'
         + (p.best ? '<span class="badge-best">Хамгийн үнэ цэнэтэй</span>' : '')
         + '<div class="tag">' + esc(p.cardTag || p.tag || '') + '</div>'
         + '<h3>' + esc(p.title || '') + '</h3>'
         + '<p>' + esc(p.excerpt || p.lead || '') + '</p>'
-        + '<span class="more">Дэлгэрэнгүй →</span>'
         + '</article>';
     }).join('');
   }
