@@ -2431,6 +2431,16 @@
     ['in-name','in-phone','in-email','in-org','in-role'].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
     ['f-name','f-phone','f-email','f-org','f-role'].forEach(id => { const el = document.getElementById(id); if (el) el.classList.remove('invalid'); });
   }
+  // Бүртгэлийг хялбар болгох: энэ браузараас өмнө өгсөн мэдээллээр урьдчилан бөглөнө.
+  // Эх сурвалж: өмнөх бүрэн бүртгэл (knownUser) → бүх талбар; эсвэл захиалсан
+  // и-мэйл (localSubscribed) → зөвхөн и-мэйл. Аль хэдийн бичсэн талбарыг дарж бичихгүй.
+  function prefillRegForm() {
+    const known = knownUser();
+    const subs = localSubscribed();
+    const set = (id, v) => { const el = document.getElementById(id); if (el && !el.value && v) el.value = v; };
+    if (known) { set('in-name', known.name); set('in-phone', known.phone); set('in-org', known.org); set('in-role', known.role); }
+    set('in-email', (known && known.email) || (subs.length ? subs[subs.length - 1] : ''));
+  }
   function isRegistered() { try { return localStorage.getItem('kpihub_registered') === '1'; } catch (e) { return false; } }
   function currentUser() {
     try { return JSON.parse(localStorage.getItem('kpihub_current_user') || '{}') || {}; } catch (e) { return {}; }
@@ -2507,6 +2517,7 @@
   function showRegisterPane(e) {
     if (e) e.preventDefault();
     resetRegForm();
+    prefillRegForm();
     document.getElementById('paneLogin').classList.add('hidden');
     document.getElementById('pane2').classList.add('hidden');
     document.getElementById('pane3').classList.add('hidden');
