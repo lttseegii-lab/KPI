@@ -1935,6 +1935,7 @@
     usersList.forEach(r => add(r, 'user'));
     subsList.forEach(r => add(r, 'subscribe'));
     feedbackList.forEach(r => add(r, 'feedback'));
+    popupSubs.forEach(r => add(r, 'popup'));
     return Array.from(byKey.values());
   }
   function selectedCrmUser() { return allLeads().find(u => u.id === selectedCrmUserId) || null; }
@@ -1948,9 +1949,9 @@
     return admin ? (admin.displayName || admin.email || '') : '';
   }
   // Лидийн эх сурвалж (автоматаар тодорхойлогдоно) — карт дээрх тэмдэг, шүүлтэд ашиглана
-  const CRM_STATUSES = ['Бүртгэл', 'Имэйл', 'Санал хүсэлт'];
+  const CRM_STATUSES = ['Бүртгэл', 'Popup', 'Имэйл', 'Санал хүсэлт'];
   const CRM_STATUS_COLOR = {
-    'Бүртгэл': '#2563eb', 'Имэйл': '#0891b2', 'Санал хүсэлт': '#7c3aed'
+    'Бүртгэл': '#2563eb', 'Popup': '#ea580c', 'Имэйл': '#0891b2', 'Санал хүсэлт': '#7c3aed'
   };
   // Лид хэрхэн бүртгэгдснийг доод баримтуудаас автоматаар тодорхойлно:
   //   Бүртгэл — вэб дээр бүх мэдээллээ бөглөж бүртгүүлсэн (kind: user)
@@ -1960,6 +1961,7 @@
   function leadSource(lead) {
     const k = (lead && lead._kinds) || [];
     if (k.indexOf('user') !== -1) return 'Бүртгэл';
+    if (k.indexOf('popup') !== -1) return 'Popup';
     if (k.indexOf('subscribe') !== -1) return 'Имэйл';
     if (k.indexOf('feedback') !== -1) return 'Санал хүсэлт';
     return 'Бүртгэл';
@@ -3477,7 +3479,7 @@
     if (!unsubBooking) unsubBooking = KPICloud.watchSubmissions('booking', arr => { bookingsList = visibleSubmissions(arr); if (appShown) { renderBookings(); renderHome(); renderUsers(); } });
     if (!unsubUser)    unsubUser    = KPICloud.watchSubmissions('user',    arr => { usersList = visibleSubmissions(arr);    if (appShown) { renderUsers(); renderHome(); } });
     if (!unsubCrm)     unsubCrm     = KPICloud.watchSubmissions('crm',     arr => { crmActivities = arr;                    if (appShown) renderUsers(); });
-    if (!unsubPopup)   unsubPopup   = KPICloud.watchSubmissions('popup',   arr => { popupSubs = visibleSubmissions(arr);    if (appShown) renderPopupSubs(); });
+    if (!unsubPopup)   unsubPopup   = KPICloud.watchSubmissions('popup',   arr => { popupSubs = visibleSubmissions(arr);    if (appShown) { renderPopupSubs(); renderUsers(); renderHome(); } });
     if (!unsubAdmins)  unsubAdmins  = KPICloud.watchAdmins(arr => { adminsList = visibleAdmins(arr); if (appShown) renderAdmins(); });
   }
   function stopAdminWatches() {
