@@ -59,6 +59,17 @@ service cloud.firestore {
         && (!('role' in request.resource.data) || request.resource.data.role.size() <= 120)
         // Бүртгэл нь ямар ч тохиолдолд төлбөртэй эрх ОЛГОХГҮЙ
         && (!('paid' in request.resource.data) || request.resource.data.kind == 'booking');
+      // Popup цонхны бүртгэл — админаас тохируулсан формоор зочин бүртгүүлнэ
+      allow create: if request.resource.data.kind == 'popup'
+        && request.resource.data.keys().hasOnly([
+             'kind','at','title','formTitle','name','email','phone','answers'
+           ])
+        && (!('answers' in request.resource.data) || request.resource.data.answers.size() <= 40)
+        && (!('name' in request.resource.data) || request.resource.data.name.size() <= 120)
+        && (!('email' in request.resource.data) || request.resource.data.email.size() <= 200)
+        && (!('phone' in request.resource.data) || request.resource.data.phone.size() <= 40)
+        && (!('title' in request.resource.data) || request.resource.data.title.size() <= 300)
+        && (!('formTitle' in request.resource.data) || request.resource.data.formTitle.size() <= 200);
       // QPay худалдан авалтын бүртгэл — ЗӨВХӨН АДМИН бичнэ.
       // Өмнө нь зочин бичдэг байсан тул хэн ч дурын дүнтэй хуурамч
       // "худалдан авалт" үүсгэж, орлогын тайланг бохирдуулж чаддаг байв.
