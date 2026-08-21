@@ -56,7 +56,8 @@
     "kpihub_contact",
     "kpihub_why",
     "kpihub_availability",
-    "kpihub_quote_questions"
+    "kpihub_quote_questions",
+    "kpihub_popup"
   ];
   var LOCAL_SUBS = "kpihub_local_submissions"; // офлайн үед зочны илгээлтийг түр хадгалах
 

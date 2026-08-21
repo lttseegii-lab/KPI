@@ -359,6 +359,7 @@
       <div class="tab" data-tab="why" onclick="switchTab('why')">Бидний тухай</div>
       <div class="tab" data-tab="pricing" onclick="switchTab('pricing')">Үнийн санал</div>
       <div class="tab" data-tab="schedule" onclick="switchTab('schedule')">Цаг товлолт</div>
+      <div class="tab" data-tab="popup" onclick="switchTab('popup')">Popup</div>
       <!-- Хэрэглэгч — мэйл бүртгүүлсэн хүн бүр хэрэглэгч. Тэдний захиалга,
            санал хүсэлтийг нэг хуудсанд цуг харуулна. -->
       <div class="tab" data-tab="users" onclick="switchTab('users')">Хэрэглэгч</div>
@@ -557,6 +558,78 @@
         <div class="actions"><span id="qrCount" style="font-size:13px; color:var(--muted);"></span></div>
       </div>
       <div class="list" id="qrList"></div>
+    </section>
+
+    <!-- ===== Popup panel ===== -->
+    <section id="tab-popup" class="hidden">
+      <div class="panel-head">
+        <h2>Popup цонх</h2>
+        <div class="actions">
+          <label style="display:flex; align-items:center; gap:8px; font-size:14px; cursor:pointer;">
+            <input type="checkbox" id="pop-active" onchange="popup.active=this.checked"> Идэвхтэй болгох
+          </label>
+        </div>
+      </div>
+      <div class="hint">Зочин сайтад орж ирээд тодорхой хугацааны дараа энэ цонх гарч ирнэ. Сургалт, хямдрал, урамшуулал, чухал мэдээлэл сурталчлах, эсвэл бүртгэл авахад ашиглана. <b>«Идэвхтэй болгох»</b>-ыг чагтлаад <b>«Хадгалах»</b> дарж нийтэлнэ.</div>
+
+      <div class="row2">
+        <div class="field"><label>Гарах хүлээлт (секунд)</label><input type="number" id="pop-delay" min="0" oninput="popup.delay=+this.value"></div>
+        <div class="field"><label>Давтамж</label>
+          <select id="pop-freq" onchange="popup.frequency=this.value">
+            <option value="day">Өдөрт нэг удаа</option>
+            <option value="session">Нэг зочлолтод нэг удаа</option>
+            <option value="always">Орж ирэх болгонд</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field"><label>Шошго (жишээ: Сургалт, Хямдрал, Урамшуулал)</label><input id="pop-eyebrow" oninput="popup.eyebrow=this.value"></div>
+      <div class="field"><label>Гарчиг</label><input id="pop-title" oninput="popup.title=this.value"></div>
+      <div class="field"><label>Тайлбар текст</label><textarea id="pop-body" style="min-height:80px" oninput="popup.body=this.value"></textarea></div>
+
+      <div class="field">
+        <label>Зураг (сонголтоор)</label>
+        <div id="pop-imgWrap"></div>
+        <label class="file-btn">Зураг сонгох<input type="file" accept="image/*" hidden onchange="onPopupImage(this)"></label>
+      </div>
+
+      <div class="row2">
+        <div class="field"><label>Товчны бичвэр</label><input id="pop-btnLabel" oninput="popup.primaryLabel=this.value" placeholder="Бүртгүүлэх"></div>
+        <div class="field"><label>Товч дарахад</label>
+          <select id="pop-action" onchange="popup.primaryAction=this.value; renderPopupEditor()">
+            <option value="register">Бүртгэлийн форм нээх</option>
+            <option value="link">Холбоос руу шилжих</option>
+            <option value="close">Зүгээр хаах</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="field" id="pop-linkWrap" style="display:none;"><label>Холбоос (URL)</label><input id="pop-link" oninput="popup.linkUrl=this.value" placeholder="https://..."></div>
+
+      <!-- Бүртгэлийн форм (товч = «Бүртгэлийн форм нээх» үед) -->
+      <div id="pop-formWrap">
+        <div class="panel-head" style="margin-top:26px;">
+          <h3 style="font-size:17px;">Бүртгэлийн форм</h3>
+          <div class="actions"><button class="btn btn-sm" onclick="addPopupField()">+ Талбар нэмэх</button></div>
+        </div>
+        <div class="row2">
+          <div class="field"><label>Формын гарчиг</label><input id="pop-formTitle" oninput="popup.formTitle=this.value" placeholder="Бүртгэл"></div>
+          <div class="field"><label>Амжилтын мэдэгдэл</label><input id="pop-success" oninput="popup.successMsg=this.value" placeholder="Таны бүртгэлийг хүлээн авлаа…"></div>
+        </div>
+        <div class="field"><label>Формын тайлбар (сонголтоор)</label><input id="pop-formNote" oninput="popup.formNote=this.value"></div>
+        <div class="list" id="pop-fieldList"></div>
+      </div>
+
+      <div class="save-bar">
+        <button class="btn btn-primary" onclick="savePopup()">Хадгалах</button>
+        <span class="saved-msg" id="popSaved">Хадгалагдлаа</span>
+      </div>
+
+      <div class="panel-head" style="margin-top:34px;">
+        <h3 style="font-size:17px;">Ирсэн бүртгэлүүд</h3>
+        <div class="actions"><span id="popSubCount" style="font-size:13px; color:var(--muted);"></span></div>
+      </div>
+      <div class="list" id="pop-subList"></div>
     </section>
 
     <!-- ===== Users panel ===== -->
@@ -1381,12 +1454,13 @@
     // «Хэрэглэгч» хуудсан дээр бүртгэлтэй хэрэглэгч, захиалагч, санал хүсэлтийг и-мэйлээр
     // нь нэгтгэн НЭГ лидийн жагсаалтад харуулна (тусдаа хэсэг байхгүй).
     const visible = [t];
-    ['home','products','articles','why','pricing','schedule','users','sections','authors','register','admins','contact'].forEach(name =>
+    ['home','products','articles','why','pricing','schedule','popup','users','sections','authors','register','admins','contact'].forEach(name =>
       document.getElementById('tab-' + name).classList.toggle('hidden', visible.indexOf(name) === -1));
     if (t === 'home') renderHome();
     if (t === 'products') renderProductsAdmin();
     if (t === 'schedule') { renderBulkControls(); renderAvList(); renderBookings(); }
     if (t === 'pricing') { renderQuestions(); renderQuoteRequests(); }
+    if (t === 'popup') { renderPopupEditor(); renderPopupSubs(); }
     if (t === 'users') { closeCrm(); renderUsers(); clearUserMsg(); }
     if (t === 'register') renderRegisterForm();
     if (t === 'sections') renderSectionsForm();
@@ -1530,6 +1604,117 @@
   function resetQuestions() {
     if (!confirm('Асуулгыг анхны төлөвт буцаах уу?')) return;
     questions = JSON.parse(JSON.stringify(DEFAULT_QUESTIONS)); save('kpihub_quote_questions', questions); renderQuestions();
+  }
+
+  // ---------- Popup цонх ----------
+  const DEFAULT_POPUP = {
+    active: false, delay: 6, frequency: 'day',
+    eyebrow: 'Сургалт', title: '', body: '',
+    image: '', primaryLabel: 'Бүртгүүлэх', primaryAction: 'register', linkUrl: '',
+    formTitle: 'Бүртгэл', formNote: '', successMsg: 'Таны бүртгэлийг хүлээн авлаа. Бид удахгүй тантай холбогдоно.',
+    fields: [
+      { label: 'Нэр', type: 'text', required: true },
+      { label: 'Утас', type: 'tel', required: true },
+      { label: 'И-мэйл', type: 'email', required: false },
+    ],
+  };
+  function normalizePopup(p) {
+    const out = Object.assign({}, DEFAULT_POPUP, p || {});
+    if (!Array.isArray(out.fields)) out.fields = JSON.parse(JSON.stringify(DEFAULT_POPUP.fields));
+    return out;
+  }
+  let popup = normalizePopup(load('kpihub_popup', null));
+
+  function renderPopupEditor() {
+    const g = id => document.getElementById(id);
+    if (!g('pop-title')) return;
+    g('pop-active').checked = !!popup.active;
+    g('pop-delay').value = popup.delay != null ? popup.delay : 6;
+    g('pop-freq').value = popup.frequency || 'day';
+    g('pop-eyebrow').value = popup.eyebrow || '';
+    g('pop-title').value = popup.title || '';
+    g('pop-body').value = popup.body || '';
+    g('pop-btnLabel').value = popup.primaryLabel || '';
+    g('pop-action').value = popup.primaryAction || 'register';
+    g('pop-link').value = popup.linkUrl || '';
+    g('pop-formTitle').value = popup.formTitle || '';
+    g('pop-formNote').value = popup.formNote || '';
+    g('pop-success').value = popup.successMsg || '';
+    const action = popup.primaryAction || 'register';
+    g('pop-linkWrap').style.display = action === 'link' ? '' : 'none';
+    g('pop-formWrap').style.display = action === 'register' ? '' : 'none';
+    renderPopupImg();
+    renderPopupFields();
+  }
+  function renderPopupImg() {
+    const wrap = document.getElementById('pop-imgWrap');
+    if (!wrap) return;
+    wrap.innerHTML = String(popup.image || '').trim()
+      ? '<div style="margin-bottom:10px;"><img src="' + esc(popup.image) + '" style="max-width:100%; max-height:160px; border-radius:12px; border:1px solid var(--line); display:block; margin-bottom:8px;">'
+        + '<button class="btn btn-danger btn-sm" onclick="removePopupImage()">Зураг устгах</button></div>'
+      : '';
+  }
+  function onPopupImage(input) {
+    const f = input.files && input.files[0];
+    if (!f) return;
+    if (f.size > MAX_IMG) { alert('Зураг хэт том байна (дээд тал нь 5MB). Жижиг зураг сонгоно уу.'); input.value = ''; return; }
+    compressFile(f).then(data => { popup.image = data; renderPopupImg(); });
+  }
+  function removePopupImage() {
+    if (!confirmDelete('Энэ зургийг устгах уу?')) return;
+    popup.image = ''; renderPopupImg();
+  }
+  const POPUP_FIELD_TYPES = [['text', 'Богино текст'], ['textarea', 'Урт текст'], ['tel', 'Утас'], ['email', 'И-мэйл'], ['number', 'Тоо']];
+  function renderPopupFields() {
+    const el = document.getElementById('pop-fieldList');
+    if (!el) return;
+    el.innerHTML = (popup.fields || []).map((f, i) =>
+      '<div class="tpl-card"><div class="tpl-top" style="grid-template-columns:1fr 140px auto auto; align-items:center;">'
+      + '<input value="' + esc(f.label || '') + '" oninput="popup.fields[' + i + '].label=this.value" placeholder="Талбарын нэр">'
+      + '<select onchange="popup.fields[' + i + '].type=this.value">'
+      + POPUP_FIELD_TYPES.map(o => '<option value="' + o[0] + '"' + ((f.type || 'text') === o[0] ? ' selected' : '') + '>' + o[1] + '</option>').join('')
+      + '</select>'
+      + '<label style="display:flex; align-items:center; gap:6px; font-size:13px; white-space:nowrap;"><input type="checkbox"' + (f.required ? ' checked' : '') + ' onchange="popup.fields[' + i + '].required=this.checked"> Заавал</label>'
+      + '<button class="btn btn-danger btn-sm" onclick="delPopupField(' + i + ')">Устгах</button>'
+      + '</div></div>'
+    ).join('') || '<div class="empty">Талбар алга. «+ Талбар нэмэх» дарна уу.</div>';
+  }
+  function addPopupField() {
+    popup.fields = popup.fields || [];
+    popup.fields.push({ label: 'Шинэ талбар', type: 'text', required: false });
+    renderPopupFields();
+    const inputs = document.querySelectorAll('#pop-fieldList .tpl-card input:not([type=checkbox])');
+    const last = inputs[inputs.length - 1];
+    if (last) { last.scrollIntoView({ behavior: 'smooth', block: 'center' }); last.focus(); last.select(); }
+  }
+  function delPopupField(i) {
+    if (!confirmDelete()) return;
+    popup.fields.splice(i, 1); renderPopupFields();
+  }
+  function savePopup() {
+    popup.fields = (popup.fields || []).filter(f => String(f.label || '').trim());
+    save('kpihub_popup', popup).then(ok => { if (ok) { flash('popSaved'); renderPopupEditor(); } });
+  }
+
+  // Ирсэн popup бүртгэлүүд (submissions kind:'popup')
+  let popupSubs = [];
+  function renderPopupSubs() {
+    const el = document.getElementById('pop-subList');
+    if (!el) return;
+    const cnt = document.getElementById('popSubCount');
+    if (cnt) cnt.textContent = popupSubs.length ? popupSubs.length + ' бүртгэл' : '';
+    if (!popupSubs.length) { el.innerHTML = '<div class="empty">Одоогоор бүртгэл алга.</div>'; return; }
+    el.innerHTML = popupSubs.map(r => {
+      let when = '';
+      try { when = r.at ? new Date(r.at).toLocaleString('mn-MN') : ''; } catch (e) {}
+      const ans = (r.answers || []).map(a =>
+        '<div style="font-size:13px; margin-top:2px;"><span style="color:var(--muted)">' + esc(a.q) + ':</span> ' + esc(a.a || '—') + '</div>').join('');
+      return '<div class="tpl-card"><div style="padding:6px 4px;">'
+        + '<div style="display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:4px;">'
+        + '<b>' + esc(r.name || 'Нэргүй') + '</b><span style="font-size:12px; color:var(--muted)">' + esc(when) + '</span></div>'
+        + (r.title ? '<div style="font-size:12.5px; color:var(--muted); margin-bottom:4px;">📌 ' + esc(r.title) + '</div>' : '')
+        + ans + '</div></div>';
+    }).join('');
   }
 
   // ---------- Received quote requests (Firestore submissions) ----------
@@ -3281,7 +3466,7 @@
   }
 
   // ---------- Init ----------
-  let unsubQuote = null, unsubBooking = null, unsubUser = null, unsubCrm = null, unsubAdmins = null, unsubSubs = null, unsubPay = null, unsubFb = null;
+  let unsubQuote = null, unsubBooking = null, unsubUser = null, unsubCrm = null, unsubAdmins = null, unsubSubs = null, unsubPay = null, unsubFb = null, unsubPopup = null;
   let paymentsList = [];
   let feedbackList = [];
   function startAdminWatches() {
@@ -3292,6 +3477,7 @@
     if (!unsubBooking) unsubBooking = KPICloud.watchSubmissions('booking', arr => { bookingsList = visibleSubmissions(arr); if (appShown) { renderBookings(); renderHome(); renderUsers(); } });
     if (!unsubUser)    unsubUser    = KPICloud.watchSubmissions('user',    arr => { usersList = visibleSubmissions(arr);    if (appShown) { renderUsers(); renderHome(); } });
     if (!unsubCrm)     unsubCrm     = KPICloud.watchSubmissions('crm',     arr => { crmActivities = arr;                    if (appShown) renderUsers(); });
+    if (!unsubPopup)   unsubPopup   = KPICloud.watchSubmissions('popup',   arr => { popupSubs = visibleSubmissions(arr);    if (appShown) renderPopupSubs(); });
     if (!unsubAdmins)  unsubAdmins  = KPICloud.watchAdmins(arr => { adminsList = visibleAdmins(arr); if (appShown) renderAdmins(); });
   }
   function stopAdminWatches() {
@@ -3303,7 +3489,8 @@
     if (unsubSubs)    { try { unsubSubs(); } catch(e){}    unsubSubs = null; }
     if (unsubPay)     { try { unsubPay(); } catch(e){}     unsubPay = null; }
     if (unsubFb)      { try { unsubFb(); } catch(e){}      unsubFb = null; }
-    quoteReqs = []; bookingsList = []; usersList = []; crmActivities = []; adminsList = []; subsList = []; paymentsList = []; feedbackList = [];
+    if (unsubPopup)   { try { unsubPopup(); } catch(e){}   unsubPopup = null; }
+    quoteReqs = []; bookingsList = []; usersList = []; crmActivities = []; adminsList = []; subsList = []; paymentsList = []; feedbackList = []; popupSubs = [];
     selectedCrmUserId = '';
   }
 
@@ -3319,6 +3506,7 @@
     sections     = mergeSections(load('kpihub_sections', null));
     availability = load('kpihub_availability', []);
     questions    = load('kpihub_quote_questions', JSON.parse(JSON.stringify(DEFAULT_QUESTIONS)));
+    popup        = normalizePopup(load('kpihub_popup', null));
     if (appShown) showApp();
   });
 
