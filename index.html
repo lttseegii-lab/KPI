@@ -118,10 +118,16 @@
   .logo-mark { flex-shrink: 0; }
   .logo-text { font-weight: 500; color: var(--accent); white-space: nowrap; }
   .logo-text b { color: #fff; font-weight: 800; }
-  .nav-links { display: flex; gap: 28px; position: absolute; left: 50%; transform: translateX(-50%); }
+  /* Урьд нь absolute-аар голлуулдаг байсан. Цэс нэмэгдэхэд баруун талын товчнуудтай
+     давхцдаг тул flex-ийн голд байрлуулж, зайг нь өөрөө тааруулдаг болгов. */
+  .nav-links { display: flex; gap: 28px; flex: 1; justify-content: center; margin: 0 20px; white-space: nowrap; }
   .nav-links a { color: var(--muted); text-decoration: none; font-size: 14.5px; font-weight: 500; transition: color .2s; }
   .nav-links a:hover { color: var(--text); }
   .nav-cta { display: flex; align-items: center; gap: 10px; }
+  @media (max-width: 1080px) { .nav-links { gap: 20px; margin: 0 12px; } .nav-links a { font-size: 13.5px; } }
+  /* 1000px-ээс доош гурван товч + дөрвөн цэс нэг мөрөнд багтахгүй. «Холбоо барих» нь
+     footer болон бусад CTA-гаар хүрэгддэг тул эхлээд түүнийг нууна. */
+  @media (max-width: 1000px) { .nav-links { gap: 16px; } .nav-cta .nav-contact { display: none; } }
 
   /* About / Why us row */
   .about-row { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; margin-bottom: 54px; }
@@ -853,6 +859,7 @@
         <span class="logo-text"><b>KPI</b>&nbsp;consulting</span>
       </div>
       <div class="nav-links">
+        <a href="/kpi360">Мастеркласс</a>
         <a href="#products">Бүтээгдэхүүн</a>
         <a href="#insights">Мэдээлэл</a>
         <a href="#why">Бидний тухай</a>
@@ -953,6 +960,7 @@
       </div>
     </div>
     <div class="foot-right">
+      <a href="/kpi360">KPI360 Masterclass</a>
       <a href="mailto:hello@kpihub.mn">Холбоо барих</a>
       <span class="foot-copy">© 2026 KPI consulting. Бүх эрх хуулиар хамгаалагдсан.</span>
     </div>

@@ -8,6 +8,7 @@ Firebase (Firestore + Authentication) backend-тэй.
 | Файл | Тайлбар |
 |------|---------|
 | `index.html` | Нийтийн вэбсайт (нийтлэл, темплэйт, үнийн санал, цаг захиалга) |
+| `kpi360.html` | KPI360 Masterclass кампанит ажлын landing page (`/kpi360`) |
 | `admin.html` | Админ удирдлага (Firebase Auth нэвтрэлт) |
 | `firebase.js` | Firestore + Auth нийтлэг давхарга (`KPICloud`) |
 | `firestore.rules` | Аюулгүй байдлын дүрэм |
