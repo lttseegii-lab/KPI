@@ -21,7 +21,14 @@ function docUrl(key) {
     API_KEY
   );
 }
-const DOC_URL = docUrl("kpihub_articles");
+// Нийтлэлүүд нь Firestore-ийн 1MB баримтын хязгаараас болж хэд хэдэн хэсэгт
+// хуваагдан хадгалагддаг (index.html, admin.html-тэй ижил түлхүүрүүд).
+// Зөвхөн эхний хэсгийг уншвал сүүлийн хэсэг дэх нийтлэлүүд «олдсонгүй» болж,
+// хуваалцахад нийтлэлийн биш, сайтын брэнд зураг гарч байв.
+const ART_SHARD_KEYS = [
+  "kpihub_articles", "kpihub_articles_2", "kpihub_articles_3", "kpihub_articles_4",
+  "kpihub_articles_5", "kpihub_articles_6", "kpihub_articles_7", "kpihub_articles_8",
+];
 
 // content/{key} баримтын JSON-ыг уншина (нийтэд нээлттэй контент).
 // Олдохгүй/эвдэрсэн бол null буцаана.
@@ -42,15 +49,12 @@ const TTL = 60 * 1000;
 
 async function getArticles() {
   if (cache.list && Date.now() - cache.at < TTL) return cache.list;
-  const r = await fetch(DOC_URL);
-  if (!r.ok) throw new Error("firestore " + r.status);
-  const d = await r.json();
+  // Хэсгүүдийг зэрэг уншина — байхгүй хэсэг null буцаана (алдаа биш).
+  const parts = await Promise.all(
+    ART_SHARD_KEYS.map(function (k) { return getContent(k).catch(function () { return null; }); })
+  );
   let list = [];
-  const f = d && d.fields;
-  if (f && f.json && typeof f.json.stringValue === "string") {
-    try { list = JSON.parse(f.json.stringValue); } catch (e) { list = []; }
-  }
-  if (!Array.isArray(list)) list = [];
+  parts.forEach(function (p) { if (Array.isArray(p)) list = list.concat(p); });
   cache = { at: Date.now(), list: list };
   return list;
 }

@@ -502,6 +502,7 @@
         </div>
       </div>
       <div class="hint" id="artUsage"></div>
+      <div class="hint" id="artRepairMsg" style="display:none; border-color:var(--accent);"></div>
       <div class="list" id="artList"></div>
 
       <div class="editor hidden" id="artEditor">
@@ -1344,6 +1345,38 @@
     for (let i = 0; i < writeCount; i++) jobs.push(save(ART_SHARD_KEYS[i], shards[i] || [], guard));
     artShardsUsed = shards.length;
     return Promise.all(jobs).then(oks => oks.every(Boolean));
+  }
+
+  // Хуучин нийтлэлүүдийн дэмжигдэхгүй форматтай зургийг нэг удаа JPEG болгож
+  // засна. Урьд нь AVIF зураг хэвээрээ хадгалагдаж, сошиалд хуваалцахад
+  // нийтлэлийн биш, сайтын брэнд зураг гарч байсан.
+  let imgRepairDone = false;
+  function repairArticleImages() {
+    if (imgRepairDone) return;
+    const bad = (articles || []).filter(a =>
+      a && typeof a.image === 'string' && a.image.indexOf('data:') === 0 && !isSocialSafeImage(a.image));
+    if (!bad.length) { imgRepairDone = true; return; }
+    imgRepairDone = true;   // дахин давхар ажиллахаас сэргийлнэ
+    Promise.all(bad.map(a =>
+      compressDataUrl(a.image).then(out => {
+        if (out && isSocialSafeImage(out)) { a.image = out; return a.title || a.id; }
+        return null;
+      }).catch(() => null)
+    )).then(names => {
+      const fixed = names.filter(Boolean);
+      if (!fixed.length) return;
+      saveArticles().then(ok => {
+        // Хадгалж чадаагүй бол дараагийн ачаалалд дахин оролдоно
+        if (!ok) { imgRepairDone = false; return; }
+        console.info('[admin] Сошиалд дэмжигдэхгүй форматтай зургийг JPEG болголоо:', fixed);
+        if (typeof renderArticles === 'function') renderArticles();
+        const el = document.getElementById('artRepairMsg');
+        if (el) {
+          el.textContent = '\u2713 ' + fixed.length + ' нийтлэлийн зургийг сошиалд тохирох (JPEG) хэлбэрт шилжүүллээ.';
+          el.style.display = '';
+        }
+      });
+    });
   }
   // ---------- Нүүр хуудасны текстүүд ----------
   const DEFAULT_SECTIONS = {
@@ -2826,12 +2859,26 @@
   function isRasterPhoto(dataUrl) {
     return /^data:image\/(jpeg|jpg|png|webp|avif|bmp)/i.test(String(dataUrl || ''));
   }
+  // Facebook, LinkedIn зэрэг crawler-ууд эдгээр форматыг л найдвартай уншина.
+  // AVIF/HEIC зэргийг og:image болгон өгвөл preview-д зураг огт гарахгүй.
+  function isSocialSafeImage(dataUrl) {
+    return /^data:image\/(jpeg|jpg|png|gif|webp)/i.test(String(dataUrl || ''));
+  }
   function compressDataUrl(dataUrl, maxW, target) {
     maxW = maxW || IMG_MAX_W; target = target || IMG_TARGET;
     return new Promise(resolve => {
       if (!isRasterPhoto(dataUrl)) { resolve(dataUrl); return; }
       const img = new Image();
-      img.onerror = () => resolve(dataUrl); // задалж чадсангүй — хэвээр нь үлдээнэ
+      img.onerror = () => {
+        // Задалж чадсангүй — хэвээр нь үлдээнэ. Сошиалд дэмжигдэхгүй формат
+        // бол хуваалцахад зураг нь гарахгүй тул админд шууд хэлнэ.
+        if (!isSocialSafeImage(dataUrl)) {
+          alert('Энэ зургийн форматыг хөтөч задалж чадсангүй.\n\n'
+            + 'Facebook, LinkedIn дээр хуваалцахад зураг нь гарахгүй тул '
+            + 'JPEG эсвэл PNG хэлбэрээр хөрвүүлж оруулна уу.');
+        }
+        resolve(dataUrl);
+      };
       img.onload = () => {
         const iw = img.naturalWidth || maxW, ih = img.naturalHeight || maxW;
         const scale = Math.min(1, maxW / iw);
@@ -2848,8 +2895,12 @@
           out = cv.toDataURL('image/jpeg', q);
           if (out.length <= target) break;
         }
-        // Шахсан нь эхнийхээсээ том болвол эхнийхийг нь хэвээр үлдээнэ
-        resolve(out && out.length < dataUrl.length ? out : dataUrl);
+        // Шахсан нь эхнийхээсээ том болвол эхнийхийг нь хэвээр үлдээнэ.
+        // ГЭХДЭЭ эх формат нь сошиалд дэмжигдэхгүй бол (AVIF нь JPEG-ээс
+        // жижиг гардаг тул урьд нь энд хэвээрээ үлдэж, хуваалцахад зураг нь
+        // гардаггүй байв) хэмжээ томорсон ч JPEG хувилбарыг заавал сонгоно.
+        const mustConvert = !isSocialSafeImage(dataUrl);
+        resolve(out && (mustConvert || out.length < dataUrl.length) ? out : dataUrl);
       };
       img.src = dataUrl;
     });
@@ -3725,6 +3776,9 @@
         // true (админ) эсвэл null (сүлжээгээр тодорхойлж чадсангүй) — оруулна
         showApp();
         startAdminWatches();
+        // Зургийн засвар Firestore руу БИЧДЭГ тул эрх баталгаажсаны дараа,
+        // контент ачаалагдсан үед л ажиллуулна.
+        KPICloud.ready.then(repairArticleImages);
       }
     });
   });

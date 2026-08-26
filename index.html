@@ -1604,19 +1604,22 @@
     { key: 'fb', label: 'Facebook' },
     { key: 'email', label: 'Email' }
   ];
-  // Нийтлэл бүр өөрийн холбоостой байхын тулд #article-<id> хаяг үүсгэнэ
+  // Нийтлэлийн ганц хаяг: /a/<id>. Сервер (api/share.js) энэ хаягаар тухайн
+  // нийтлэлийн гарчиг, тайлбар, ЗУРАГ бүхий OG таг буцаадаг тул Facebook,
+  // LinkedIn дээр зурагтай preview гарна. Хүн ороход SPA руу шилжинэ.
+  //
+  // Урьд нь уншиж байх үед хаягийн мөрөнд #article-<id> харагддаг байсан тул
+  // хаягаа хуулж тавьсан хүнд зураг гардаггүй байв (crawler нь hash-ийг үл
+  // хардаг). Одоо уншиж байх үед ч, хуваалцах товчоор ч ижил хаяг гарна.
   function articleUrl(id) {
-    return location.origin + location.pathname + '#article-' + encodeURIComponent(id);
+    return location.origin + articlePath(id);
   }
-  // Гадаад сүлжээнд хуваалцах хаяг: /a/<id> нь серверээс тухайн нийтлэлийн
-  // гарчиг, тайлбар, ЗУРАГ бүхий OG таг буцаадаг тул Facebook/LinkedIn дээр
-  // зурагтай preview гарна (hash хаяг ажилладаггүй). Хүн ороход SPA руу шилжинэ.
-  function shareUrl(id) {
-    return location.origin + '/a/' + encodeURIComponent(id);
+  function articlePath(id) {
+    return '/a/' + encodeURIComponent(id);
   }
   function shareTo(platform, id) {
     const a = ARTICLES.find(x => x.id === id);
-    const url = encodeURIComponent(id ? shareUrl(id) : location.href);
+    const url = encodeURIComponent(id ? articleUrl(id) : location.href);
     const title = encodeURIComponent(a ? a.title : document.title);
     let u = '';
     if (platform === 'li') u = 'https://www.linkedin.com/sharing/share-offsite/?url=' + url;
@@ -1757,8 +1760,9 @@
     arOverlay.scrollTop = 0; window.scrollTo(0, 0);
     arOverlay.classList.add('open');
     document.body.style.overflow = 'hidden';
-    // Хуваалцсан холбоос нээгдэхэд яг энэ нийтлэл дээр очихын тулд хаягийг тэмдэглэнэ
-    try { history.replaceState(null, '', '#article-' + encodeURIComponent(id)); } catch (e) {}
+    // Хаягийн мөрөнд хуваалцахад тохирох жинхэнэ хаягийг гаргана. Хэрэглэгч
+    // хаягаа хуулж сошиалд тавихад OG таг бүхий /a/<id> очно.
+    try { history.replaceState(null, '', articlePath(id)); } catch (e) {}
     // Нийтлэл нээгдсэнийг тусад нь бүртгэнэ (хуудсын үзэлтээс салангид)
     try { if (window.KPITrack) window.KPITrack.view('article', id); } catch (e) {}
   }
@@ -1796,8 +1800,10 @@
   function closeArticle() {
     arOverlay.classList.remove('open');
     document.body.style.overflow = '';
-    if (location.hash.indexOf('#article-') === 0) {
-      try { history.replaceState(null, '', location.pathname + location.search); } catch (e) {}
+    const onArticleUrl = location.hash.indexOf('#article-') === 0
+      || /^\/a\//.test(location.pathname);
+    if (onArticleUrl) {
+      try { history.replaceState(null, '', '/' + location.search); } catch (e) {}
     }
   }
   // #article-<id> хаягаар орж ирвэл тухайн нийтлэлийг нээнэ (нэг л удаа)
