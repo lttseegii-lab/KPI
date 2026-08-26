@@ -58,7 +58,7 @@
         }
       },
       "organizer": { "@id": "https://kpiconsulting.mn/#organization" },
-      "performer": { "@id": "https://kpiconsulting.mn/#organization" },
+      "performer": { "@id": "https://kpiconsulting.mn/kpi360#instructor" },
       "offers": {
         "@type": "Offer",
         "url": "https://kpiconsulting.mn/kpi360",
@@ -67,6 +67,23 @@
         "availability": "https://schema.org/LimitedAvailability",
         "category": "Нэг суудал"
       }
+    },
+    {
+      "@type": "Person",
+      "@id": "https://kpiconsulting.mn/kpi360#instructor",
+      "name": "Б.Баярцэцэг",
+      "jobTitle": "Захирал · Хүний нөөцийн зөвлөх",
+      "image": "https://kpiconsulting.mn/kpi360-instructor.jpg",
+      "description": "Хүний нөөцийн салбарт 2015 оноос хойш тасралтгүй ажиллаж, 2020 оноос хүний нөөцийн зөвлөх үйлчилгээний чиглэлээр мэргэшин ажилласан туршлагатай.",
+      "worksFor": { "@id": "https://kpiconsulting.mn/#organization" },
+      "knowsAbout": [
+        "Хүний нөөцийн стратеги, бодлого",
+        "Гүйцэтгэлийн удирдлагын тогтолцоо",
+        "Ур чадвар, компетенцийн тогтолцоо",
+        "Хүний нөөцийн мэдээллийн систем /HRIS/",
+        "Green HRM",
+        "Ажлын байрны шинжилгээ, тодорхойлолт"
+      ]
     },
     {
       "@type": "Organization",
@@ -285,9 +302,22 @@
 
   /* ---- instructor ---- */
   .instructor-wrap{background:var(--card); border:1px solid var(--line); border-top:4px solid var(--yellow); border-radius:10px; padding:36px;}
+  .instructor-head{display:grid; grid-template-columns:180px 1fr; gap:32px; align-items:start;}
+  .instructor-photo{width:180px; height:180px; border-radius:10px; object-fit:cover; background:var(--paper);}
   .instructor-wrap h3{font-size:20px; margin-bottom:4px; color:var(--navy);}
   .instructor-role{font-size:12.5px; color:var(--cyan); font-weight:700; margin-bottom:14px;}
   .instructor-wrap p{font-size:14px; color:var(--slate); line-height:1.65; max-width:640px;}
+  .instructor-sub{font-family:'Montserrat',sans-serif; font-weight:800; font-size:13px; color:var(--navy);
+    letter-spacing:.4px; margin:32px 0 16px; padding-top:24px; border-top:1px solid var(--line);}
+  .proj-list{display:grid; grid-template-columns:1fr 1fr; gap:14px 28px;}
+  .proj{display:flex; gap:12px; align-items:baseline;}
+  .proj-year{flex:0 0 auto; font-family:'Montserrat',sans-serif; font-weight:800; font-size:12px;
+    color:var(--navy); background:var(--yellow); border-radius:4px; padding:3px 8px; line-height:1.3;}
+  .proj-org{font-size:13.5px; font-weight:700; color:var(--ink); line-height:1.45;}
+  .proj-desc{font-size:12.5px; color:var(--slate); line-height:1.5; margin-top:2px;}
+  .skill-tags{display:flex; flex-wrap:wrap; gap:8px;}
+  .skill-tag{font-size:12.5px; font-weight:600; color:var(--navy); background:var(--paper);
+    border:1px solid var(--line); border-radius:100px; padding:6px 14px;}
 
   /* ---- FAQ ---- */
   .faq-item{border-bottom:1px solid var(--line);}
@@ -344,6 +374,9 @@
     .deliv-grid{grid-template-columns:1fr;}
     .who-grid{grid-template-columns:1fr; gap:28px;}
     .instructor-wrap{padding:26px;}
+    .instructor-head{grid-template-columns:1fr; gap:20px;}
+    .instructor-photo{width:140px; height:140px;}
+    .proj-list{grid-template-columns:1fr;}
     .cta-panel{grid-template-columns:1fr;}
     .timeline{flex-wrap:wrap; row-gap:20px;}
     .timeline::before{display:none;}
@@ -546,10 +579,101 @@
       <h2>Сургалтын багш</h2>
     </div>
     <div class="instructor-wrap reveal">
-      <div>
-        <h3>[Багшийн нэр]</h3>
-        <div class="instructor-role">[Албан тушаал / Мэргэшил]</div>
-        <p>[Товч танилцуулга бичнэ үү: туршлагын жил, ажилласан салбарууд, бодит үр дүн — жишээ нь "20 гаруй байгууллагад KPI-ийн тоог 40-өөс дээш байснаа стратегитай шууд холбоотой 8 KPI болгож бууруулахад дэмжлэг үзүүлсэн." Нийтлэхээсээ өмнө энэ хэсгийг бодит багшийн намтраар солино уу.]</p>
+      <div class="instructor-head">
+        <img class="instructor-photo" src="kpi360-instructor.jpg" width="180" height="180"
+             alt="Б.Баярцэцэг — KPI consulting-ийн захирал, сургалтын багш" loading="lazy">
+        <div>
+          <h3>Б.Баярцэцэг</h3>
+          <div class="instructor-role">Захирал · Хүний нөөцийн зөвлөх</div>
+          <p>Хүний нөөцийн салбарт 2015 оноос хойш тасралтгүй ажиллаж, 2020 оноос хүний нөөцийн зөвлөх үйлчилгээний чиглэлээр мэргэшин ажилласан туршлагатай. Байгууллагын гүйцэтгэлийн удирдлага, ур чадварын тогтолцоо, хүний нөөцийн мэдээллийн систем, Green HRM, хүний нөөцийн бодлого, ажлын байрны шинжилгээ ба тодорхойлолт зэрэг чиглэлээр төрийн болон хувийн хэвшлийн байгууллагуудад төсөл, зөвлөх үйлчилгээг удирдан хэрэгжүүлж ажилласан.</p>
+        </div>
+      </div>
+
+      <div class="instructor-sub">АЖИЛЛАСАН ТӨСЛҮҮД</div>
+      <div class="proj-list">
+        <div class="proj">
+          <span class="proj-year">2020</span>
+          <div>
+            <div class="proj-org">Нийгмийн даатгалын ерөнхий газар</div>
+            <div class="proj-desc">Хүний нөөцийн систем нэвтрүүлэлтийн төсөл</div>
+          </div>
+        </div>
+        <div class="proj">
+          <span class="proj-year">2022</span>
+          <div>
+            <div class="proj-org">Монгол Даатгал ХК</div>
+            <div class="proj-desc">Хүний нөөцийн систем нэвтрүүлэлтийн төсөл</div>
+          </div>
+        </div>
+        <div class="proj">
+          <span class="proj-year">2022</span>
+          <div>
+            <div class="proj-org">АПУ ХК</div>
+            <div class="proj-desc">Хүний нөөцийн систем нэвтрүүлэлтийн төсөл</div>
+          </div>
+        </div>
+        <div class="proj">
+          <span class="proj-year">2022</span>
+          <div>
+            <div class="proj-org">Shangri-La</div>
+            <div class="proj-desc">Хүний нөөцийн систем нэвтрүүлэлтийн төсөл</div>
+          </div>
+        </div>
+        <div class="proj">
+          <span class="proj-year">2022</span>
+          <div>
+            <div class="proj-org">Мастер Групп</div>
+            <div class="proj-desc">Ур чадварын тогтолцоо боловсруулах, нэвтрүүлэх зөвлөх үйлчилгээ</div>
+          </div>
+        </div>
+        <div class="proj">
+          <span class="proj-year">2023</span>
+          <div>
+            <div class="proj-org">Ай Си Ти Групп</div>
+            <div class="proj-desc">Гүйцэтгэлийн удирдлагын систем боловсруулах, нэвтрүүлэх зөвлөх үйлчилгээ</div>
+          </div>
+        </div>
+        <div class="proj">
+          <span class="proj-year">2023</span>
+          <div>
+            <div class="proj-org">Дижитал Эдү Менежмент ХХК</div>
+            <div class="proj-desc">Байгууллагын хүний нөөцийн бүхий л чиг үүрэг, үйл ажиллагааг удирдан зохион байгуулж ажилласан</div>
+          </div>
+        </div>
+        <div class="proj">
+          <span class="proj-year">2023</span>
+          <div>
+            <div class="proj-org">Өрх ХХК</div>
+            <div class="proj-desc">Хүний нөөцийн бодлого, журам болон холбогдох баримт бичиг боловсруулах зөвлөх үйлчилгээ</div>
+          </div>
+        </div>
+        <div class="proj">
+          <span class="proj-year">2023</span>
+          <div>
+            <div class="proj-org">Гэр бүл, хөдөлмөр, нийгмийн хамгааллын яам</div>
+            <div class="proj-desc">EJOB платформд шинээр бүртгэгдсэн ажил, мэргэжлүүдийн ажлын байрны дэлгэрэнгүй тодорхойлолт боловсруулах зөвлөх үйлчилгээ</div>
+          </div>
+        </div>
+        <div class="proj">
+          <span class="proj-year">2024</span>
+          <div>
+            <div class="proj-org">Электрокомплект ХХК</div>
+            <div class="proj-desc">Хүний хөгжлийн албаны үйл ажиллагаа, хүний нөөцийн бодлого, төлөвлөлтийг удирдан ажилласан</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="instructor-sub">ГОЛ МЭРГЭШЛИЙН ЧИГЛЭЛ</div>
+      <div class="skill-tags">
+        <span class="skill-tag">Хүний нөөцийн стратеги, бодлого</span>
+        <span class="skill-tag">Гүйцэтгэлийн удирдлагын тогтолцоо</span>
+        <span class="skill-tag">Ур чадвар, компетенцийн тогтолцоо</span>
+        <span class="skill-tag">Хүний нөөцийн мэдээллийн систем /HRIS/</span>
+        <span class="skill-tag">Green HRM</span>
+        <span class="skill-tag">Ажлын байрны шинжилгээ, тодорхойлолт</span>
+        <span class="skill-tag">Хүний нөөцийн процессын зураглал, сайжруулалт</span>
+        <span class="skill-tag">Байгууллагын хүний хөгжлийн бодлого, тогтолцоо</span>
+        <span class="skill-tag">Хүний нөөцийн зөвлөх үйлчилгээ, төсөл хэрэгжүүлэлт</span>
       </div>
     </div>
   </div>
