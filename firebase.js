@@ -407,6 +407,30 @@
     ready = Promise.resolve(false);
   }
 
+  // ---- Хуудас үзэлтийн тайлан (зөвхөн админ) ------------------------------
+  // analytics.js нь өдөр тутмын analytics/YYYY-MM-DD баримтыг increment-ээр
+  // өсгөж бичдэг. Энд сүүлийн N хоногийн баримтыг уншиж, өдрөөр эрэмбэлж өгнө.
+  function loadAnalytics(days) {
+    if (!online) return Promise.resolve([]);
+    var n = days || 30;
+    // Огноог Монголын цагаар (UTC+8) — analytics.js-тэй ижил тооллоор
+    var TZ = 8 * 60 * 60 * 1000;
+    var from = new Date(Date.now() + TZ - (n - 1) * 86400000).toISOString().slice(0, 10);
+    return db.collection("analytics")
+      .where("day", ">=", from)
+      .orderBy("day")
+      .get()
+      .then(function (snap) {
+        var arr = [];
+        snap.forEach(function (d) { arr.push(Object.assign({ day: d.id }, d.data())); });
+        return arr;
+      })
+      .catch(function (err) {
+        console.error("[KPICloud] тайлан уншиж чадсангүй:", err);
+        return [];
+      });
+  }
+
   window.KPICloud = {
     // content
     get: get, set: set, watch: watch,
@@ -420,6 +444,8 @@
     // auth
     signIn: signIn, signOut: signOut, onAuth: onAuth, authUser: authUser, checkAdmin: checkAdmin,
     createAdmin: createAdmin, watchAdmins: watchAdmins, removeAdmin: removeAdmin,
+    // тайлан
+    loadAnalytics: loadAnalytics,
     // misc
     ready: ready, online: online, db: db, auth: auth, CONTENT_KEYS: CONTENT_KEYS
   };

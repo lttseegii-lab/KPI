@@ -289,6 +289,17 @@
   .spark-x { display:flex; gap:4px; margin-top:7px; }
   .spark-x span { flex:1; min-width:0; text-align:center; font-size:10px; color:var(--muted); }
 
+  /* Тайлан — задаргааны мөр (шошго + харьцааны багана + тоо) */
+  .brk { display:flex; flex-direction:column; gap:9px; }
+  .brk-row { display:grid; grid-template-columns:minmax(0,1fr) 44px; gap:10px; align-items:center; }
+  .brk-l { min-width:0; }
+  .brk-t { font-size:12.5px; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .brk-track { height:6px; border-radius:4px; background:var(--accent-soft); margin-top:5px; overflow:hidden; }
+  .brk-fill { height:100%; border-radius:4px; background:var(--accent); }
+  .brk-v { font-size:12.5px; font-weight:700; text-align:right; font-variant-numeric:tabular-nums; }
+  .rep-range { display:flex; gap:6px; flex-wrap:wrap; }
+  .rep-range .btn.on { background:var(--accent); border-color:var(--accent); color:#fff; }
+
   .feed-row { display:flex; gap:12px; align-items:flex-start; padding:11px 0; border-bottom:1px solid var(--line); }
   .feed-row:first-child { padding-top:0; }
   .feed-row:last-child { border-bottom:0; padding-bottom:0; }
@@ -348,6 +359,7 @@
   <main class="wrap admin-layout">
     <div class="tabs">
       <div class="tab active" data-tab="home" onclick="switchTab('home')">Нүүр</div>
+      <div class="tab" data-tab="reports" onclick="switchTab('reports')">Тайлан</div>
       <!-- Бүтээгдэхүүн — бүтээгдэхүүн бүр дэд цэс болно (жагсаалтыг JS зурна) -->
       <div class="tab tab-group" id="productsToggle" onclick="toggleProducts()" role="button" tabindex="0"
            aria-expanded="false" aria-controls="productsSub"
@@ -412,6 +424,54 @@
             <button class="btn" onclick="exportLeads()">⬇️ Лидүүдийн CSV татах</button>
             <a class="btn" href="/" target="_blank">🌐 Сайтыг шинэ цонхонд нээх</a>
           </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Тайлан — хуудас үзэлт ===== -->
+    <section id="tab-reports" class="hidden">
+      <div class="panel-head">
+        <h2>Тайлан</h2>
+        <div class="actions">
+          <div class="rep-range" id="repRange">
+            <button class="btn" data-days="7"  onclick="setReportRange(7)">7 хоног</button>
+            <button class="btn on" data-days="30" onclick="setReportRange(30)">30 хоног</button>
+            <button class="btn" data-days="90" onclick="setReportRange(90)">90 хоног</button>
+          </div>
+          <button class="btn" onclick="renderReports(true)">↻ Шинэчлэх</button>
+        </div>
+      </div>
+      <div class="hint">Сайт болон сургалтын хуудсанд хэдэн хүн орж үзсэн, хаанаас орж ирснийг өдрөөр нэгтгэн харуулна. Огноог Монголын цагаар (UTC+8) тооцно. Зочны тоо нь тухайн өдөр орсон хөтөч тус бүрийг нэг удаа тоолсон дүн.</div>
+
+      <div class="stat-grid" id="repStats"></div>
+
+      <div class="card-box" style="margin-top:16px;">
+        <h3>Өдрийн үзэлт <em id="repChartSum"></em></h3>
+        <div class="spark" id="repChart"></div>
+        <div class="spark-x" id="repChartX"></div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="card-box">
+          <h3>Хуудсууд <em>Үзэлтээр</em></h3>
+          <div class="brk" id="repPages"></div>
+        </div>
+        <div class="card-box">
+          <h3>Хаанаас орж ирсэн <em>Сессээр</em></h3>
+          <div class="brk" id="repRefs"></div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="card-box">
+          <h3>Мэдээ нийтлэл <em id="repArtSum"></em></h3>
+          <div class="brk" id="repArticles"></div>
+        </div>
+        <div class="card-box">
+          <h3>Төхөөрөмж, хөтөч <em>Сессээр</em></h3>
+          <div class="brk" id="repDevices"></div>
+          <h3 style="margin-top:20px;">Хөтөч</h3>
+          <div class="brk" id="repBrowsers"></div>
         </div>
       </div>
     </section>
@@ -1413,9 +1473,11 @@
     document.getElementById('artEditor').classList.add('hidden');
     document.body.style.overflow = '';
     // Гарсны дараа хувийн мэдээллийг DOM-оос цэвэрлэх (хуваалцсан компьютерээс сэргийлэх)
-    ['qrList', 'bookingList', 'usrList', 'subList', 'fbList', 'admList', 'homeFeed', 'homeBookings', 'homeStats'].forEach(id => {
+    ['qrList', 'bookingList', 'usrList', 'subList', 'fbList', 'admList', 'homeFeed', 'homeBookings', 'homeStats',
+     'repStats', 'repChart', 'repChartX', 'repPages', 'repRefs', 'repArticles', 'repDevices', 'repBrowsers'].forEach(id => {
       const el = document.getElementById(id); if (el) el.innerHTML = '';
     });
+    repCache = null;
   }
 
   // ---------- Tabs ----------
@@ -1454,9 +1516,10 @@
     // «Хэрэглэгч» хуудсан дээр бүртгэлтэй хэрэглэгч, захиалагч, санал хүсэлтийг и-мэйлээр
     // нь нэгтгэн НЭГ лидийн жагсаалтад харуулна (тусдаа хэсэг байхгүй).
     const visible = [t];
-    ['home','products','articles','why','pricing','schedule','popup','users','sections','authors','register','admins','contact'].forEach(name =>
+    ['home','reports','products','articles','why','pricing','schedule','popup','users','sections','authors','register','admins','contact'].forEach(name =>
       document.getElementById('tab-' + name).classList.toggle('hidden', visible.indexOf(name) === -1));
     if (t === 'home') renderHome();
+    if (t === 'reports') renderReports();
     if (t === 'products') renderProductsAdmin();
     if (t === 'schedule') { renderBulkControls(); renderAvList(); renderBookings(); }
     if (t === 'pricing') { renderQuestions(); renderQuoteRequests(); }
@@ -1504,6 +1567,142 @@
       + '<div class="v">' + value + '</div>'
       + '<div class="d' + (delta && delta.up ? ' up' : '') + '">' + esc(delta ? delta.text : '') + '</div></div>';
   }
+  // ---------- Тайлан (хуудас үзэлт) ----------
+  // Өгөгдлийг analytics.js нь өдөр тутмын analytics/YYYY-MM-DD баримтад
+  // increment-ээр бичдэг. Энд сүүлийн N хоногийг нэгтгэж харуулна.
+  let repDays = 30;
+  let repCache = null;      // { days, at, rows }
+  const REP_CACHE_MS = 60 * 1000;
+
+  function setReportRange(days) {
+    repDays = days;
+    document.querySelectorAll('#repRange .btn').forEach(b =>
+      b.classList.toggle('on', Number(b.dataset.days) === days));
+    renderReports(true);
+  }
+
+  // Монголын цагаар (UTC+8) огноо — analytics.js-тэй ижил тооллоор
+  function mnDay(ts) {
+    return new Date((ts == null ? Date.now() : ts) + 8 * 3600000).toISOString().slice(0, 10);
+  }
+  function sumMap(rows, field) {
+    const out = {};
+    rows.forEach(r => {
+      const m = r[field];
+      if (!m || typeof m !== 'object') return;
+      Object.keys(m).forEach(k => { out[k] = (out[k] || 0) + (Number(m[k]) || 0); });
+    });
+    return out;
+  }
+  function topPairs(obj, n) {
+    return Object.keys(obj).map(k => [k, obj[k]])
+      .sort((a, b) => b[1] - a[1]).slice(0, n || 12);
+  }
+  function brkList(pairs, labelFn) {
+    if (!pairs.length) return '<div class="empty">Одоогоор өгөгдөл алга.</div>';
+    const max = Math.max.apply(null, pairs.map(p => p[1]).concat([1]));
+    return pairs.map(p =>
+      '<div class="brk-row"><div class="brk-l">'
+      + '<div class="brk-t" title="' + esc(labelFn ? labelFn(p[0]) : p[0]) + '">'
+      + esc(labelFn ? labelFn(p[0]) : p[0]) + '</div>'
+      + '<div class="brk-track"><div class="brk-fill" style="width:'
+      + Math.max(2, Math.round(p[1] / max * 100)) + '%"></div></div></div>'
+      + '<div class="brk-v">' + p[1].toLocaleString('en-US') + '</div></div>'
+    ).join('');
+  }
+
+  const REP_PAGE_NAMES = { home: 'Нүүр хуудас', kpi360: 'KPI360 сургалтын хуудас', article: 'Нийтлэл (нээсэн)' };
+  const REP_REF_NAMES = {
+    direct: 'Шууд орсон', facebook: 'Facebook', instagram: 'Instagram', google: 'Google хайлт',
+    linkedin: 'LinkedIn', twitter: 'X / Twitter', youtube: 'YouTube', bing: 'Bing',
+    'search-other': 'Бусад хайлтын систем', other: 'Тодорхойгүй'
+  };
+  const REP_DEVICE_NAMES = { mobile: 'Гар утас', tablet: 'Таблет', desktop: 'Компьютер' };
+  const REP_BROWSER_NAMES = {
+    chrome: 'Chrome', safari: 'Safari', firefox: 'Firefox', edge: 'Edge',
+    samsung: 'Samsung Internet', opera: 'Opera', other: 'Бусад'
+  };
+
+  function renderReports(force) {
+    if (!document.getElementById('repStats')) return;
+    const fresh = repCache && repCache.days === repDays
+      && (Date.now() - repCache.at) < REP_CACHE_MS;
+    if (fresh && !force) return drawReports(repCache.rows);
+
+    document.getElementById('repStats').innerHTML =
+      '<div class="stat"><div class="k">Уншиж байна…</div></div>';
+    KPICloud.loadAnalytics(repDays).then(rows => {
+      repCache = { days: repDays, at: Date.now(), rows: rows };
+      drawReports(rows);
+    });
+  }
+
+  function drawReports(rows) {
+    if (!document.getElementById('repStats')) return;
+    const byDay = {};
+    rows.forEach(r => { byDay[r.day] = r; });
+
+    // --- Өдрийн мөрүүд (өгөгдөлгүй өдрийг 0-ээр нөхнө) ---
+    const days = [];
+    for (let i = repDays - 1; i >= 0; i--) days.push(mnDay(Date.now() - i * DAY_MS));
+    const counts = days.map(d => Number((byDay[d] || {}).views) || 0);
+
+    const pages = sumMap(rows, 'pages');
+    const arts = sumMap(rows, 'articles');
+    const refs = sumMap(rows, 'refs');
+    const devs = sumMap(rows, 'devices');
+    const brws = sumMap(rows, 'browsers');
+
+    const totalViews = counts.reduce((a, b) => a + b, 0);
+    const totalVisitors = rows.reduce((a, r) => a + (Number(r.visitors) || 0), 0);
+    const artViews = Object.keys(arts).reduce((a, k) => a + arts[k], 0);
+    const avg = Math.round(totalViews / repDays);
+    const period = repDays + ' хоногт';
+
+    document.getElementById('repStats').innerHTML = [
+      statCard('👀', 'Нийт үзэлт', totalViews.toLocaleString('en-US'), { text: period }),
+      statCard('🧑', 'Зочин', totalVisitors.toLocaleString('en-US'), { text: 'Давхардалгүй, өдрөөр' }),
+      statCard('🏠', 'Нүүр хуудас', (pages.home || 0).toLocaleString('en-US'), { text: period }),
+      statCard('🎓', 'Сургалтын хуудас', (pages.kpi360 || 0).toLocaleString('en-US'), { text: '/kpi360' }),
+      statCard('📰', 'Нийтлэл нээсэн', artViews.toLocaleString('en-US'), { text: Object.keys(arts).length + ' нийтлэл' }),
+      statCard('📈', 'Өдрийн дундаж', avg.toLocaleString('en-US'), { text: 'Үзэлт / хоног' })
+    ].join('');
+
+    // --- Өдрийн багана ---
+    const max = Math.max.apply(null, counts.concat([1]));
+    const every = repDays > 45 ? 10 : (repDays > 14 ? 5 : 2);
+    document.getElementById('repChartSum').textContent = 'Нийт ' + totalViews.toLocaleString('en-US');
+    document.getElementById('repChart').innerHTML = counts.map((c, i) =>
+      '<div class="bar' + (c ? ' has' : '') + '" style="height:' + Math.max(3, Math.round(c / max * 100)) + '%"'
+      + ' title="' + days[i] + ' — ' + c + ' үзэлт"></div>'
+    ).join('');
+    document.getElementById('repChartX').innerHTML = days.map((d, i) =>
+      '<span>' + ((repDays - 1 - i) % every === 0 ? d.slice(8) : '') + '</span>'
+    ).join('');
+
+    // --- Задаргаанууд ---
+    document.getElementById('repPages').innerHTML =
+      brkList(topPairs(pages, 12), k => REP_PAGE_NAMES[k] || '/' + k);
+    document.getElementById('repRefs').innerHTML =
+      brkList(topPairs(refs, 12), k => REP_REF_NAMES[k] || k);
+    document.getElementById('repDevices').innerHTML =
+      brkList(topPairs(devs, 5), k => REP_DEVICE_NAMES[k] || k);
+    document.getElementById('repBrowsers').innerHTML =
+      brkList(topPairs(brws, 7), k => REP_BROWSER_NAMES[k] || k);
+
+    // Нийтлэлийн түлхүүр нь analytics.js-д цэвэрлэгдсэн байдаг тул
+    // жинхэнэ id-г мөн адил цэвэрлэж тааруулна.
+    const artTitle = {};
+    (articles || []).forEach(a => {
+      const k = String(a.id || '').toLowerCase().replace(/[^a-z0-9_-]+/g, '-')
+        .replace(/^-+|-+$/g, '').slice(0, 60);
+      if (k) artTitle[k] = a.title || a.id;
+    });
+    document.getElementById('repArtSum').textContent = artViews ? 'Нийт ' + artViews : '';
+    document.getElementById('repArticles').innerHTML =
+      brkList(topPairs(arts, 10), k => artTitle[k] || k);
+  }
+
   function renderHome() {
     if (!document.getElementById('homeStats')) return;
     const subs = uniqueSubs();

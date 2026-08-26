@@ -11,6 +11,7 @@ Firebase (Firestore + Authentication) backend-тэй.
 | `kpi360.html` | KPI360 Masterclass кампанит ажлын landing page (`/kpi360`) |
 | `admin.html` | Админ удирдлага (Firebase Auth нэвтрэлт) |
 | `firebase.js` | Firestore + Auth нийтлэг давхарга (`KPICloud`) |
+| `analytics.js` | Хуудас үзэлтийн хэмжилт (Firestore REST, SDK шаардахгүй) |
 | `firestore.rules` | Аюулгүй байдлын дүрэм |
 
 ## Өгөгдлийн загвар (Firestore)
@@ -18,6 +19,8 @@ Firebase (Firestore + Authentication) backend-тэй.
 - `content/*` — нийтийн контент. Хэн ч унших, зөвхөн админ засах.
 - `submissions/*` — зочны хүсэлт/захиалга/бүртгэл. Зочид зөвхөн үүсгэх, зөвхөн админ унших.
 - `public/taken_slots` — захиалагдсан цаг (PII биш).
+- `analytics/*` — өдөр тутмын хуудас үзэлтийн тоолуур (PII биш). Хэн ч өсгөх,
+  зөвхөн админ унших. Тайланг админы «Тайлан» хэсгээс харна.
 - `admins/*` — админы UID жагсаалт.
 
 ## Deploy

@@ -17,6 +17,8 @@ rules_version = '2';
 //   • submissions/*  — зочны хүсэлт/захиалга/бүртгэл (хувийн мэдээлэлтэй).
 //                      Зочид зөвхөн ҮҮСГЭНЭ, зөвхөн админ УНШИХ/УСТГАНА.
 //   • public/taken_slots — захиалагдсан цаг (огноо+цаг, PII биш). Хэн ч унших/бичих.
+//   • analytics/*    — өдөр тутмын хуудас үзэлтийн тоолуур (PII биш).
+//                      Хэн ч өсгөнө, зөвхөн админ УНШИНА.
 //   • admins/*       — админы UID жагсаалт. Зөвхөн одоогийн админ удирдана.
 // =============================================================================
 
@@ -134,6 +136,28 @@ service cloud.firestore {
       allow write: if request.resource.data.keys().hasOnly(['slots'])
         && request.resource.data.slots is list
         && request.resource.data.slots.size() <= 1000;
+    }
+
+    // Хуудас үзэлтийн хэмжилт — өдөр тутмын нэгтгэсэн тоолуур (analytics.js бичнэ).
+    //   • Хэн ч ӨСГӨНӨ (зочин хуудас нээхэд), гэхдээ зөвхөн админ УНШИНА —
+    //     сайтын урсгалын тоо нийтэд харагдах ёсгүй.
+    //   • PII агуулахгүй: зөвхөн тоолуур ба ангиллын түлхүүр.
+    //   • Түлхүүрийн тоог хязгаарлаж, хязгааргүй том баримт үүсгэхээс сэргийлнэ.
+    match /analytics/{day} {
+      allow read: if isAdmin();
+      allow create, update: if day.matches('^[0-9]{4}-[0-9]{2}-[0-9]{2}$')
+        && request.resource.data.keys().hasOnly([
+             'day','views','visitors','pages','articles','refs','devices','browsers'
+           ])
+        && request.resource.data.day == day
+        && request.resource.data.views is int
+        && (!('visitors' in request.resource.data) || request.resource.data.visitors is int)
+        && (!('pages'    in request.resource.data) || request.resource.data.pages.size()    <= 100)
+        && (!('articles' in request.resource.data) || request.resource.data.articles.size() <= 400)
+        && (!('refs'     in request.resource.data) || request.resource.data.refs.size()     <= 120)
+        && (!('devices'  in request.resource.data) || request.resource.data.devices.size()  <= 10)
+        && (!('browsers' in request.resource.data) || request.resource.data.browsers.size() <= 20);
+      allow delete: if isAdmin();
     }
 
     // Админы жагсаалт — зөвхөн одоогийн админ унших/нэмэх/эрх хасах боломжтой

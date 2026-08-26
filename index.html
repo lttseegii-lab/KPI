@@ -1422,6 +1422,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
 <script src="firebase.js?v=8"></script>
+<script src="analytics.js" defer></script>
 
 <script>
   // ---------- Insights / articles ----------
@@ -1758,6 +1759,8 @@
     document.body.style.overflow = 'hidden';
     // Хуваалцсан холбоос нээгдэхэд яг энэ нийтлэл дээр очихын тулд хаягийг тэмдэглэнэ
     try { history.replaceState(null, '', '#article-' + encodeURIComponent(id)); } catch (e) {}
+    // Нийтлэл нээгдсэнийг тусад нь бүртгэнэ (хуудсын үзэлтээс салангид)
+    try { if (window.KPITrack) window.KPITrack.view('article', id); } catch (e) {}
   }
   // Уншсан нийтлэлтэй холбоотойг сонгоно: эхлээд ижил ангиллынх, дараа нь
   // бусдаас нөхөж, нийт 3 хүртэл. Массивын дараалал (шинэ→хуучин) хадгалагдана.
