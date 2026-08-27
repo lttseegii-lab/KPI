@@ -12,6 +12,8 @@ Firebase (Firestore + Authentication) backend-тэй.
 | `admin.html` | Админ удирдлага (Firebase Auth нэвтрэлт) |
 | `firebase.js` | Firestore + Auth нийтлэг давхарга (`KPICloud`) |
 | `analytics.js` | Хуудас үзэлтийн хэмжилт (Firestore REST, SDK шаардахгүй) |
+| `api/share.js` | Нийтлэлийн бие даасан indexable хуудас (`/a/<id>`) — SEO |
+| `api/sitemap.js` | Динамик `sitemap.xml` (бүх нийтлэлийг оруулна) |
 | `firestore.rules` | Аюулгүй байдлын дүрэм |
 
 ## Өгөгдлийн загвар (Firestore)

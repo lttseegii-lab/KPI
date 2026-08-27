@@ -1,30 +1,136 @@
-/* Нийтлэлийн хуваалцах хуудас — crawler-т OG таг, хүнд SPA руу шилжүүлэлт.
+/* Нийтлэлийн бие даасан хуудас — /a/<id> (vercel.json rewrite → /api/share?a=<id>)
    -------------------------------------------------------------------------
-   Facebook/LinkedIn crawler нь JS ажиллуулдаггүй, #article-<id> hash-ийг үл
-   хардаг тул нийтлэл бүрт зориулж энэ жинхэнэ хаяг (/a/<id> → /api/share?a=<id>)
-   нь нийтлэлийн гарчиг, тайлбар, ЗУРАГ бүхий OG таг буцаана. Жинхэнэ хэрэглэгч
-   ороход шууд SPA дээрх нийтлэл рүү (/#article-<id>) шилжинэ. */
+   Урьд нь энэ хуудас crawler-т зөвхөн OG таг өгөөд хүнийг SPA hash руу шууд
+   шилжүүлдэг байсан тул Google-д индекслэгдэх бодит контентгүй, нийтлэлүүд
+   хайлтад гардаггүй байв. Одоо crawler болон хүнд ИЖИЛ бүрэн нийтлэлийг
+   (гарчиг, огноо, зураг, бүтэн бие) бодит HTML-ээр өгнө — indexable хуудас.
+   OG/Twitter/canonical нь өөрийгөө (/a/<id>) заана; BlogPosting JSON-LD-тэй. */
 "use strict";
 
-const { getArticles, findArticle, esc, queryParam, baseUrl } = require("./_content.js");
+const {
+  getArticles, findArticle, esc, queryParam, baseUrl,
+  renderBody, bodyText, articleISODate,
+} = require("./_content.js");
 
+const SITE = "KPI consulting";
 const SITE_TITLE = "KPI consulting — KPI хэмжилт, удирдлагын шийдлүүд";
 const SITE_DESC =
   "Байгууллагынхаа гүйцэтгэлийг зөв хэмжиж, ухаалаг удирд. KPI хэмжилт, удирдлагын аргачлал, гарын авлага, темплэйт болон зөвлөх үйлчилгээ.";
 
+// Meta description — excerpt эсвэл биеийн эхнээс ~160 тэмдэгт
+function clip(s, n) {
+  s = String(s || "").replace(/\s+/g, " ").trim();
+  return s.length > n ? s.slice(0, n - 1).replace(/\s+\S*$/, "") + "…" : s;
+}
+
+const CSS = `
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a1150;--soft:#0f1a6b;--card:#16227e;--line:#2e3ba8;--text:#eef3ff;--muted:#aeb9ea;--accent:#4faeee}
+html{scroll-behavior:smooth}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;-webkit-font-smoothing:antialiased}
+a{color:inherit}
+img{display:block;max-width:100%}
+.top{border-bottom:1px solid var(--line);background:rgba(10,17,80,.85);backdrop-filter:saturate(140%) blur(8px);position:sticky;top:0;z-index:5}
+.top .in{max-width:760px;margin:0 auto;padding:16px 22px;display:flex;align-items:center;justify-content:space-between}
+.brand{font-size:18px;font-weight:600;color:var(--muted);text-decoration:none}
+.brand b{color:#fff;font-weight:800}
+.back{font-size:13.5px;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:9px;padding:8px 14px}
+.back:hover{color:#fff;border-color:var(--accent)}
+main{max-width:760px;margin:0 auto;padding:34px 22px 64px}
+.eyebrow{font-size:12.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
+h1{font-size:33px;line-height:1.22;margin:14px 0 12px;letter-spacing:-.3px}
+.meta{font-size:13px;color:var(--muted);margin-bottom:24px}
+.cover{border-radius:16px;overflow:hidden;margin:0 0 28px;border:1px solid var(--line)}
+.cover img{width:100%;height:auto}
+.hero-ic{aspect-ratio:16/8;display:grid;place-items:center;font-size:76px;background:linear-gradient(160deg,#16227e,#0f1a6b)}
+article p{margin:0 0 18px;font-size:16.5px;color:#e6ecff}
+article h3{font-size:20px;margin:30px 0 12px;color:#fff}
+article ul{margin:0 0 18px;padding-left:22px}
+article li{margin:0 0 9px;font-size:16px;color:#e6ecff}
+article blockquote{margin:22px 0;padding:14px 20px;border-left:3px solid var(--accent);background:var(--soft);border-radius:0 10px 10px 0;color:#dfe7ff;font-style:italic}
+article figure{margin:22px 0}
+article figure img{width:100%;border-radius:12px;border:1px solid var(--line)}
+article figcaption{font-size:12.5px;color:var(--muted);margin-top:8px;text-align:center}
+article a{color:var(--accent);text-decoration:underline}
+.cta{margin:40px 0 8px;padding:24px;background:var(--card);border:1px solid var(--line);border-radius:16px;text-align:center}
+.cta p{margin:0 0 14px;color:var(--muted);font-size:14.5px}
+.btn{display:inline-block;background:var(--accent);color:#00122b;font-weight:700;text-decoration:none;padding:12px 22px;border-radius:11px;font-size:14.5px}
+.more{margin-top:44px;border-top:1px solid var(--line);padding-top:26px}
+.more h2{font-size:15px;color:var(--muted);font-weight:700;margin-bottom:14px}
+.more a{display:block;text-decoration:none;color:var(--text);padding:12px 0;border-bottom:1px solid var(--line);font-size:15.5px}
+.more a:last-child{border-bottom:0}
+.more a:hover{color:var(--accent)}
+footer{border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;text-align:center;padding:26px 22px}
+`;
+
 module.exports = async (req, res) => {
   const base = baseUrl(req);
   const id = queryParam(req, "a");
-  let a = null;
-  try { if (id) a = findArticle(await getArticles(), id); } catch (e) { a = null; }
 
-  const title = a ? a.title + " — KPI consulting" : SITE_TITLE;
-  const desc = a ? (a.excerpt || SITE_DESC) : SITE_DESC;
-  const image = a
-    ? base + "/api/og-image?a=" + encodeURIComponent(id)
-    : base + "/og-cover.png";
-  const canon = a ? base + "/a/" + encodeURIComponent(id) : base + "/";
-  const dest = a ? "/#article-" + encodeURIComponent(id) : "/";
+  let list = [];
+  try { list = await getArticles(); } catch (e) { list = []; }
+  const a = id ? findArticle(list, id) : null;
+
+  // Нийтлэл олдохгүй бол сайтын үндсэн OG-тэй, нүүр рүү шилжүүлэх stub
+  if (!a) {
+    res.statusCode = 404;
+    res.setHeader("Content-Type", "text/html; charset=utf-8");
+    res.setHeader("Cache-Control", "public, max-age=60, s-maxage=300");
+    res.end(
+      '<!doctype html><html lang="mn"><head><meta charset="utf-8">' +
+      '<meta name="viewport" content="width=device-width, initial-scale=1">' +
+      "<title>" + esc(SITE_TITLE) + "</title>" +
+      '<meta name="description" content="' + esc(SITE_DESC) + '">' +
+      '<link rel="canonical" href="' + esc(base + "/") + '">' +
+      '<meta name="robots" content="noindex, follow">' +
+      '<meta http-equiv="refresh" content="0; url=/">' +
+      '<style>body{font-family:system-ui,-apple-system,sans-serif;background:#0a1150;color:#fff;padding:48px;text-align:center}a{color:#7cc7ff;font-weight:600}</style>' +
+      '</head><body>Нийтлэл олдсонгүй. <a href="/">Нүүр хуудас руу очих</a></body></html>'
+    );
+    return;
+  }
+
+  const canon = base + "/a/" + encodeURIComponent(id);
+  const title = a.title + " — " + SITE;
+  const desc = clip(a.excerpt || bodyText(a.body) || SITE_DESC, 160);
+  const ogImage = base + "/api/og-image?a=" + encodeURIComponent(id);
+  const iso = articleISODate(id);
+  const author = a.author || SITE;
+
+  // Cover: сошиалд тохирох растер зурагтай бол og-image эндпойнтоор, эс бол
+  // ангиллын icon бүхий брэнд hero
+  const hasPhoto = typeof a.image === "string" && /^data:image\/(jpeg|jpg|png|gif|webp)/i.test(a.image);
+  const coverHtml = hasPhoto
+    ? '<div class="cover"><img src="' + esc(ogImage) + '" alt="' + esc(a.title) + '" width="1200" height="630"></div>'
+    : '<div class="cover"><div class="hero-ic">' + esc(a.icon || "📊") + "</div></div>";
+
+  // Метадата мөр (ангилал | огноо · унших)
+  const metaBits = [a.date, a.read].filter(Boolean).join(" · ");
+
+  // Бусад нийтлэл — crawl-discovery ба дотоод холбоос
+  const others = list.filter(x => x && x.id !== id).slice(0, 5);
+  const moreHtml = others.length
+    ? '<nav class="more"><h2>Бусад нийтлэл</h2>' +
+      others.map(x =>
+        '<a href="/a/' + esc(encodeURIComponent(x.id)) + '">' + esc(x.title) + "</a>"
+      ).join("") + "</nav>"
+    : "";
+
+  // BlogPosting JSON-LD
+  const ld = {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "@id": canon + "#article",
+    "mainEntityOfPage": { "@type": "WebPage", "@id": canon },
+    "headline": a.title,
+    "description": desc,
+    "image": ogImage,
+    "inLanguage": "mn-MN",
+    "articleSection": a.cat || undefined,
+    "author": { "@type": "Organization", "name": author },
+    "publisher": { "@id": base + "/#organization" },
+  };
+  if (iso) { ld.datePublished = iso; ld.dateModified = iso; }
 
   res.statusCode = 200;
   res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -35,23 +141,42 @@ module.exports = async (req, res) => {
     "<title>" + esc(title) + "</title>" +
     '<meta name="description" content="' + esc(desc) + '">' +
     '<link rel="canonical" href="' + esc(canon) + '">' +
+    '<meta name="robots" content="index, follow, max-image-preview:large">' +
+    '<link rel="icon" href="/favicon.svg" type="image/svg+xml">' +
+    '<link rel="icon" href="/favicon.ico" sizes="32x32">' +
+    '<meta name="theme-color" content="#0a1150">' +
     '<meta property="og:type" content="article">' +
-    '<meta property="og:site_name" content="KPI consulting">' +
+    '<meta property="og:site_name" content="' + esc(SITE) + '">' +
     '<meta property="og:locale" content="mn_MN">' +
     '<meta property="og:url" content="' + esc(canon) + '">' +
     '<meta property="og:title" content="' + esc(title) + '">' +
     '<meta property="og:description" content="' + esc(desc) + '">' +
-    '<meta property="og:image" content="' + esc(image) + '">' +
-    '<meta property="og:image:alt" content="' + esc(a ? a.title : "KPI consulting") + '">' +
+    '<meta property="og:image" content="' + esc(ogImage) + '">' +
+    '<meta property="og:image:alt" content="' + esc(a.title) + '">' +
+    (iso ? '<meta property="article:published_time" content="' + esc(iso) + '">' : "") +
+    (a.cat ? '<meta property="article:section" content="' + esc(a.cat) + '">' : "") +
     '<meta name="twitter:card" content="summary_large_image">' +
     '<meta name="twitter:title" content="' + esc(title) + '">' +
     '<meta name="twitter:description" content="' + esc(desc) + '">' +
-    '<meta name="twitter:image" content="' + esc(image) + '">' +
-    '<meta http-equiv="refresh" content="0; url=' + esc(dest) + '">' +
-    "<script>location.replace(" + JSON.stringify(dest) + ");</script>" +
-    '</head><body style="font-family:system-ui,-apple-system,sans-serif;background:#0a1150;color:#fff;padding:48px;text-align:center">' +
-    "Нээж байна… " +
-    '<a href="' + esc(dest) + '" style="color:#7cc7ff;font-weight:600">KPI consulting нээх</a>' +
+    '<meta name="twitter:image" content="' + esc(ogImage) + '">' +
+    '<script type="application/ld+json">' + JSON.stringify(ld) + "</script>" +
+    "<style>" + CSS + "</style></head><body>" +
+    '<header class="top"><div class="in">' +
+    '<a class="brand" href="/"><b>KPI</b>&nbsp;consulting</a>' +
+    '<a class="back" href="/">← Бүх нийтлэл</a>' +
+    "</div></header>" +
+    "<main><article>" +
+    '<div class="eyebrow">' + esc(a.cat || SITE) + "</div>" +
+    "<h1>" + esc(a.title) + "</h1>" +
+    (metaBits ? '<div class="meta">' + esc(metaBits) + "</div>" : "") +
+    coverHtml +
+    renderBody(a.body) +
+    "</article>" +
+    '<div class="cta"><p>Байгууллагынхаа гүйцэтгэлийг зөв хэмжиж, ухаалаг удирдъя.</p>' +
+    '<a class="btn" href="/">KPI consulting-тэй танилцах</a></div>' +
+    moreHtml +
+    "</main>" +
+    '<footer>© 2026 ' + esc(SITE) + ". KPI хэмжилт, гүйцэтгэлийн үнэлгээ, зөвлөх үйлчилгээ.</footer>" +
     "</body></html>"
   );
 };

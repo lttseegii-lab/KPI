@@ -4,8 +4,8 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>KPI consulting — KPI хэмжилт, гүйцэтгэлийн үнэлгээ, KPI зөвлөх үйлчилгээ</title>
-<meta name="description" content="KPI хэмжилт, гүйцэтгэлийн үнэлгээ, KPI консалтинг ба зөвлөх үйлчилгээ. Байгууллагынхаа гүйцэтгэлийг зөв хэмжиж, ухаалаг удирдах аргачлал, гарын авлага, темплэйт, сургалт.">
-<link rel="canonical" href="https://kpiconsulting.mn/">
+<meta name="description" content="KPI хэмжилт, гүйцэтгэлийн үнэлгээ, KPI консалтинг ба зөвлөх үйлчилгээ. Гүйцэтгэлээ зөв хэмжиж, ухаалаг удирдах аргачлал, темплэйт, сургалт.">
+<link rel="canonical" href="https://www.kpiconsulting.mn/">
 <meta name="google-site-verification" content="naqrtheRMS9qqGUoDmVx5OuPOF30FvFW5gM-hm-FId4">
 <link rel="icon" href="favicon.svg" type="image/svg+xml">
 <link rel="icon" href="favicon.ico" sizes="32x32">
@@ -18,11 +18,11 @@
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="KPI consulting">
 <meta property="og:locale" content="mn_MN">
-<meta property="og:url" content="https://kpiconsulting.mn/">
+<meta property="og:url" content="https://www.kpiconsulting.mn/">
 <meta property="og:title" content="KPI consulting — KPI хэмжилт, гүйцэтгэлийн үнэлгээ, KPI зөвлөх үйлчилгээ">
 <meta property="og:description" content="KPI хэмжилт, гүйцэтгэлийн үнэлгээ, KPI консалтинг ба зөвлөх үйлчилгээ. Байгууллагынхаа гүйцэтгэлийг зөв хэмжиж, ухаалаг удирдах аргачлал, гарын авлага, темплэйт, сургалт.">
-<meta property="og:image" content="https://kpiconsulting.mn/og-cover.png">
-<meta property="og:image:secure_url" content="https://kpiconsulting.mn/og-cover.png">
+<meta property="og:image" content="https://www.kpiconsulting.mn/og-cover.png">
+<meta property="og:image:secure_url" content="https://www.kpiconsulting.mn/og-cover.png">
 <meta property="og:image:type" content="image/png">
 <meta property="og:image:width" content="1200">
 <meta property="og:image:height" content="630">
@@ -30,7 +30,7 @@
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="KPI consulting — KPI хэмжилт, гүйцэтгэлийн үнэлгээ, KPI зөвлөх">
 <meta name="twitter:description" content="KPI хэмжилт, гүйцэтгэлийн үнэлгээ, KPI консалтинг ба зөвлөх үйлчилгээ. Гүйцэтгэлээ зөв хэмжиж, ухаалаг удирд.">
-<meta name="twitter:image" content="https://kpiconsulting.mn/og-cover.png">
+<meta name="twitter:image" content="https://www.kpiconsulting.mn/og-cover.png">
 <meta name="robots" content="index, follow, max-image-preview:large">
 
 <!-- Structured data — Google-т брэнд, вэбсайтыг ойлгуулна (Knowledge panel, sitelinks) -->
@@ -40,12 +40,12 @@
   "@graph": [
     {
       "@type": "Organization",
-      "@id": "https://kpiconsulting.mn/#organization",
+      "@id": "https://www.kpiconsulting.mn/#organization",
       "name": "KPI consulting",
       "alternateName": "KPI зөвлөх үйлчилгээ",
-      "url": "https://kpiconsulting.mn/",
-      "logo": "https://kpiconsulting.mn/apple-touch-icon.png",
-      "image": "https://kpiconsulting.mn/og-cover.png",
+      "url": "https://www.kpiconsulting.mn/",
+      "logo": "https://www.kpiconsulting.mn/apple-touch-icon.png",
+      "image": "https://www.kpiconsulting.mn/og-cover.png",
       "description": "Байгууллагын гүйцэтгэлийг зөв хэмжиж, ухаалаг удирдах KPI хэмжилт, гүйцэтгэлийн үнэлгээ, KPI консалтинг, зөвлөх үйлчилгээ, аргачлал, гарын авлага, темплэйт.",
       "knowsAbout": [
         "KPI хэмжилт",
@@ -60,11 +60,11 @@
     },
     {
       "@type": "WebSite",
-      "@id": "https://kpiconsulting.mn/#website",
-      "url": "https://kpiconsulting.mn/",
+      "@id": "https://www.kpiconsulting.mn/#website",
+      "url": "https://www.kpiconsulting.mn/",
       "name": "KPI consulting",
       "inLanguage": "mn-MN",
-      "publisher": { "@id": "https://kpiconsulting.mn/#organization" }
+      "publisher": { "@id": "https://www.kpiconsulting.mn/#organization" }
     }
   ]
 }
@@ -1556,6 +1556,35 @@
     }
     const saved = getSaved();
     grid.innerHTML = list.map(a => articleCardHtml(a, a.feature && activeFilter === 'Бүгд', saved)).join('');
+    updateArticleListLd();
+  }
+  // Нийтлэлийн жагсаалтыг ItemList бүтэцтэй болгож JSON-LD-д тусгана. Googlebot
+  // JS-ийг рендерлэдэг тул runtime-д шигтгэсэн ldjson-г уншиж, /a/<id> хаягуудыг
+  // нийтлэлийн жинхэнэ URL гэж ойлгоно (дотоод холбоос + индекслэлт бэхжинэ).
+  function updateArticleListLd() {
+    try {
+      const origin = location.origin;
+      const data = {
+        '@context': 'https://schema.org',
+        '@type': 'ItemList',
+        '@id': origin + '/#articles',
+        name: 'KPI consulting — Мэдээ, нийтлэл',
+        itemListElement: ARTICLES.map((a, i) => ({
+          '@type': 'ListItem',
+          position: i + 1,
+          url: origin + '/a/' + encodeURIComponent(a.id),
+          name: a.title
+        }))
+      };
+      let el = document.getElementById('ld-articles');
+      if (!el) {
+        el = document.createElement('script');
+        el.type = 'application/ld+json';
+        el.id = 'ld-articles';
+        document.head.appendChild(el);
+      }
+      el.textContent = JSON.stringify(data);
+    } catch (e) {}
   }
   // Нийтлэлийн карт — нүүр хуудасны хэсэг болон «Бүх нийтлэл» хуудсанд хоёуланд нь
   const CARD_BM = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z"/></svg>';
@@ -1564,13 +1593,13 @@
     const t = THEMES[a.cat] || THEMES._default;
     const author = a.author || 'KPI consulting';
     const media = a.image
-      ? '<img src="' + safeUrl(a.image) + '" alt="">'
+      ? '<img src="' + safeUrl(a.image) + '" alt="' + esc(a.title) + '">'
       : '<span style="filter:drop-shadow(0 10px 24px rgba(0,0,0,.35))">' + esc(a.icon) + '</span>';
     return '<div class="article' + (isFeature ? ' feature' : '') + '" onclick="openArticle(\'' + esc(a.id) + '\')">'
       + '<div class="thumb" style="background:' + t.bg + '">' + media + '</div>'
       + '<div class="body">'
       + '<div class="eyebrow">' + esc(a.cat) + ' | KPI consulting</div>'
-      + '<h3>' + esc(a.title) + '</h3>'
+      + '<h3><a href="/a/' + esc(encodeURIComponent(a.id)) + '" style="color:inherit;text-decoration:none" onclick="event.preventDefault(); event.stopPropagation(); openArticle(\'' + esc(a.id) + '\')">' + esc(a.title) + '</a></h3>'
       + '<div class="byline">By <a onclick="event.stopPropagation()">' + esc(author) + '</a></div>'
       + '<p>' + esc(a.excerpt) + '</p>'
       + '<div class="meta-foot">'
@@ -1752,7 +1781,7 @@
     document.getElementById('arTitle').textContent = a.title;
     renderByline();
     const cover = document.getElementById('arCover');
-    if (a.image) { cover.innerHTML = '<img src="' + safeUrl(a.image) + '" alt="">'; cover.style.background = '#eee'; }
+    if (a.image) { cover.innerHTML = '<img src="' + safeUrl(a.image) + '" alt="' + esc(a.title) + '">'; cover.style.background = '#eee'; }
     else { cover.textContent = a.icon; cover.style.background = (THEMES[a.cat] || THEMES._default).bg; }
     document.getElementById('arContent').innerHTML = renderBody(a.body);
     document.getElementById('arSaveBtn').classList.toggle('saved', getSaved().has(id));
@@ -1783,7 +1812,7 @@
     grid.innerHTML = items.map(r => {
       const t = THEMES[r.cat] || THEMES._default;
       const media = r.image
-        ? '<img src="' + safeUrl(r.image) + '" alt="">'
+        ? '<img src="' + safeUrl(r.image) + '" alt="' + esc(r.title) + '">'
         : '<span>' + esc(r.icon || '📄') + '</span>';
       const meta = '<span class="rr-cat">' + esc(r.cat) + '</span>'
         + (r.date ? '<span class="rr-date">' + esc(r.date) + '</span>' : '');
@@ -1853,7 +1882,7 @@
     return (a && a.author) ? a.author : FALLBACK_AUTHOR;
   }
   function avatarInner(author, name) {
-    if (author && author.photo) return '<img src="' + esc(author.photo) + '" alt="">';
+    if (author && author.photo) return '<img src="' + esc(author.photo) + '" alt="' + esc(name) + '">';
     return '<span class="rb-initial">' + esc(String(name || '?').trim().charAt(0)) + '</span>';
   }
   function renderByline() {
@@ -1880,7 +1909,7 @@
     const projects = Array.isArray(a.projects) ? a.projects.filter(Boolean) : [];
     document.getElementById('authorBody').innerHTML =
       '<div class="au-head">'
-      + '<div class="au-photo">' + (a.photo ? '<img src="' + esc(a.photo) + '" alt="">' : '<span>' + esc(name.charAt(0)) + '</span>') + '</div>'
+      + '<div class="au-photo">' + (a.photo ? '<img src="' + esc(a.photo) + '" alt="' + esc(name) + '">' : '<span>' + esc(name.charAt(0)) + '</span>') + '</div>'
       + '<div class="au-name">' + esc(name) + '</div>'
       + (a.role ? '<div class="au-role">' + esc(a.role) + '</div>' : '')
       + (a.bio ? '<div class="au-bio">' + esc(a.bio) + '</div>' : '')
@@ -3173,7 +3202,7 @@
       const projects = (Array.isArray(a.projects) ? a.projects : []).filter(Boolean);
       return '<div class="tm-card">'
         + '<div class="tm-top">'
-        + '<div class="tm-photo">' + (a.photo ? '<img src="' + safeUrl(a.photo) + '" alt="">' : '<span>' + esc(name.charAt(0)) + '</span>') + '</div>'
+        + '<div class="tm-photo">' + (a.photo ? '<img src="' + safeUrl(a.photo) + '" alt="' + esc(name) + '">' : '<span>' + esc(name.charAt(0)) + '</span>') + '</div>'
         + '<div><div class="tm-name">' + esc(name) + '</div>'
         + (a.role ? '<div class="tm-role">' + esc(a.role) + '</div>' : '')
         + '</div></div>'
