@@ -3,6 +3,7 @@
   "cleanUrls": true,
   "rewrites": [
     { "source": "/sitemap.xml", "destination": "/api/sitemap" },
+    { "source": "/og/:id", "destination": "/api/og-image?a=:id" },
     { "source": "/a/:id", "destination": "/api/share?a=:id" }
   ],
   "headers": [

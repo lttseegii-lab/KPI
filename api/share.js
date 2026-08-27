@@ -93,7 +93,11 @@ module.exports = async (req, res) => {
   const canon = base + "/a/" + encodeURIComponent(id);
   const title = a.title + " — " + SITE;
   const desc = clip(a.excerpt || bodyText(a.body) || SITE_DESC, 160);
-  const ogImage = base + "/api/og-image?a=" + encodeURIComponent(id);
+  // og:image-ийг /api/-ийн доор биш, цэвэр /og/<id> замаар өгнө. robots.txt нь
+  // /api/-г Disallow хийдэг тул Facebook /api/og-image-ийг татаж чаддаггүй
+  // ("Corrupted Image") байв. /og/<id> нь зөвшөөрөгдсөн — vercel.json дотор
+  // /api/og-image рүү rewrite хийгддэг.
+  const ogImage = base + "/og/" + encodeURIComponent(id);
   const iso = articleISODate(id);
   const author = a.author || SITE;
 
