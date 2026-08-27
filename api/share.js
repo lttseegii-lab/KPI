@@ -9,7 +9,7 @@
 
 const {
   getArticles, findArticle, esc, queryParam, baseUrl,
-  renderBody, bodyText, articleISODate,
+  renderBody, bodyText, articleISODate, imageSize,
 } = require("./_content.js");
 
 const SITE = "KPI consulting";
@@ -97,11 +97,21 @@ module.exports = async (req, res) => {
   const iso = articleISODate(id);
   const author = a.author || SITE;
 
-  // Cover: сошиалд тохирох растер зурагтай бол og-image эндпойнтоор, эс бол
-  // ангиллын icon бүхий брэнд hero
-  const hasPhoto = typeof a.image === "string" && /^data:image\/(jpeg|jpg|png|gif|webp)/i.test(a.image);
+  // Cover ба og:image-ийн хэмжээ/төрөл. Растер зурагтай бол og-image түүнийг
+  // шууд өгнө (хэмжээ = imageSize); эс бол og-cover.png (1200×630). Facebook
+  // эхний scrape-д зургийг шууд гаргахын тулд og:image:width/height зарлана.
+  const photoMime = ((typeof a.image === "string"
+    && /^data:(image\/(?:jpeg|jpg|png|gif|webp))/i.exec(a.image)) || [])[1];
+  const hasPhoto = !!photoMime;
+  let ogW = 1200, ogH = 630, ogType = "image/png";
+  if (hasPhoto) {
+    ogType = photoMime.toLowerCase() === "image/jpg" ? "image/jpeg" : photoMime.toLowerCase();
+    const dim = imageSize(a.image);
+    if (dim) { ogW = dim.w; ogH = dim.h; } else { ogW = 0; ogH = 0; } // тодорхойгүй бол зарлахгүй
+  }
+  const coverDims = (ogW && ogH) ? ' width="' + ogW + '" height="' + ogH + '"' : "";
   const coverHtml = hasPhoto
-    ? '<div class="cover"><img src="' + esc(ogImage) + '" alt="' + esc(a.title) + '" width="1200" height="630"></div>'
+    ? '<div class="cover"><img src="' + esc(ogImage) + '" alt="' + esc(a.title) + '"' + coverDims + '></div>'
     : '<div class="cover"><div class="hero-ic">' + esc(a.icon || "📊") + "</div></div>";
 
   // Метадата мөр (ангилал | огноо · унших)
@@ -162,6 +172,9 @@ module.exports = async (req, res) => {
     '<meta property="og:description" content="' + esc(desc) + '">' +
     '<meta property="og:image" content="' + esc(ogImage) + '">' +
     '<meta property="og:image:alt" content="' + esc(a.title) + '">' +
+    (ogW && ogH ? '<meta property="og:image:width" content="' + ogW + '">' : "") +
+    (ogW && ogH ? '<meta property="og:image:height" content="' + ogH + '">' : "") +
+    '<meta property="og:image:type" content="' + esc(ogType) + '">' +
     (iso ? '<meta property="article:published_time" content="' + esc(iso) + '">' : "") +
     (a.cat ? '<meta property="article:section" content="' + esc(a.cat) + '">' : "") +
     '<meta name="twitter:card" content="summary_large_image">' +

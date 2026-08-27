@@ -210,6 +210,41 @@ function articleISODate(id) {
   return t ? new Date(t).toISOString() : null;
 }
 
+// data:image URI-аас зургийн хэмжээг (өргөн×өндөр) header-ээс уншина. og:image
+// -д зөв хэмжээ зарлаж, Facebook эхний scrape-д зургийг шууд гаргах боломжтой
+// болгоно. JPEG/PNG/GIF-ийг дэмжинэ (нийтлэлийн зургууд эдгээр); бусад бол null.
+function imageSize(dataUri) {
+  const m = /^data:image\/[^;,]+;base64,([\s\S]*)$/i.exec(String(dataUri || ""));
+  if (!m) return null;
+  let buf;
+  try { buf = Buffer.from(m[1], "base64"); } catch (e) { return null; }
+  if (buf.length < 24) return null;
+  // PNG: \x89PNG\r\n\x1a\n, IHDR-д width/height (big-endian)
+  if (buf[0] === 0x89 && buf[1] === 0x50 && buf[2] === 0x4e && buf[3] === 0x47) {
+    return { w: buf.readUInt32BE(16), h: buf.readUInt32BE(20) };
+  }
+  // GIF: 'GIF', width/height (little-endian) 6..10 байтад
+  if (buf[0] === 0x47 && buf[1] === 0x49 && buf[2] === 0x46) {
+    return { w: buf.readUInt16LE(6), h: buf.readUInt16LE(8) };
+  }
+  // JPEG: SOF marker (0xFFC0..0xFFCF, C4/C8/CC-ээс бусад) хайж height/width уншина
+  if (buf[0] === 0xff && buf[1] === 0xd8) {
+    let off = 2;
+    while (off + 9 < buf.length) {
+      if (buf[off] !== 0xff) { off++; continue; }
+      const marker = buf[off + 1];
+      if (marker === 0xd8 || marker === 0xd9 || (marker >= 0xd0 && marker <= 0xd7)) { off += 2; continue; }
+      const len = buf.readUInt16BE(off + 2);
+      const isSOF = marker >= 0xc0 && marker <= 0xcf && marker !== 0xc4 && marker !== 0xc8 && marker !== 0xcc;
+      if (isSOF) {
+        return { h: buf.readUInt16BE(off + 5), w: buf.readUInt16BE(off + 7) };
+      }
+      off += 2 + len;
+    }
+  }
+  return null;
+}
+
 // Бүтээгдэхүүн бүрийн хэрэгслүүд хадгалагдах түлхүүр (index/admin-тай ижил)
 const TEMPLATE_PRODUCT_KEYS = {
   blueprints: "kpihub_templates",
@@ -264,5 +299,5 @@ async function readJsonBody(req) {
 module.exports = {
   getArticles, findArticle, esc, queryParam, baseUrl,
   getContent, productAmount, readJsonBody, TEMPLATE_PRODUCT_KEYS,
-  safeUrl, inlineSafe, renderBody, bodyText, articleTimestamp, articleISODate,
+  safeUrl, inlineSafe, renderBody, bodyText, articleTimestamp, articleISODate, imageSize,
 };
