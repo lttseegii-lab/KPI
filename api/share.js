@@ -116,7 +116,16 @@ module.exports = async (req, res) => {
       ).join("") + "</nav>"
     : "";
 
-  // BlogPosting JSON-LD
+  // BlogPosting JSON-LD. Publisher-ийг бүрэн Organization (нэр + logo)-оор
+  // шигтгэнэ — зөвхөн @id reference өгвөл энэ хуудсанд Organization node
+  // байхгүй тул Google "Thing" гэж үзэж, publisher.logo дутуу болно.
+  const org = {
+    "@type": "Organization",
+    "@id": base + "/#organization",
+    "name": SITE,
+    "url": base + "/",
+    "logo": { "@type": "ImageObject", "url": base + "/apple-touch-icon.png" },
+  };
   const ld = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
@@ -127,8 +136,8 @@ module.exports = async (req, res) => {
     "image": ogImage,
     "inLanguage": "mn-MN",
     "articleSection": a.cat || undefined,
-    "author": { "@type": "Organization", "name": author },
-    "publisher": { "@id": base + "/#organization" },
+    "author": { "@type": "Organization", "name": author, "url": base + "/" },
+    "publisher": org,
   };
   if (iso) { ld.datePublished = iso; ld.dateModified = iso; }
 
