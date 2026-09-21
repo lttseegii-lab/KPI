@@ -755,8 +755,8 @@
     box-shadow:0 34px 74px rgba(10,17,80,.32); }
   /* Дээд icon-ууд хүрээ дотроо, төвдөө */
   .showcase-tabs{ display:flex; justify-content:center; gap:14px;
-    --tab-gap:26px;                                  /* нумын гүн (босоо) */
-    --tab-curve:calc(var(--tab-gap) * 1.5);          /* нумын дэлгэц (хэвтээ) */
+    --tab-gap:28px;                 /* нумын радиус = гүн. Том байх тусам нум гүнзгий */
+    --tab-curve:var(--tab-gap);     /* rx = ry → жинхэнэ дугуй нум */
     margin-bottom:var(--tab-gap); }
   .stab{ width:58px; height:58px; border-radius:16px; cursor:pointer;
     display:flex; align-items:center; justify-content:center;
@@ -856,7 +856,7 @@
     .hero > .wrap{ padding-top:40px; padding-bottom:54px; }
     .topbar .wrap{ padding-right:44px; gap:8px; font-size:12px; }
     .showcase{ padding:22px 16px 24px; margin-top:36px; border-radius:22px; }
-    .showcase-tabs{ gap:8px; --tab-gap:22px; margin-bottom:var(--tab-gap); }
+    .showcase-tabs{ gap:8px; --tab-gap:24px; margin-bottom:var(--tab-gap); }
     .stab{ width:50px; height:50px; border-radius:13px; }
     .stab svg{ width:22px; height:22px; }
     .spanel.active{ grid-template-columns:1fr; }
@@ -961,7 +961,7 @@
     .mlist{ gap:13px; }
 
     .showcase{ margin-top:18px; padding:18px 20px 20px; border-radius:24px; }
-    .showcase-tabs{ --tab-gap:19px; margin-bottom:var(--tab-gap); gap:10px; }
+    .showcase-tabs{ --tab-gap:26px; margin-bottom:var(--tab-gap); gap:10px; }
     .stab{ width:46px; height:46px; border-radius:13px; }
     .stab svg{ width:21px; height:21px; }
 
@@ -1026,7 +1026,7 @@
     .hero-head .hero-sub{ font-size:13.5px; margin-top:9px; }
     .hero-head .hero-note{ margin-top:10px; font-size:12px; padding:6px 12px; }
     .showcase{ margin-top:14px; padding:14px 18px 16px; border-radius:20px; }
-    .showcase-tabs{ --tab-gap:16px; margin-bottom:var(--tab-gap); gap:9px; }
+    .showcase-tabs{ --tab-gap:20px; margin-bottom:var(--tab-gap); gap:9px; }
     .stab{ width:42px; height:42px; border-radius:12px; }
     .stab svg{ width:19px; height:19px; }
     .spanel-text{ padding:18px 24px; }
