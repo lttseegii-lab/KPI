@@ -153,6 +153,22 @@
   .slot:hover { border-color: var(--accent); }
   .slot.sel { background: var(--accent); color: #fff; border-color: var(--accent); }
   .slot.taken { opacity: .3; pointer-events: none; text-decoration: line-through; }
+  /* Зөвлөх сонголт (цаг товлох) */
+  .adv-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:12px; margin-bottom:6px; }
+  .adv-card { border:1px solid var(--line); border-radius:14px; padding:16px; text-align:center; cursor:pointer; transition:border-color .15s, transform .1s; background:var(--bg-soft); }
+  .adv-card:hover { border-color:var(--accent); transform:translateY(-2px); }
+  .adv-card-photo { width:66px; height:66px; border-radius:50%; overflow:hidden; margin:0 auto 10px; background:#e7ebf5; display:grid; place-items:center; }
+  .adv-card-photo img { width:100%; height:100%; object-fit:cover; display:block; }
+  .adv-card-photo span { font-size:26px; font-weight:800; color:#5a6273; }
+  .adv-card-name { font-size:14.5px; font-weight:700; color:var(--text); }
+  .adv-card-role { font-size:12px; color:var(--muted); margin-top:2px; }
+  .adv-head { display:flex; align-items:center; gap:12px; margin-bottom:16px; padding-bottom:14px; border-bottom:1px solid var(--line); }
+  .adv-head-photo { width:52px; height:52px; border-radius:50%; overflow:hidden; background:#e7ebf5; display:grid; place-items:center; flex-shrink:0; }
+  .adv-head-photo img { width:100%; height:100%; object-fit:cover; display:block; }
+  .adv-head-photo span { font-size:20px; font-weight:800; color:#5a6273; }
+  .adv-head-name { font-size:15.5px; font-weight:800; color:var(--text); }
+  .adv-head-role { font-size:12.5px; color:var(--muted); margin-top:1px; }
+  .adv-back { margin-left:auto; font-size:13px; color:var(--accent); text-decoration:none; white-space:nowrap; }
   .book-slots .slot-empty { grid-column: 1 / -1; color: var(--muted); font-size: 13.5px; text-align: center; padding: 14px 0; }
 
   .contact-list { list-style: none; display: flex; flex-direction: column; gap: 4px; }
@@ -490,6 +506,7 @@
   .reader-body { max-width: 720px; margin: 0 auto; }
   .reader-body p { font-size: 16.5px; color: #222; line-height: 1.75; margin-bottom: 18px; }
   .reader-body a { color: var(--accent); text-decoration: underline; text-underline-offset: 2px; }
+  .reader-body .lg { font-size: 1.3em; } .reader-body .sm { font-size: 0.82em; }
   .reader-body h3 { font-size: 20px; font-weight: 700; color: #111; margin: 30px 0 10px; }
   .reader-body ul { margin: 0 0 20px 4px; display: flex; flex-direction: column; gap: 11px; list-style: none; }
   .reader-body ul li { display: flex; gap: 12px; font-size: 16.5px; color: #222; line-height: 1.65; }
@@ -1118,11 +1135,18 @@
       <!-- Slot picker (registered users) -->
       <div id="bookForm">
         <p id="bookGreeting" style="font-size:13.5px;color:var(--muted);margin-bottom:18px;"></p>
-        <span class="book-label">Огноо сонгох</span>
-        <div class="book-days" id="bookDays"></div>
-        <span class="book-label">Сул цаг сонгох</span>
-        <div class="book-slots" id="bookSlots"></div>
-        <button class="btn btn-primary" id="bookConfirmBtn" onclick="confirmBooking()" disabled style="opacity:.5;">Цаг товлох</button>
+        <div id="bookAdvisorPick" class="hidden">
+          <span class="book-label">Зөвлөхөө сонгоно уу</span>
+          <div class="adv-grid" id="bookAdvisors"></div>
+        </div>
+        <div id="bookAdvisorStep" class="hidden">
+          <div class="adv-head" id="bookAdvisorHead"></div>
+          <span class="book-label">Огноо сонгох</span>
+          <div class="book-days" id="bookDays"></div>
+          <span class="book-label">Сул цаг сонгох</span>
+          <div class="book-slots" id="bookSlots"></div>
+          <button class="btn btn-primary" id="bookConfirmBtn" onclick="confirmBooking()" disabled style="opacity:.5;">Цаг товлох</button>
+        </div>
       </div>
 
       <!-- Success -->
@@ -1421,7 +1445,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
-<script src="firebase.js?v=8"></script>
+<script src="firebase.js?v=9"></script>
 <script src="analytics.js" defer></script>
 
 <script>
@@ -1520,9 +1544,13 @@
     });
     return all;
   }
+  // Нийтлэлийг бичсэн хугацаагаар нь (id доторх 13 оронтой timestamp) шинэ→хуучин
+  // эрэмбэлнэ. id нь 'x'+Date.now() тул хамгийн сүүлд бичсэн нь эхэнд гарна.
+  function articleTs(a) { const m = /(\d{13})/.exec(String((a && a.id) || '')); return m ? +m[1] : 0; }
+  function sortArticlesByNewest(arr) { return arr.sort((a, b) => articleTs(b) - articleTs(a)); }
   // Apply admin overrides (from localStorage) before deriving categories
   const savedArticles = readArticles();
-  if (savedArticles.length) { ARTICLES.length = 0; savedArticles.forEach(a => ARTICLES.push(a)); }
+  if (savedArticles.length) { sortArticlesByNewest(savedArticles); ARTICLES.length = 0; savedArticles.forEach(a => ARTICLES.push(a)); }
 
   let CATS = ['Бүгд', ...Array.from(new Set(ARTICLES.map(a => a.cat)))];
   let activeFilter = 'Бүгд';
@@ -1751,6 +1779,10 @@
           r += (/^(https?:\/\/|mailto:)/i.test(href) && inner)
             ? '<a href="' + esc(href) + '" target="_blank" rel="noopener">' + inner + '</a>'
             : inner;
+        }
+        else if (tag === 'span') {
+          const sz = (/\b(lg|sm)\b/.exec(n.getAttribute('class') || '') || [])[1];
+          r += (sz && inner) ? '<span class="' + sz + '">' + inner + '</span>' : inner;
         }
         else r += inner;
       });
@@ -3235,7 +3267,7 @@
   const WD_MN = ['Ня','Да','Мя','Лх','Пү','Ба','Бя'];
   // Зөвлөхийн и-мэйл (Google Calendar урилга илгээх хаяг). Админд өөрчлөх боломжтой болгож болно.
   const ADVISOR_EMAIL = 'hello@kpihub.mn';
-  let bkSelDate = null, bkSelTime = null;
+  let bkSelDate = null, bkSelTime = null, bkSelAdvisor = null;
 
   // (currentUser нь дээр 1 удаа тодорхойлогдсон — өмнө энд давхар, kpihub_users-д
   //  тулгуурласан, хоосон үед null буцаадаг хувилбар байсныг устгав. Тэр нь эхнийхийг
@@ -3244,7 +3276,7 @@
   const pad2 = n => String(n).padStart(2, '0');
   const dateKey = d => d.getFullYear() + '-' + pad2(d.getMonth() + 1) + '-' + pad2(d.getDate());
   // Захиалагдсан цаг Firestore-ийн public/taken_slots-оос (PII биш)
-  function isTaken(dk, time) { return KPICloud.isTaken(dk, time); }
+  function isTaken(dk, time) { return KPICloud.isTaken(dk, time, bkSelAdvisor); }
   function isPast(dk, time) {
     const [y,m,d] = dk.split('-').map(Number);
     const [hh,mm] = time.split(':').map(Number);
@@ -3254,14 +3286,65 @@
   function getAvailability() {
     try { return JSON.parse(localStorage.getItem('kpihub_availability') || '[]'); } catch (e) { return []; }
   }
+  // Зөвлөх бүрд тусад нь. Зөвлөхгүй (хуучин) цагийг эхний зөвлөхөд хамааруулна.
+  function firstAdvisorName() {
+    const a = (AUTHORS || []).find(x => String((x && x.name) || '').trim());
+    return a ? String(a.name).trim() : '';
+  }
+  function advOf(a) { return (a && a.advisor && String(a.advisor).trim()) || firstAdvisorName(); }
+  function advisorInfo(name) { return (AUTHORS || []).find(a => String((a && a.name) || '').trim() === name) || { name: name }; }
+  function advisorsWithAvailability() {
+    const seen = [];
+    getAvailability().forEach(a => { const n = advOf(a); if (n && seen.indexOf(n) === -1 && !isPast(a.date, a.time)) seen.push(n); });
+    return seen.map(advisorInfo);
+  }
   function availTimes(dk) {
-    return getAvailability().filter(a => a.date === dk).map(a => a.time)
+    return getAvailability().filter(a => a.date === dk && advOf(a) === bkSelAdvisor).map(a => a.time)
       .filter((t, i, arr) => arr.indexOf(t) === i).sort();
   }
   function freeTimes(dk) { return availTimes(dk).filter(t => !isTaken(dk, t) && !isPast(dk, t)); }
   function openDates() {
-    const dks = [...new Set(getAvailability().map(a => a.date))].sort();
+    const dks = [...new Set(getAvailability().filter(a => advOf(a) === bkSelAdvisor).map(a => a.date))].sort();
     return dks.filter(dk => availTimes(dk).some(t => !isPast(dk, t))); // ирээдүйн цагтай өдрүүд
+  }
+  // --- Зөвлөх сонгох алхам ---
+  function renderAdvisorHead(showBack) {
+    const info = advisorInfo(bkSelAdvisor) || {};
+    const nm = bkSelAdvisor || 'Зөвлөх';
+    const photo = info.photo
+      ? '<div class="adv-head-photo"><img src="' + safeUrl(info.photo) + '" alt="' + esc(nm) + '"></div>'
+      : '<div class="adv-head-photo"><span>' + esc(nm.charAt(0)) + '</span></div>';
+    document.getElementById('bookAdvisorHead').innerHTML = photo
+      + '<div><div class="adv-head-name">' + esc(nm) + '</div>'
+      + (info.role ? '<div class="adv-head-role">' + esc(info.role) + '</div>' : '') + '</div>'
+      + (showBack ? '<a href="#" class="adv-back" onclick="backToAdvisors(event)">← Солих</a>' : '');
+  }
+  function renderBookAdvisors(list) {
+    document.getElementById('bookAdvisors').innerHTML = list.map(a => {
+      const name = String(a.name || '').trim();
+      const photo = a.photo
+        ? '<div class="adv-card-photo"><img src="' + safeUrl(a.photo) + '" alt="' + esc(name) + '"></div>'
+        : '<div class="adv-card-photo"><span>' + esc(name.charAt(0)) + '</span></div>';
+      return '<div class="adv-card" onclick="selectBookAdvisor(\'' + encodeURIComponent(name) + '\')">'
+        + photo + '<div class="adv-card-name">' + esc(name) + '</div>'
+        + (a.role ? '<div class="adv-card-role">' + esc(a.role) + '</div>' : '') + '</div>';
+    }).join('');
+  }
+  function showAdvisorStep(showBack) {
+    document.getElementById('bookAdvisorPick').classList.add('hidden');
+    document.getElementById('bookAdvisorStep').classList.remove('hidden');
+    renderAdvisorHead(showBack);
+    renderBookDays();
+  }
+  function selectBookAdvisor(enc) {
+    bkSelAdvisor = decodeURIComponent(enc); bkSelDate = null; bkSelTime = null;
+    showAdvisorStep(true); updateBookConfirm();
+  }
+  function backToAdvisors(e) {
+    if (e) e.preventDefault();
+    bkSelAdvisor = null; bkSelDate = null; bkSelTime = null;
+    document.getElementById('bookAdvisorStep').classList.add('hidden');
+    document.getElementById('bookAdvisorPick').classList.remove('hidden');
   }
 
   function openBooking(e) {
@@ -3276,9 +3359,17 @@
     if (done) {
       const u = currentUser();
       document.getElementById('bookGreeting').textContent =
-        (u && u.name ? u.name + ', з' : 'З') + 'өвлөхийн нээлттэй цагаас сонгоод товлоорой.';
-      bkSelDate = null; bkSelTime = null;
-      renderBookDays();
+        (u && u.name ? u.name + ', з' : 'З') + 'өвлөхөө сонгоод нээлттэй цагаас товлоорой.';
+      bkSelDate = null; bkSelTime = null; bkSelAdvisor = null;
+      const advisors = advisorsWithAvailability();
+      if (advisors.length > 1) {
+        renderBookAdvisors(advisors);
+        document.getElementById('bookAdvisorStep').classList.add('hidden');
+        document.getElementById('bookAdvisorPick').classList.remove('hidden');
+      } else {
+        bkSelAdvisor = advisors.length ? advisors[0].name : firstAdvisorName();
+        showAdvisorStep(false);
+      }
     }
     bookingModal.classList.add('open');
     document.body.style.overflow = 'hidden';
@@ -3355,9 +3446,9 @@
     const name = u.name || 'Хэрэглэгч';
     KPICloud.addSubmission('booking', {
       name, phone: u.phone || '', email: u.email || '', org: u.org || '',
-      date: bkSelDate, time: bkSelTime, paid: false
+      date: bkSelDate, time: bkSelTime, paid: false, advisor: bkSelAdvisor || ''
     });
-    KPICloud.addTakenSlot(bkSelDate, bkSelTime); // тухайн цагийг "завгүй" болгох
+    KPICloud.addTakenSlot(bkSelDate, bkSelTime, bkSelAdvisor); // тухайн зөвлөхийн цагийг "завгүй" болгох
     const email = u.email || 'бүртгэлтэй и-мэйл';
     document.getElementById('bookSuccessMsg').innerHTML =
       name + ', таны <b>' + bkSelDate + ' ' + bkSelTime + '</b>-ийн зөвлөгөөний цаг товлогдлоо. '
@@ -3513,7 +3604,7 @@
   // Cloud-оос ирсэн (localStorage-д тусгагдсан) өгөгдлөөр бүх хэсгийг дахин зурна.
   function applyCloudContent() {
     const cloudArticles = readArticles();
-    if (cloudArticles.length) { ARTICLES.length = 0; cloudArticles.forEach(a => ARTICLES.push(a)); }
+    if (cloudArticles.length) { sortArticlesByNewest(cloudArticles); ARTICLES.length = 0; cloudArticles.forEach(a => ARTICLES.push(a)); }
     CATS = ['Бүгд', ...Array.from(new Set(ARTICLES.map(a => a.cat)))];
     if (!CATS.includes(activeFilter)) activeFilter = 'Бүгд';
     try {

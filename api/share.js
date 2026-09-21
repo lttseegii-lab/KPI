@@ -52,6 +52,7 @@ article figure{margin:22px 0}
 article figure img{width:100%;border-radius:12px;border:1px solid var(--line)}
 article figcaption{font-size:12.5px;color:var(--muted);margin-top:8px;text-align:center}
 article a{color:var(--accent);text-decoration:underline}
+article .lg{font-size:1.3em}article .sm{font-size:0.82em}
 .cta{margin:40px 0 8px;padding:24px;background:var(--card);border:1px solid var(--line);border-radius:16px;text-align:center}
 .cta p{margin:0 0 14px;color:var(--muted);font-size:14.5px}
 .btn{display:inline-block;background:var(--accent);color:#00122b;font-weight:700;text-decoration:none;padding:12px 22px;border-radius:11px;font-size:14.5px}

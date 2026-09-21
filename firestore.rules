@@ -50,7 +50,7 @@ service cloud.firestore {
       allow create: if request.resource.data.kind in ['quote', 'booking', 'user']
         && request.resource.data.keys().hasOnly([
              'kind','at','name','email','phone','org',
-             'product','productKey','answers','date','time','paid','role'
+             'product','productKey','answers','date','time','paid','role','advisor'
            ])
         && (!('answers' in request.resource.data) || request.resource.data.answers.size() <= 40)
         // Талбар бүрд уртын хязгаар — хязгааргүй том өгөгдөл бичихээс сэргийлнэ
@@ -59,6 +59,7 @@ service cloud.firestore {
         && (!('phone' in request.resource.data) || request.resource.data.phone.size() <= 40)
         && (!('org' in request.resource.data) || request.resource.data.org.size() <= 200)
         && (!('role' in request.resource.data) || request.resource.data.role.size() <= 120)
+        && (!('advisor' in request.resource.data) || request.resource.data.advisor.size() <= 120)
         // Бүртгэл нь ямар ч тохиолдолд төлбөртэй эрх ОЛГОХГҮЙ
         && (!('paid' in request.resource.data) || request.resource.data.kind == 'booking');
       // Popup цонхны бүртгэл — админаас тохируулсан формоор зочин бүртгүүлнэ

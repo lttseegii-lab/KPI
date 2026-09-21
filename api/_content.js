@@ -120,7 +120,8 @@ function inlineSafe(s) {
   let out = "";
   let last = 0;
   const anchorStack = [];
-  const re = /<\/?(?:b|strong|i|em|u|br|a)\b[^>]*>/gi;
+  const spanStack = [];
+  const re = /<\/?(?:b|strong|i|em|u|br|a|span)\b[^>]*>/gi;
   let m;
   while ((m = re.exec(s))) {
     out += esc(decodeEntities(s.slice(last, m.index))); // тагийн өмнөх текстийг задалж, escape
@@ -153,6 +154,16 @@ function inlineSafe(s) {
     } else if (/^<\/a>/.test(lower)) {
       const wasSafe = anchorStack.pop();
       if (wasSafe) out += "</a>";
+    } else if (/^<span\b/.test(lower)) {
+      // Зөвхөн хэмжээний класс (lg/sm) бүхий span-ыг үлдээнэ
+      const cm = /class\s*=\s*("([^"]*)"|'([^']*)'|([^\s>]+))/i.exec(tag);
+      const cls = cm ? (cm[2] || cm[3] || cm[4] || "") : "";
+      const sz = (/\b(lg|sm)\b/.exec(cls) || [])[1];
+      if (sz) { out += '<span class="' + sz + '">'; spanStack.push(true); }
+      else { spanStack.push(false); }
+    } else if (/^<\/span>/.test(lower)) {
+      const wasSize = spanStack.pop();
+      if (wasSize) out += "</span>";
     }
     last = re.lastIndex;
   }

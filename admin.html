@@ -118,9 +118,19 @@
   .se-body ul { margin:0 0 14px 22px; }
   .se-body li { margin-bottom:6px; }
   .se-body a { color:var(--accent); text-decoration:underline; }
+  .se-body .lg { font-size:1.3em; } .se-body .sm { font-size:0.82em; }
   .se-body figure { margin:18px 0; }
   .se-body figure img, .se-body img { max-width:100%; border-radius:10px; border:1px solid var(--line); display:block; }
   .se-body figcaption { font-size:12.5px; color:var(--muted); margin-top:6px; text-align:center; }
+  /* Биеийн зураг — hover дээр устгах/солих хэрэгсэл ба засварлагдах тайлбар */
+  .se-body figure.se-fig { position:relative; }
+  .se-body .fig-tools { position:absolute; top:8px; right:8px; display:flex; gap:6px; opacity:0; transition:opacity .15s; }
+  .se-body figure.se-fig:hover .fig-tools, .se-body figure.se-fig:focus-within .fig-tools { opacity:1; }
+  .se-body .fig-btn { width:30px; height:30px; padding:0; border:none; border-radius:8px; background:rgba(0,0,0,.62); color:#fff; font-size:14px; cursor:pointer; display:grid; place-items:center; line-height:1; box-shadow:0 1px 4px rgba(0,0,0,.3); }
+  .se-body .fig-btn:hover { background:rgba(0,0,0,.85); }
+  .se-body figcaption[contenteditable] { outline:none; cursor:text; }
+  .se-body figcaption[contenteditable]:empty::before { content:attr(data-ph); color:#b8bcc6; }
+  .se-body figcaption[contenteditable]:focus { color:var(--text); }
   .se-meta { margin-top:30px; border-top:1px solid var(--line); padding-top:18px; }
   .se-meta-title { font-size:12.5px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--muted); margin-bottom:14px; }
 
@@ -240,6 +250,8 @@
   .bulk-days { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; margin-bottom:18px; }
   .bulk-slots { max-width:none; }
   @media (max-width:520px){ .av-toggles { grid-template-columns:repeat(3,1fr); } }
+  .av-adv-group { margin-bottom:18px; }
+  .av-adv-name { font-weight:700; font-size:14px; margin:2px 0 8px; color:var(--text); }
   @media (max-width:760px){ .bulk-days { grid-template-columns:repeat(4,minmax(0,1fr)); } }
   .av-chip { padding:10px 0; text-align:center; border-radius:10px; border:1px solid var(--line); background:var(--bg-soft); cursor:pointer; font-size:14px; font-weight:600; transition:all .15s; }
   .av-chip:hover { border-color:var(--accent); }
@@ -385,7 +397,7 @@
       </div>
       <div class="tab-sub" id="settingsSub">
         <div class="tab" data-tab="sections" onclick="switchTab('sections')">Хуудасны текст</div>
-        <div class="tab" data-tab="authors" onclick="switchTab('authors')">Нийтлэл бичсэн</div>
+        <div class="tab" data-tab="authors" onclick="switchTab('authors')">Хүмүүс / Зөвлөх</div>
         <div class="tab" data-tab="register" onclick="switchTab('register')">Бүртгэлийн текст</div>
         <div class="tab" data-tab="admins" onclick="switchTab('admins')">Админууд</div>
         <div class="tab" data-tab="contact" onclick="switchTab('contact')">Холбоо барих</div>
@@ -518,6 +530,10 @@
           <button type="button" title="Налуу" onclick="seCmd('italic')"><i>I</i></button>
           <button type="button" title="Доогуур зураас" onclick="seCmd('underline')"><u>U</u></button>
           <span class="se-sep"></span>
+          <button type="button" title="Том бичих" onclick="seSize('lg')">A+</button>
+          <button type="button" title="Жижиг бичих" onclick="seSize('sm')">A−</button>
+          <button type="button" title="Хэвийн хэмжээ" onclick="seSize('')">A</button>
+          <span class="se-sep"></span>
           <button type="button" title="Холбоос" onclick="seLink()">🔗</button>
           <button type="button" title="Эшлэл" onclick="seQuote()">❝</button>
           <button type="button" title="Жагсаалт" onclick="seCmd('insertUnorderedList')">•≡</button>
@@ -543,7 +559,7 @@
           </div>
           <div class="row2">
             <div class="field"><label>Унших хугацаа</label><input id="e-read" placeholder="5 мин"></div>
-            <div class="field"><label>Нийтлэл бичсэн (By ...)</label><input id="e-author" placeholder="Жишээ: Бат Болд"></div>
+            <div class="field"><label>Нийтлэл бичсэн (By ...)</label><select id="e-author"></select></div>
           </div>
           <div class="field">
             <label>Нүүр зураг</label>
@@ -854,7 +870,7 @@
 
     <section id="tab-authors" class="hidden">
       <div class="panel-head">
-        <h2>Нийтлэл бичсэн хүмүүс</h2>
+        <h2>Хүмүүс / Зөвлөхүүд</h2>
         <div class="actions">
           <button class="btn btn-sm" onclick="addAuthor()">+ Хүн нэмэх</button>
           <button class="btn btn-primary" onclick="saveAuthors()">Хадгалах</button>
@@ -929,8 +945,13 @@
 
       <div class="editor">
         <h3>Боломжтой цаг нээх</h3>
-        <div class="field" style="max-width:260px;"><label>Огноо</label><input type="date" id="av-date" onchange="renderAvToggles()"></div>
+        <div class="field" style="max-width:260px;"><label>Зөвлөх</label><select id="av-advisor" onchange="renderAvToggles()"></select></div>
+        <div class="row2" style="max-width:540px;">
+          <div class="field"><label>Огноо (эхлэх)</label><input type="date" id="av-date" onchange="renderAvToggles()"></div>
+          <div class="field"><label>Дуусах огноо (сонголтоор)</label><input type="date" id="av-date-end" onchange="renderAvToggles()"></div>
+        </div>
         <span class="book-label" style="display:block; margin-bottom:8px;">Цаг сонгох (дарж нээх/хаах)</span>
+        <span class="hint" id="avRangeNote" style="display:none; margin-bottom:10px;"></span>
         <div class="av-toggles" id="avToggles"></div>
         <div class="save-bar">
           <button class="btn btn-primary" onclick="saveAvailability()">Хадгалах</button>
@@ -940,6 +961,7 @@
 
       <div class="editor">
         <h3>Бөөнөөр цаг нээх</h3>
+        <div class="field" style="max-width:260px;"><label>Зөвлөх</label><select id="bulk-advisor"></select></div>
         <div class="row2">
           <div class="field"><label>Эхлэх огноо</label><input type="date" id="bulk-start"></div>
           <div class="field"><label>Дуусах огноо</label><input type="date" id="bulk-end"></div>
@@ -1012,7 +1034,7 @@
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
-<script src="firebase.js?v=8"></script>
+<script src="firebase.js?v=9"></script>
 
 <script>
 
@@ -1317,6 +1339,11 @@
       if (Array.isArray(a) && a.length) { all = all.concat(a); used++; }
     });
     artShardsUsed = Math.max(1, used);
+    // Хамгийн сүүлд бичсэн нийтлэл (id доторх timestamp) эхэнд харагдахаар эрэмбэлнэ
+    all.sort((a, b) => {
+      const ts = x => { const m = /(\d{13})/.exec(String((x && x.id) || '')); return m ? +m[1] : 0; };
+      return ts(b) - ts(a);
+    });
     return all.length ? all : DEFAULT_ARTICLES.map(a => JSON.parse(JSON.stringify(a)));
   }
   // Нийтлэлүүдийг хэмжээгээр нь дараалуулан хэсгүүдэд хуваана
@@ -1555,7 +1582,7 @@
     if (t === 'home') renderHome();
     if (t === 'reports') renderReports();
     if (t === 'products') renderProductsAdmin();
-    if (t === 'schedule') { renderBulkControls(); renderAvList(); renderBookings(); }
+    if (t === 'schedule') { initSchedule(); renderBookings(); }
     if (t === 'pricing') { renderQuestions(); renderQuoteRequests(); }
     if (t === 'popup') { renderPopupEditor(); renderPopupSubs(); }
     if (t === 'users') { closeCrm(); renderUsers(); clearUserMsg(); }
@@ -1992,19 +2019,80 @@
   }
 
   // ---------- Schedule / availability ----------
-  const avKey = (d, t) => d + '|' + t;
-  function hasAv(d, t) { return availability.some(a => a.date === d && a.time === t); }
+  const avKey = (d, t, adv) => (adv || '') + '|' + d + '|' + t;
+  // --- Зөвлөх (цаг товлолт) ---
+  // Бүртгэлийн эхний хүнийг үндсэн зөвлөх болгоно. Зөвлөхгүй хуучин цагийг
+  // уншихдаа энэ хүнд хамааруулна (хадгалахдаа өөрчлөхгүй — advKey зохицуулна).
+  function firstAdvisorName() {
+    const a = (authors || []).find(x => String((x && x.name) || '').trim());
+    return a ? String(a.name).trim() : '';
+  }
+  function advKey(a) { return (a && a.advisor && String(a.advisor).trim()) || firstAdvisorName(); }
+  function curAvAdvisor() { const s = document.getElementById('av-advisor'); return s ? s.value : ''; }
+  function advisorOptionNames() {
+    const names = [];
+    (authors || []).forEach(a => { const n = String((a && a.name) || '').trim(); if (n && names.indexOf(n) === -1) names.push(n); });
+    (availability || []).forEach(a => { const n = advKey(a); if (n && names.indexOf(n) === -1) names.push(n); });
+    return names;
+  }
+  function fillAdvisorSelect(id) {
+    const sel = document.getElementById(id); if (!sel) return;
+    const cur = sel.value; const names = advisorOptionNames();
+    sel.innerHTML = names.length
+      ? names.map(n => '<option value="' + esc(n) + '">' + esc(n) + '</option>').join('')
+      : '<option value="">— Эхлээд «Хүмүүс / Зөвлөх» дээр нэмнэ үү —</option>';
+    if (cur && names.indexOf(cur) !== -1) sel.value = cur; else if (names.length) sel.value = names[0];
+  }
+  function initSchedule() {
+    fillAdvisorSelect('av-advisor'); fillAdvisorSelect('bulk-advisor');
+    renderAvToggles(); renderBulkControls(); renderAvList();
+  }
+  function hasAv(d, t, adv) { return availability.some(a => a.date === d && a.time === t && advKey(a) === adv); }
+  // «Боломжтой цаг нээх» хэсгийн огнооны муж [эхлэх..дуусах]. Дуусах огноо
+  // хоосон бол зөвхөн эхлэх огноо (нэг өдөр). Дуусах нь эхлэхээс өмнө бол эхлэхтэй тэнцүү.
+  function avDatesInRange() {
+    const s = document.getElementById('av-date').value;
+    if (!s) return [];
+    const start = parseInputDate(s);
+    if (!start) return [];
+    const eEl = document.getElementById('av-date-end');
+    let end = (eEl && eEl.value) ? parseInputDate(eEl.value) : start;
+    if (!end || end < start) end = start;
+    if (Math.floor((end - start) / 86400000) > 366) end = start; // хэт урт мужаас сэргийлнэ
+    const out = [];
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) out.push(dateInputValue(d));
+    return out;
+  }
   function renderAvToggles() {
     const d = document.getElementById('av-date').value;
+    const adv = curAvAdvisor();
     document.getElementById('avToggles').innerHTML = SCHED_SLOTS.map(t =>
-      '<div class="av-chip' + (d && hasAv(d, t) ? ' on' : '') + '" onclick="toggleAv(\'' + t + '\')">' + t + '</div>'
+      '<div class="av-chip' + (d && adv && hasAv(d, t, adv) ? ' on' : '') + '" onclick="toggleAv(\'' + t + '\')">' + t + '</div>'
     ).join('');
+    // Интервал сонгосон бол хэдэн өдөрт үйлчлэхийг тайлбарлана
+    const note = document.getElementById('avRangeNote');
+    if (note) {
+      const dates = avDatesInRange();
+      if (dates.length > 1) {
+        note.textContent = 'Дарсан цаг ' + fmtDate(dates[0]) + ' – ' + fmtDate(dates[dates.length - 1]) + ' хоорондох ' + dates.length + ' өдөрт үйлчилнэ. (Тухайн цагийн төлөв эхлэх өдрөөр харагдана.)';
+        note.style.display = '';
+      } else {
+        note.textContent = ''; note.style.display = 'none';
+      }
+    }
   }
   function toggleAv(t) {
     const d = document.getElementById('av-date').value;
     if (!d) { alert('Эхлээд огноо сонгоно уу.'); return; }
-    if (hasAv(d, t)) availability = availability.filter(a => !(a.date === d && a.time === t));
-    else availability.push({ date: d, time: t });
+    const adv = curAvAdvisor();
+    if (!adv) { alert('Эхлээд зөвлөх сонгоно уу.'); return; }
+    const dates = avDatesInRange();
+    const turnOn = !hasAv(d, t, adv); // эхлэх огнооны төлөвөөр нээх/хаахыг шийднэ
+    dates.forEach(dv => {
+      const exists = availability.some(a => a.date === dv && a.time === t && advKey(a) === adv);
+      if (turnOn && !exists) availability.push({ date: dv, time: t, advisor: adv });
+      else if (!turnOn && exists) availability = availability.filter(a => !(a.date === dv && a.time === t && advKey(a) === adv));
+    });
     renderAvToggles();
   }
   function saveAvailability() {
@@ -2054,17 +2142,19 @@
     if (dayCount > 366) { alert('Нэг удаад 366 хүртэл хоногийн цаг үүсгэнэ үү.'); return; }
     if (!bulkSelectedDays.size) { alert('Доод тал нь нэг гараг сонгоно уу.'); return; }
     if (!bulkSelectedTimes.size) { alert('Доод тал нь нэг цаг сонгоно уу.'); return; }
+    const adv = document.getElementById('bulk-advisor').value;
+    if (!adv) { alert('Эхлээд зөвлөх сонгоно уу.'); return; }
 
-    const existing = new Set(availability.map(a => avKey(a.date, a.time)));
+    const existing = new Set(availability.map(a => avKey(a.date, a.time, advKey(a))));
     const times = SCHED_SLOTS.filter(time => bulkSelectedTimes.has(time));
     let added = 0;
     for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
       if (!bulkSelectedDays.has(date.getDay())) continue;
       const dateValue = dateInputValue(date);
       times.forEach(time => {
-        const key = avKey(dateValue, time);
+        const key = avKey(dateValue, time, adv);
         if (existing.has(key)) return;
-        availability.push({ date:dateValue, time:time });
+        availability.push({ date:dateValue, time:time, advisor:adv });
         existing.add(key);
         added++;
       });
@@ -2080,18 +2170,28 @@
     });
   }
   function renderAvList() {
-    const byDate = {};
-    availability.forEach(a => { (byDate[a.date] = byDate[a.date] || []).push(a.time); });
-    const dates = Object.keys(byDate).sort();
-    document.getElementById('avList').innerHTML = dates.length ? dates.map(d =>
-      '<div class="av-day"><div class="d">' + fmtDate(d) + '</div>'
-      + '<div class="times">' + byDate[d].sort().map(t => '<span class="tchip">' + t + '</span>').join('') + '</div>'
-      + '<button class="btn btn-danger btn-sm" onclick="clearAvDay(\'' + d + '\')">Хаах</button></div>'
-    ).join('') : '<div class="empty">Нээсэн цаг алга. Дээрээс огноо сонгоод цаг нээнэ үү.</div>';
+    const byAdv = {};
+    availability.forEach(a => {
+      const adv = advKey(a) || '—';
+      byAdv[adv] = byAdv[adv] || {};
+      (byAdv[adv][a.date] = byAdv[adv][a.date] || []).push(a.time);
+    });
+    const advs = Object.keys(byAdv).sort();
+    document.getElementById('avList').innerHTML = advs.length ? advs.map(adv => {
+      const dates = Object.keys(byAdv[adv]).sort();
+      return '<div class="av-adv-group"><div class="av-adv-name">👤 ' + esc(adv) + '</div>'
+        + dates.map(d =>
+            '<div class="av-day"><div class="d">' + fmtDate(d) + '</div>'
+            + '<div class="times">' + byAdv[adv][d].sort().map(t => '<span class="tchip">' + t + '</span>').join('') + '</div>'
+            + '<button class="btn btn-danger btn-sm" onclick="clearAvDay(\'' + encodeURIComponent(adv) + '\',\'' + d + '\')">Хаах</button></div>'
+          ).join('')
+        + '</div>';
+    }).join('') : '<div class="empty">Нээсэн цаг алга. Дээрээс зөвлөх, огноо сонгоод цаг нээнэ үү.</div>';
   }
-  function clearAvDay(d) {
-    if (!confirm(fmtDate(d) + '-ны бүх нээлттэй цагийг хаах уу?')) return;
-    availability = availability.filter(a => a.date !== d);
+  function clearAvDay(advEnc, d) {
+    const adv = decodeURIComponent(advEnc);
+    if (!confirm(adv + ' — ' + fmtDate(d) + '-ны бүх нээлттэй цагийг хаах уу?')) return;
+    availability = availability.filter(a => !(a.date === d && advKey(a) === adv));
     save('kpihub_availability', availability); renderAvList();
     if (document.getElementById('av-date').value === d) renderAvToggles();
   }
@@ -3510,12 +3610,35 @@
     document.getElementById('e-cat').value = a.cat || '';
     document.getElementById('e-date').value = monthDateValue(a.date) || '';
     document.getElementById('e-read').value = a.read || '';
-    document.getElementById('e-author').value = a.author || '';
+    populateAuthorSelect(a.author);
     document.getElementById('e-title').value = a.title || '';
     document.getElementById('e-excerpt').value = a.excerpt || '';
     document.getElementById('e-body').innerHTML = blocksToEditorHtml(a.body || []);
+    decorateFigures();
     editImage = a.image || '';
     renderArticleImage();
+  }
+  // «Нийтлэл бичсэн» талбарыг бүртгэгдсэн зохиогчдоос (kpihub_authors) дүүргэнэ.
+  // Хуучин нийтлэлийн зохиогч бүртгэлд байхгүй бол өгөгдөл алдагдахгүйн тулд
+  // тусдаа сонголт болгон нэмж, сонгосон хэвээр үлдээнэ.
+  function populateAuthorSelect(current) {
+    const sel = document.getElementById('e-author');
+    if (!sel) return;
+    const cur = String(current || '').trim();
+    const names = [];
+    (authors || []).forEach(a => {
+      const n = String((a && a.name) || '').trim();
+      if (n && names.indexOf(n) === -1) names.push(n);
+    });
+    let html = '<option value="">— Зохиогч сонгох —</option>';
+    names.forEach(n => {
+      html += '<option value="' + esc(n) + '"' + (n === cur ? ' selected' : '') + '>' + esc(n) + '</option>';
+    });
+    if (cur && names.indexOf(cur) === -1) {
+      html += '<option value="' + esc(cur) + '" selected>' + esc(cur) + ' (бүртгэлд алга)</option>';
+    }
+    sel.innerHTML = html;
+    sel.value = cur;
   }
   function renderArticleImage() {
     const prev = document.getElementById('e-imgPreview'), rm = document.getElementById('e-imgRm'), nm = document.getElementById('e-imgName');
@@ -3556,6 +3679,44 @@
   }
   function seHeading() { seRestoreSel(); document.execCommand('formatBlock', false, seInTag('H3') ? 'p' : 'h3'); seSaveSel(); }
   function seQuote() { seRestoreSel(); document.execCommand('formatBlock', false, seInTag('BLOCKQUOTE') ? 'p' : 'blockquote'); seSaveSel(); }
+  // Сонгосон текстийн хэмжээ: 'lg' том, 'sm' жижиг, '' хэвийн (цэвэрлэх)
+  function seSize(cls) {
+    seRestoreSel();
+    const sel = window.getSelection();
+    if (!sel || !sel.rangeCount || sel.isCollapsed) return;
+    const range = sel.getRangeAt(0);
+    const body = seBody();
+    if (!body.contains(range.commonAncestorContainer)) return;
+
+    // Сонголт бүхэлдээ нэг хэмжээний span дотор бол түүн дээр шууд ажиллана
+    let host = range.commonAncestorContainer;
+    if (host.nodeType === 3) host = host.parentNode;
+    const sizeSpan = host && host.closest ? host.closest('span.lg, span.sm') : null;
+    if (sizeSpan && body.contains(sizeSpan) && range.toString() === sizeSpan.textContent) {
+      if (cls === 'lg' || cls === 'sm') sizeSpan.className = cls;
+      else { while (sizeSpan.firstChild) sizeSpan.parentNode.insertBefore(sizeSpan.firstChild, sizeSpan); sizeSpan.remove(); }
+      body.normalize(); seSaveSel(); return;
+    }
+
+    // Бусад тохиолдол: сонголтыг гаргаж, доторх хэмжээний span-уудыг задална
+    const frag = range.extractContents();
+    frag.querySelectorAll('span.lg, span.sm').forEach(sp => {
+      while (sp.firstChild) sp.parentNode.insertBefore(sp.firstChild, sp);
+      sp.remove();
+    });
+    let wrap = null;
+    if (cls === 'lg' || cls === 'sm') {
+      wrap = document.createElement('span'); wrap.className = cls;
+      wrap.appendChild(frag); range.insertNode(wrap);
+    } else {
+      range.insertNode(frag);
+    }
+    // Хоосон үлдсэн хэмжээний span-уудыг цэвэрлэнэ
+    body.querySelectorAll('span.lg:empty, span.sm:empty').forEach(sp => sp.remove());
+    sel.removeAllRanges();
+    if (wrap) { const nr = document.createRange(); nr.selectNodeContents(wrap); sel.addRange(nr); }
+    seSaveSel();
+  }
   function seLink() {
     seRestoreSel();
     const url = prompt('Холбоосын хаяг (https://…):');
@@ -3573,6 +3734,7 @@
       document.execCommand('insertHTML', false,
         '<figure contenteditable="false"><img src="' + data + '" alt=""></figure><p><br></p>');
       input.value = '';
+      decorateFigures();
       seSaveSel();
     });
   }
@@ -3662,6 +3824,10 @@
             ? '<a href="' + esc(href) + '" target="_blank" rel="noopener">' + inner + '</a>'
             : inner;
         }
+        else if (tag === 'span') {
+          const sz = (/\b(lg|sm)\b/.exec(n.getAttribute('class') || '') || [])[1];
+          r += (sz && inner) ? '<span class="' + sz + '">' + inner + '</span>' : inner;
+        }
         else r += inner;
       });
       return r;
@@ -3676,6 +3842,54 @@
       if (b[0] === 'img') return '<figure contenteditable="false"><img src="' + b[1] + '" alt="' + esc(b[2] || '') + '"></figure>';
       return '<p>' + inlineSafe(b[1]) + '</p>';
     }).join('');
+  }
+  // Биеийн зураг бүрд устгах/солих хэрэгсэл ба засварлагдах тайлбар нэмнэ.
+  // Эдгээр удирдлагыг зөвхөн засварлагчид JS-ээр залгадаг тул хадгалахад
+  // ороогүй (editorToBlocks нь зөвхөн img src + figcaption-ыг уншина).
+  function decorateFigures() {
+    const root = seBody(); if (!root) return;
+    root.querySelectorAll('figure').forEach(fig => {
+      fig.setAttribute('contenteditable', 'false');
+      fig.classList.add('se-fig');
+      const img = fig.querySelector('img');
+      if (!img) return;
+      // Тайлбар (figcaption) — засварлагдах, байхгүй бол img alt-аас үүсгэнэ
+      let cap = fig.querySelector('figcaption');
+      if (!cap) {
+        cap = document.createElement('figcaption');
+        cap.textContent = img.getAttribute('alt') || '';
+        img.insertAdjacentElement('afterend', cap);
+      }
+      cap.setAttribute('contenteditable', 'true');
+      cap.setAttribute('data-ph', 'Зургийн тайлбар (сонголтоор)');
+      // Хэрэгслүүд (устгах/солих) — нэг л удаа нэмнэ
+      if (!fig.querySelector('.fig-tools')) {
+        const tools = document.createElement('div');
+        tools.className = 'fig-tools';
+        tools.setAttribute('contenteditable', 'false');
+        tools.innerHTML =
+          '<button type="button" class="fig-btn fig-replace" title="Зураг солих">\u21c4</button>' +
+          '<button type="button" class="fig-btn fig-del" title="Зураг устгах">\uD83D\uDDD1</button>';
+        fig.appendChild(tools);
+      }
+    });
+  }
+  // Зураг солих хэрэгсэлд зориулсан нэг нийтлэг файл сонгогч
+  let figReplaceTarget = null, figReplaceInput = null;
+  function ensureFigReplaceInput() {
+    if (figReplaceInput) return figReplaceInput;
+    figReplaceInput = document.createElement('input');
+    figReplaceInput.type = 'file'; figReplaceInput.accept = 'image/*'; figReplaceInput.hidden = true;
+    figReplaceInput.addEventListener('change', function () {
+      const f = this.files && this.files[0]; this.value = '';
+      const fig = figReplaceTarget; figReplaceTarget = null;
+      if (!f || !fig) return;
+      if (f.size > MAX_IMG) { alert('Зураг хэт том байна (дээд тал нь 5MB).'); return; }
+      const img = fig.querySelector('img');
+      compressFile(f).then(data => { if (img) img.setAttribute('src', data); });
+    });
+    document.body.appendChild(figReplaceInput);
+    return figReplaceInput;
   }
   // Хоосон эсэхийг inline HTML талаас нь шалгана (зөвхөн <br>/зай бол хоосон)
   function seEmpty(html) { return !String(html || '').replace(/<br>/g, '').replace(/&nbsp;/g, ' ').trim(); }
@@ -3709,6 +3923,12 @@
   (function () {
     const b = document.getElementById('e-body');
     if (b) ['keyup', 'mouseup', 'focus', 'input'].forEach(ev => b.addEventListener(ev, seSaveSel));
+    if (b) b.addEventListener('click', function (e) {
+      const del = e.target.closest && e.target.closest('.fig-del');
+      if (del) { e.preventDefault(); const fig = del.closest('figure'); if (fig && confirmDelete('Энэ зургийг устгах уу?')) fig.remove(); return; }
+      const rep = e.target.closest && e.target.closest('.fig-replace');
+      if (rep) { e.preventDefault(); figReplaceTarget = rep.closest('figure'); ensureFigReplaceInput().click(); return; }
+    });
     try { document.execCommand('defaultParagraphSeparator', false, 'p'); } catch (e) {}
   })();
 

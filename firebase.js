@@ -265,18 +265,27 @@
   }
 
   // ================= Захиалагдсан цаг (public/taken_slots) =================
-  function slotKey(date, time) { return date + " " + time; }
-  function isTaken(date, time) { return !!takenSet[slotKey(date, time)]; }
+  // Захиалагдсан цагийн түлхүүр — зөвлөх бүрд тусад нь. Зөвлөхгүй (хуучин)
+  // түлхүүр нь "date time" хэвээр; зөвлөхтэй нь "advisor | date time".
+  function slotKey(date, time, advisor) {
+    return (advisor ? String(advisor).trim() + " | " : "") + date + " " + time;
+  }
+  function isTaken(date, time, advisor) {
+    if (takenSet[slotKey(date, time, advisor)]) return true;
+    // Хуучин зөвлөхгүй захиалга давхар захиалгаас сэргийлж бүх зөвлөхөд хүчинтэй
+    if (advisor && takenSet[slotKey(date, time, "")]) return true;
+    return false;
+  }
   function takenList() { return Object.keys(takenSet); }
-  function addTakenSlot(date, time) {
-    var k = slotKey(date, time); takenSet[k] = true;
+  function addTakenSlot(date, time, advisor) {
+    var k = slotKey(date, time, advisor); takenSet[k] = true;
     if (!online) return Promise.resolve();
     return db.collection("public").doc("taken_slots")
       .set({ slots: firebase.firestore.FieldValue.arrayUnion(k) }, { merge: true })
       .catch(function (err) { console.error("[KPICloud] taken slot нэмж чадсангүй:", err); });
   }
-  function removeTakenSlot(date, time) {
-    var k = slotKey(date, time); delete takenSet[k];
+  function removeTakenSlot(date, time, advisor) {
+    var k = slotKey(date, time, advisor); delete takenSet[k];
     if (!online) return Promise.resolve();
     return db.collection("public").doc("taken_slots")
       .set({ slots: firebase.firestore.FieldValue.arrayRemove(k) }, { merge: true })
