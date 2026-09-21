@@ -754,14 +754,23 @@
     background:linear-gradient(140deg, var(--navy) 0%, var(--navy-deep) 100%);
     box-shadow:0 34px 74px rgba(10,17,80,.32); }
   /* Дээд icon-ууд хүрээ дотроо, төвдөө */
-  .showcase-tabs{ display:flex; justify-content:center; gap:14px; margin-bottom:24px; }
+  .showcase-tabs{ display:flex; justify-content:center; gap:14px; --tab-gap:24px; margin-bottom:var(--tab-gap); }
   .stab{ width:58px; height:58px; border-radius:16px; cursor:pointer;
     display:flex; align-items:center; justify-content:center;
     background:rgba(255,255,255,.12); color:#dbe0ff; border:1px solid rgba(255,255,255,.22);
     transition:transform .16s ease, background .18s ease, color .18s ease, box-shadow .18s ease; }
   .stab svg{ width:24px; height:24px; }
   .stab:hover{ transform:translateY(-2px); background:rgba(255,255,255,.22); color:#fff; }
+  .stab{ position:relative; }
   .stab[aria-selected="true"]{ background:#fff; color:var(--navy); box-shadow:0 10px 22px rgba(0,0,0,.28); }
+
+  /* Идэвхтэй icon-оос доорх панель руу татсан цагаан "иш" — хоёулаа нэг бүхэл мэт */
+  .stab[aria-selected="true"]::after{
+    content:""; position:absolute; left:50%; top:calc(100% - 1px);
+    transform:translateX(-50%); pointer-events:none;
+    width:56px; height:calc(var(--tab-gap) + 2px); background:#fff;
+    clip-path:polygon(23% 0, 77% 0, 100% 100%, 0 100%);
+  }
 
   /* Дотоод цагаан панель */
   .showcase-stage{ background:#fff; border-radius:20px; overflow:hidden; box-shadow:0 22px 46px rgba(16,18,38,.14); }
@@ -821,7 +830,7 @@
     .hero > .wrap{ padding-top:40px; padding-bottom:54px; }
     .topbar .wrap{ padding-right:44px; gap:8px; font-size:12px; }
     .showcase{ padding:22px 16px 24px; margin-top:36px; border-radius:22px; }
-    .showcase-tabs{ gap:8px; margin-bottom:18px; }
+    .showcase-tabs{ gap:8px; --tab-gap:18px; margin-bottom:var(--tab-gap); }
     .stab{ width:50px; height:50px; border-radius:13px; }
     .stab svg{ width:22px; height:22px; }
     .spanel.active{ grid-template-columns:1fr; }
@@ -926,7 +935,7 @@
     .mlist{ gap:13px; }
 
     .showcase{ margin-top:18px; padding:18px 20px 20px; border-radius:24px; }
-    .showcase-tabs{ margin-bottom:14px; gap:10px; }
+    .showcase-tabs{ --tab-gap:14px; margin-bottom:var(--tab-gap); gap:10px; }
     .stab{ width:46px; height:46px; border-radius:13px; }
     .stab svg{ width:21px; height:21px; }
 
@@ -991,7 +1000,7 @@
     .hero-head .hero-sub{ font-size:13.5px; margin-top:9px; }
     .hero-head .hero-note{ margin-top:10px; font-size:12px; padding:6px 12px; }
     .showcase{ margin-top:14px; padding:14px 18px 16px; border-radius:20px; }
-    .showcase-tabs{ margin-bottom:12px; gap:9px; }
+    .showcase-tabs{ --tab-gap:12px; margin-bottom:var(--tab-gap); gap:9px; }
     .stab{ width:42px; height:42px; border-radius:12px; }
     .stab svg{ width:19px; height:19px; }
     .spanel-text{ padding:18px 24px; }
