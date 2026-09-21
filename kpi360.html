@@ -768,10 +768,12 @@
      өргөнтэй цагаан хүзүү доошилж, хоёр талдаа хонхор нумаар панель руу уусна. */
   .stab[aria-selected="true"]{ border-bottom-left-radius:0; border-bottom-right-radius:0; }
   .stab[aria-selected="true"]::after{
-    content:""; position:absolute; left:50%; top:calc(100% - 1px);
+    content:""; position:absolute; left:50%; top:100%;
     transform:translateX(-50%); pointer-events:none;
     width:calc(100% + var(--tab-gap) * 2);
-    height:calc(var(--tab-gap) + 1px);
+    /* top:100% нь padding box-оос тоологддог тул доод хүрээ (1px) дээр нэмж,
+       панель руу 1px давхцуулж, завсарт нимгэн зурвас үлдэхээс сэргийлнэ */
+    height:calc(var(--tab-gap) + 2px);
     background:
       /* табтай ижил өргөнтэй хүзүү */
       linear-gradient(#fff, #fff)
