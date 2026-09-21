@@ -863,11 +863,26 @@
   .plist{ width:100%; max-width:450px; }
   .plist-title{ font-family:'Montserrat',sans-serif; font-weight:800; font-size:12px; letter-spacing:.6px;
     text-transform:uppercase; color:var(--navy); margin-bottom:12px; }
-  .prow{ display:flex; gap:12px; align-items:center; padding:9px 0; border-bottom:1px solid var(--line);
+  .prow{ display:flex; gap:12px; align-items:flex-start; padding:9px 0; border-bottom:1px solid var(--line);
     font-size:13px; color:var(--ink); line-height:1.4; }
   .prow:last-child{ border-bottom:none; }
   .prow .py{ flex:0 0 auto; font-family:'Montserrat',sans-serif; font-weight:800; font-size:11px; color:#fff;
-    background:var(--navy); border-radius:5px; padding:3px 7px; }
+    background:var(--navy); border-radius:5px; padding:3px 7px; margin-top:1px; }
+  .prow b{ display:block; font-weight:700; color:var(--ink); line-height:1.35; }
+  .pd{ display:block; font-size:11.8px; color:var(--slate); line-height:1.45; margin-top:2px; }
+
+  /* Агуулга багтахгүй үед голлуулах нь дээд талыг тасалж, гүйж хүрэхгүй болгодог.
+     "safe" нь багтахгүй тохиолдолд эхнээс нь эхлүүлж, бүх агуулгыг хүрэхүйц болгоно. */
+  .spanel-visual{ align-items:safe center; }
+  .spanel-text{ justify-content:safe center; }
+
+  /* Урт жагсаалт гүйх үед scrollbar-ыг зөөлөн харуулна */
+  .spanel-text::-webkit-scrollbar, .spanel-visual::-webkit-scrollbar{ width:8px; }
+  .spanel-text::-webkit-scrollbar-track, .spanel-visual::-webkit-scrollbar-track{ background:transparent; }
+  .spanel-text::-webkit-scrollbar-thumb, .spanel-visual::-webkit-scrollbar-thumb{
+    background:rgba(14,31,162,.22); border-radius:99px; }
+  .spanel-text::-webkit-scrollbar-thumb:hover, .spanel-visual::-webkit-scrollbar-thumb:hover{
+    background:rgba(14,31,162,.38); }
 
   /* Бүртгэл — үнэд багтсан зүйлс */
   .inc-title{ margin-top:18px; margin-bottom:10px; font-size:12px; font-weight:800; letter-spacing:.5px;
@@ -956,6 +971,7 @@
     .plist-title{ font-size:11px; margin-bottom:9px; }
     .prow{ padding:6px 0; font-size:12.3px; }
     .prow .py{ font-size:10.3px; padding:3px 6px; }
+    .pd{ font-size:11.2px; }
 
     .inc-title{ margin-top:14px; margin-bottom:8px; font-size:11px; }
     .inc-list{ gap:8px; }
@@ -1173,14 +1189,16 @@
           <div class="spanel-visual">
             <div class="plist">
               <div class="plist-title">Ажилласан төслүүд</div>
-              <div class="prow"><span class="py">2024</span><span>Электрокомплект ХХК</span></div>
-              <div class="prow"><span class="py">2023</span><span>Ай Си Ти Групп</span></div>
-              <div class="prow"><span class="py">2023</span><span>Гэр бүл, хөдөлмөр, нийгмийн хамгааллын яам</span></div>
-              <div class="prow"><span class="py">2023</span><span>Дижитал Эдю Менежмент · Өрх ХХК</span></div>
-              <div class="prow"><span class="py">2022</span><span>АПУ ХК</span></div>
-              <div class="prow"><span class="py">2022</span><span>Монгол Даатгал ХК</span></div>
-              <div class="prow"><span class="py">2022</span><span>Shangri-La · Мастер Групп</span></div>
-              <div class="prow"><span class="py">2020</span><span>Нийгмийн даатгалын ерөнхий газар</span></div>
+              <div class="prow"><span class="py">2024</span><div><b>Электрокомплект ХХК</b><span class="pd">Хүний хөгжлийн албаны үйл ажиллагаа, хүний нөөцийн бодлого, төлөвлөлтийг удирдан ажилласан</span></div></div>
+              <div class="prow"><span class="py">2023</span><div><b>Ай Си Ти Групп</b><span class="pd">Гүйцэтгэлийн удирдлагын систем боловсруулах, нэвтрүүлэх зөвлөх үйлчилгээ</span></div></div>
+              <div class="prow"><span class="py">2023</span><div><b>Гэр бүл, хөдөлмөр, нийгмийн хамгааллын яам</b><span class="pd">EJOB платформд шинээр бүртгэгдсэн ажил, мэргэжлүүдийн ажлын байрны дэлгэрэнгүй тодорхойлолт боловсруулах зөвлөх үйлчилгээ</span></div></div>
+              <div class="prow"><span class="py">2023</span><div><b>Дижитал Эдү Менежмент ХХК</b><span class="pd">Байгууллагын хүний нөөцийн бүхий л чиг үүрэг, үйл ажиллагааг удирдан зохион байгуулж ажилласан</span></div></div>
+              <div class="prow"><span class="py">2023</span><div><b>Өрх ХХК</b><span class="pd">Хүний нөөцийн бодлого, журам болон холбогдох баримт бичиг боловсруулах зөвлөх үйлчилгээ</span></div></div>
+              <div class="prow"><span class="py">2022</span><div><b>АПУ ХК</b><span class="pd">Хүний нөөцийн систем нэвтрүүлэлтийн төсөл</span></div></div>
+              <div class="prow"><span class="py">2022</span><div><b>Монгол Даатгал ХК</b><span class="pd">Хүний нөөцийн систем нэвтрүүлэлтийн төсөл</span></div></div>
+              <div class="prow"><span class="py">2022</span><div><b>Shangri-La</b><span class="pd">Хүний нөөцийн систем нэвтрүүлэлтийн төсөл</span></div></div>
+              <div class="prow"><span class="py">2022</span><div><b>Мастер Групп</b><span class="pd">Ур чадварын тогтолцоо боловсруулах, нэвтрүүлэх зөвлөх үйлчилгээ</span></div></div>
+              <div class="prow"><span class="py">2020</span><div><b>Нийгмийн даатгалын ерөнхий газар</b><span class="pd">Хүний нөөцийн систем нэвтрүүлэлтийн төсөл</span></div></div>
             </div>
           </div>
         </div>
