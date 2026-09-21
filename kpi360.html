@@ -764,12 +764,26 @@
   .stab{ position:relative; }
   .stab[aria-selected="true"]{ background:#fff; color:var(--navy); box-shadow:0 10px 22px rgba(0,0,0,.28); }
 
-  /* Идэвхтэй icon-оос доорх панель руу татсан цагаан "иш" — хоёулаа нэг бүхэл мэт */
+  /* Идэвхтэй таб доорх панельтайгаа нийлнэ: доод булангууд тэгшрэн, табтай ижил
+     өргөнтэй цагаан хүзүү доошилж, хоёр талдаа хонхор нумаар панель руу уусна. */
+  .stab[aria-selected="true"]{ border-bottom-left-radius:0; border-bottom-right-radius:0; }
   .stab[aria-selected="true"]::after{
     content:""; position:absolute; left:50%; top:calc(100% - 1px);
     transform:translateX(-50%); pointer-events:none;
-    width:56px; height:calc(var(--tab-gap) + 2px); background:#fff;
-    clip-path:polygon(23% 0, 77% 0, 100% 100%, 0 100%);
+    width:calc(100% + var(--tab-gap) * 2);
+    height:calc(var(--tab-gap) + 1px);
+    background:
+      /* табтай ижил өргөнтэй хүзүү */
+      linear-gradient(#fff, #fff)
+        center bottom / calc(100% - var(--tab-gap) * 2) 100% no-repeat,
+      /* зүүн хонхор шилжилт */
+      radial-gradient(circle at 0 0,
+        transparent var(--tab-gap), #fff calc(var(--tab-gap) + .5px))
+        left bottom / var(--tab-gap) var(--tab-gap) no-repeat,
+      /* баруун хонхор шилжилт */
+      radial-gradient(circle at 100% 0,
+        transparent var(--tab-gap), #fff calc(var(--tab-gap) + .5px))
+        right bottom / var(--tab-gap) var(--tab-gap) no-repeat;
   }
 
   /* Дотоод цагаан панель */
