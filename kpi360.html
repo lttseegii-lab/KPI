@@ -762,7 +762,14 @@
   .stab svg{ width:24px; height:24px; }
   .stab:hover{ transform:translateY(-2px); background:rgba(255,255,255,.22); color:#fff; }
   .stab{ position:relative; }
-  .stab[aria-selected="true"]{ background:#fff; color:var(--navy); box-shadow:0 10px 22px rgba(0,0,0,.28); }
+  /* Идэвхтэй таб панельтайгаа нэг цул тул доош унах сүүдэр нь залгаасын шугамыг
+     ил гаргадаг — сүүдрийг авч, хүрээг цагаан болгоно. Гүн нь панелийн сүүдрээр гарна. */
+  .stab[aria-selected="true"]{ background:#fff; color:var(--navy); border-color:#fff; box-shadow:none; }
+  /* Идэвхтэй таб аль хэдийн сонгогдсон тул hover дээр үсрэхгүй (үсэрвэл залгаас сална) */
+  .stab[aria-selected="true"]:hover{ transform:none; background:#fff; color:var(--navy); }
+  /* Хулганаар дархад хүрээ гарахгүй, гарнаас удирдахад л харагдана */
+  .stab:focus{ outline:none; }
+  .stab:focus-visible{ outline:2px solid var(--cyan); outline-offset:3px; }
 
   /* Идэвхтэй таб доорх панельтайгаа нийлнэ: доод булангууд тэгшрэн, табтай ижил
      өргөнтэй цагаан хүзүү доошилж, хоёр талдаа хонхор нумаар панель руу уусна. */
