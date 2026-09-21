@@ -754,7 +754,10 @@
     background:linear-gradient(140deg, var(--navy) 0%, var(--navy-deep) 100%);
     box-shadow:0 34px 74px rgba(10,17,80,.32); }
   /* Дээд icon-ууд хүрээ дотроо, төвдөө */
-  .showcase-tabs{ display:flex; justify-content:center; gap:14px; --tab-gap:24px; margin-bottom:var(--tab-gap); }
+  .showcase-tabs{ display:flex; justify-content:center; gap:14px;
+    --tab-gap:26px;                                  /* нумын гүн (босоо) */
+    --tab-curve:calc(var(--tab-gap) * 1.5);          /* нумын дэлгэц (хэвтээ) */
+    margin-bottom:var(--tab-gap); }
   .stab{ width:58px; height:58px; border-radius:16px; cursor:pointer;
     display:flex; align-items:center; justify-content:center;
     background:rgba(255,255,255,.12); color:#dbe0ff; border:1px solid rgba(255,255,255,.22);
@@ -777,22 +780,22 @@
   .stab[aria-selected="true"]::after{
     content:""; position:absolute; left:50%; top:100%;
     transform:translateX(-50%); pointer-events:none;
-    width:calc(100% + var(--tab-gap) * 2);
+    width:calc(100% + var(--tab-curve) * 2);
     /* top:100% нь padding box-оос тоологддог тул доод хүрээ (1px) дээр нэмж,
        панель руу 1px давхцуулж, завсарт нимгэн зурвас үлдэхээс сэргийлнэ */
     height:calc(var(--tab-gap) + 2px);
     background:
       /* табтай ижил өргөнтэй хүзүү */
       linear-gradient(#fff, #fff)
-        center bottom / calc(100% - var(--tab-gap) * 2) 100% no-repeat,
-      /* зүүн хонхор шилжилт */
-      radial-gradient(circle at 0 0,
-        transparent var(--tab-gap), #fff calc(var(--tab-gap) + .5px))
-        left bottom / var(--tab-gap) var(--tab-gap) no-repeat,
-      /* баруун хонхор шилжилт */
-      radial-gradient(circle at 100% 0,
-        transparent var(--tab-gap), #fff calc(var(--tab-gap) + .5px))
-        right bottom / var(--tab-gap) var(--tab-gap) no-repeat;
+        center bottom / calc(100% - var(--tab-curve) * 2) 100% no-repeat,
+      /* зүүн гүн хонхор нум (эллипс: хэвтээ --tab-curve, босоо --tab-gap) */
+      radial-gradient(var(--tab-curve) var(--tab-gap) at 0 0,
+        transparent 99%, #fff 100%)
+        left bottom / var(--tab-curve) var(--tab-gap) no-repeat,
+      /* баруун гүн хонхор нум */
+      radial-gradient(var(--tab-curve) var(--tab-gap) at 100% 0,
+        transparent 99%, #fff 100%)
+        right bottom / var(--tab-curve) var(--tab-gap) no-repeat;
   }
 
   /* Дотоод цагаан панель */
@@ -853,7 +856,7 @@
     .hero > .wrap{ padding-top:40px; padding-bottom:54px; }
     .topbar .wrap{ padding-right:44px; gap:8px; font-size:12px; }
     .showcase{ padding:22px 16px 24px; margin-top:36px; border-radius:22px; }
-    .showcase-tabs{ gap:8px; --tab-gap:18px; margin-bottom:var(--tab-gap); }
+    .showcase-tabs{ gap:8px; --tab-gap:22px; margin-bottom:var(--tab-gap); }
     .stab{ width:50px; height:50px; border-radius:13px; }
     .stab svg{ width:22px; height:22px; }
     .spanel.active{ grid-template-columns:1fr; }
@@ -958,7 +961,7 @@
     .mlist{ gap:13px; }
 
     .showcase{ margin-top:18px; padding:18px 20px 20px; border-radius:24px; }
-    .showcase-tabs{ --tab-gap:14px; margin-bottom:var(--tab-gap); gap:10px; }
+    .showcase-tabs{ --tab-gap:19px; margin-bottom:var(--tab-gap); gap:10px; }
     .stab{ width:46px; height:46px; border-radius:13px; }
     .stab svg{ width:21px; height:21px; }
 
@@ -1023,7 +1026,7 @@
     .hero-head .hero-sub{ font-size:13.5px; margin-top:9px; }
     .hero-head .hero-note{ margin-top:10px; font-size:12px; padding:6px 12px; }
     .showcase{ margin-top:14px; padding:14px 18px 16px; border-radius:20px; }
-    .showcase-tabs{ --tab-gap:12px; margin-bottom:var(--tab-gap); gap:9px; }
+    .showcase-tabs{ --tab-gap:16px; margin-bottom:var(--tab-gap); gap:9px; }
     .stab{ width:42px; height:42px; border-radius:12px; }
     .stab svg{ width:19px; height:19px; }
     .spanel-text{ padding:18px 24px; }
