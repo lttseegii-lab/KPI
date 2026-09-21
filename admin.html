@@ -247,19 +247,18 @@
   .crm-summary .item b { display:block; font-size:19px; color:var(--text); font-weight:800; line-height:1.15; }
   .book-label { font-size:13px; font-weight:600; color:var(--muted); }
   .av-toggles { display:grid; grid-template-columns:repeat(4,1fr); gap:8px; margin-bottom:18px; max-width:420px; }
-  .bulk-days { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:8px; margin-bottom:18px; }
-  .bulk-slots { max-width:none; }
   @media (max-width:520px){ .av-toggles { grid-template-columns:repeat(3,1fr); } }
   .av-adv-group { margin-bottom:18px; }
   .av-adv-name { font-weight:700; font-size:14px; margin:2px 0 8px; color:var(--text); }
-  @media (max-width:760px){ .bulk-days { grid-template-columns:repeat(4,minmax(0,1fr)); } }
   .av-chip { padding:10px 0; text-align:center; border-radius:10px; border:1px solid var(--line); background:var(--bg-soft); cursor:pointer; font-size:14px; font-weight:600; transition:all .15s; }
   .av-chip:hover { border-color:var(--accent); }
   .av-chip.on { background:var(--accent); color:#fff; border-color:var(--accent); }
   .av-day { display:flex; align-items:center; gap:12px; padding:12px 16px; background:var(--card); border:1px solid var(--line); border-radius:12px; flex-wrap:wrap; }
   .av-day .d { font-weight:700; font-size:14.5px; min-width:120px; }
   .av-day .times { display:flex; gap:6px; flex-wrap:wrap; flex:1; }
-  .av-day .tchip { font-size:12px; font-weight:600; color:var(--text); background:var(--accent-soft); border:1px solid var(--line); padding:3px 9px; border-radius:999px; }
+  .av-day .tchip { display:inline-flex; align-items:center; gap:5px; font-size:12px; font-weight:600; color:var(--text); background:var(--accent-soft); border:1px solid var(--line); padding:3px 5px 3px 9px; border-radius:999px; }
+  .av-day .tchip-x { border:none; background:transparent; color:var(--muted); cursor:pointer; font-size:14px; line-height:1; padding:0 2px; border-radius:50%; }
+  .av-day .tchip-x:hover { color:var(--danger); }
   .bk-item { display:flex; align-items:center; gap:14px; padding:14px 16px; background:var(--card); border:1px solid var(--line); border-radius:12px; }
   .bk-item .when { text-align:center; min-width:78px; padding:8px; border-radius:10px; background:var(--accent-soft); border:1px solid var(--line); }
   .bk-item .when .dt { font-size:12px; color:var(--muted); }
@@ -959,23 +958,6 @@
         </div>
       </div>
 
-      <div class="editor">
-        <h3>Бөөнөөр цаг нээх</h3>
-        <div class="field" style="max-width:260px;"><label>Зөвлөх</label><select id="bulk-advisor"></select></div>
-        <div class="row2">
-          <div class="field"><label>Эхлэх огноо</label><input type="date" id="bulk-start"></div>
-          <div class="field"><label>Дуусах огноо</label><input type="date" id="bulk-end"></div>
-        </div>
-        <span class="book-label" style="display:block; margin-bottom:8px;">Гараг сонгох</span>
-        <div class="bulk-days" id="bulkDays"></div>
-        <span class="book-label" style="display:block; margin-bottom:8px;">Цаг сонгох</span>
-        <div class="av-toggles bulk-slots" id="bulkSlots"></div>
-        <div class="save-bar">
-          <button class="btn btn-primary" onclick="createBulkAvailability()">Бөөнөөр үүсгэх</button>
-          <span class="saved-msg" id="bulkSaved"></span>
-        </div>
-      </div>
-
       <div class="panel-head" style="margin-top:34px;">
         <h3 style="font-size:17px;">Нээсэн боломжтой цагууд</h3>
       </div>
@@ -1123,13 +1105,6 @@
   };
 
   const SCHED_SLOTS = ['09:00','10:00','11:00','13:00','14:00','15:00','16:00','17:00'];
-  const BULK_WEEKDAYS = [
-    { value:1, label:'Даваа' }, { value:2, label:'Мягмар' }, { value:3, label:'Лхагва' },
-    { value:4, label:'Пүрэв' }, { value:5, label:'Баасан' }, { value:6, label:'Бямба' },
-    { value:0, label:'Ням' },
-  ];
-  const bulkSelectedDays = new Set([1,2,3,4,5]);
-  const bulkSelectedTimes = new Set(SCHED_SLOTS);
 
   const DEFAULT_PRODUCTS = {
     blueprints: {
@@ -1516,7 +1491,6 @@
     renderQuestions();
     renderQuoteRequests();
     renderAvToggles();
-    renderBulkControls();
     renderAvList();
     renderBookings();
     renderUsers();
@@ -2044,8 +2018,8 @@
     if (cur && names.indexOf(cur) !== -1) sel.value = cur; else if (names.length) sel.value = names[0];
   }
   function initSchedule() {
-    fillAdvisorSelect('av-advisor'); fillAdvisorSelect('bulk-advisor');
-    renderAvToggles(); renderBulkControls(); renderAvList();
+    fillAdvisorSelect('av-advisor');
+    renderAvToggles(); renderAvList();
   }
   function hasAv(d, t, adv) { return availability.some(a => a.date === d && a.time === t && advKey(a) === adv); }
   // «Боломжтой цаг нээх» хэсгийн огнооны муж [эхлэх..дуусах]. Дуусах огноо
@@ -2106,69 +2080,6 @@
     const parts = String(value || '').split('-').map(Number);
     return parts.length === 3 && parts.every(Boolean) ? new Date(parts[0], parts[1] - 1, parts[2]) : null;
   }
-  function renderBulkControls() {
-    const startInput = document.getElementById('bulk-start');
-    const endInput = document.getElementById('bulk-end');
-    if (!startInput || !endInput) return;
-    if (!startInput.value) {
-      const today = new Date();
-      const end = new Date(today.getFullYear(), today.getMonth(), today.getDate() + 30);
-      startInput.value = dateInputValue(today);
-      endInput.value = dateInputValue(end);
-    }
-    document.getElementById('bulkDays').innerHTML = BULK_WEEKDAYS.map(day =>
-      '<div class="av-chip' + (bulkSelectedDays.has(day.value) ? ' on' : '') + '" onclick="toggleBulkDay(' + day.value + ')">' + day.label + '</div>'
-    ).join('');
-    document.getElementById('bulkSlots').innerHTML = SCHED_SLOTS.map(time =>
-      '<div class="av-chip' + (bulkSelectedTimes.has(time) ? ' on' : '') + '" onclick="toggleBulkTime(\'' + time + '\')">' + time + '</div>'
-    ).join('');
-  }
-  function toggleBulkDay(day) {
-    if (bulkSelectedDays.has(day)) bulkSelectedDays.delete(day);
-    else bulkSelectedDays.add(day);
-    renderBulkControls();
-  }
-  function toggleBulkTime(time) {
-    if (bulkSelectedTimes.has(time)) bulkSelectedTimes.delete(time);
-    else bulkSelectedTimes.add(time);
-    renderBulkControls();
-  }
-  function createBulkAvailability() {
-    const start = parseInputDate(document.getElementById('bulk-start').value);
-    const end = parseInputDate(document.getElementById('bulk-end').value);
-    if (!start || !end) { alert('Эхлэх болон дуусах огноог сонгоно уу.'); return; }
-    if (end < start) { alert('Дуусах огноо эхлэх огнооноос хойш байх ёстой.'); return; }
-    const dayCount = Math.floor((end - start) / 86400000) + 1;
-    if (dayCount > 366) { alert('Нэг удаад 366 хүртэл хоногийн цаг үүсгэнэ үү.'); return; }
-    if (!bulkSelectedDays.size) { alert('Доод тал нь нэг гараг сонгоно уу.'); return; }
-    if (!bulkSelectedTimes.size) { alert('Доод тал нь нэг цаг сонгоно уу.'); return; }
-    const adv = document.getElementById('bulk-advisor').value;
-    if (!adv) { alert('Эхлээд зөвлөх сонгоно уу.'); return; }
-
-    const existing = new Set(availability.map(a => avKey(a.date, a.time, advKey(a))));
-    const times = SCHED_SLOTS.filter(time => bulkSelectedTimes.has(time));
-    let added = 0;
-    for (let date = new Date(start); date <= end; date.setDate(date.getDate() + 1)) {
-      if (!bulkSelectedDays.has(date.getDay())) continue;
-      const dateValue = dateInputValue(date);
-      times.forEach(time => {
-        const key = avKey(dateValue, time, adv);
-        if (existing.has(key)) return;
-        availability.push({ date:dateValue, time:time, advisor:adv });
-        existing.add(key);
-        added++;
-      });
-    }
-    availability.sort((a, b) => (a.date + a.time).localeCompare(b.date + b.time));
-    renderAvList();
-    renderAvToggles();
-    save('kpihub_availability', availability).then(ok => {
-      if (!ok) return;
-      const message = document.getElementById('bulkSaved');
-      message.textContent = added ? added + ' цаг нэмэгдлээ' : 'Шинэ цаг нэмэгдсэнгүй';
-      flash('bulkSaved');
-    });
-  }
   function renderAvList() {
     const byAdv = {};
     availability.forEach(a => {
@@ -2182,11 +2093,21 @@
       return '<div class="av-adv-group"><div class="av-adv-name">👤 ' + esc(adv) + '</div>'
         + dates.map(d =>
             '<div class="av-day"><div class="d">' + fmtDate(d) + '</div>'
-            + '<div class="times">' + byAdv[adv][d].sort().map(t => '<span class="tchip">' + t + '</span>').join('') + '</div>'
+            + '<div class="times">' + byAdv[adv][d].sort().map(t =>
+                '<span class="tchip">' + t + '<button class="tchip-x" title="Энэ цагийг устгах" onclick="delAvSlot(\'' + encodeURIComponent(adv) + '\',\'' + d + '\',\'' + t + '\')">×</button></span>'
+              ).join('') + '</div>'
             + '<button class="btn btn-danger btn-sm" onclick="clearAvDay(\'' + encodeURIComponent(adv) + '\',\'' + d + '\')">Хаах</button></div>'
           ).join('')
         + '</div>';
     }).join('') : '<div class="empty">Нээсэн цаг алга. Дээрээс зөвлөх, огноо сонгоод цаг нээнэ үү.</div>';
+  }
+  // Нэг тодорхой цагийг устгана (зөвлөх + огноо + цаг)
+  function delAvSlot(advEnc, d, t) {
+    const adv = decodeURIComponent(advEnc);
+    availability = availability.filter(a => !(a.date === d && a.time === t && advKey(a) === adv));
+    save('kpihub_availability', availability); renderAvList();
+    const de = document.getElementById('av-date');
+    if (de && de.value === d) renderAvToggles();
   }
   function clearAvDay(advEnc, d) {
     const adv = decodeURIComponent(advEnc);
