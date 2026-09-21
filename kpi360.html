@@ -386,6 +386,101 @@
     .section{padding:56px 0;}
     .pill-bar{flex-direction:column; gap:10px; border-radius:24px; padding:16px;}
   }
+
+  /* ==================== Visual polish (харагдац сайжруулалт) ==================== */
+  :root{
+    --radius:16px;
+    --radius-sm:12px;
+    --shadow-sm:0 1px 2px rgba(16,18,38,.05), 0 3px 10px rgba(16,18,38,.05);
+    --shadow-md:0 6px 16px rgba(14,31,162,.08), 0 16px 34px rgba(14,31,162,.09);
+    --shadow-lg:0 22px 50px rgba(10,22,112,.18);
+  }
+  /* Илүү уужим хэмнэл */
+  .section{padding:96px 0;}
+  .section-head{margin-bottom:52px;}
+  .eyebrow{letter-spacing:2px;}
+  .section h2{letter-spacing:-.02em;}
+
+  /* Hero — гүн ба зөөлөн гэрэлтэлт */
+  .hero{background:linear-gradient(180deg,#ECF0FB 0%, var(--paper) 62%);}
+  .hero::after{content:""; position:absolute; right:-160px; top:-80px; width:460px; height:460px; z-index:0;
+    background:radial-gradient(circle at center, rgba(83,203,243,.18), transparent 68%); pointer-events:none;}
+  .hero .sunburst{width:340px; height:340px; top:-118px; left:-118px; opacity:.5;
+    -webkit-mask-image:radial-gradient(circle at 62% 62%, #000 38%, transparent 72%);
+            mask-image:radial-gradient(circle at 62% 62%, #000 38%, transparent 72%);}
+  .hero h1{letter-spacing:-.025em;}
+  .hero-note{display:inline-flex; align-items:center; gap:8px; background:#FFF6D1; border:1px solid #F2DE8A;
+    padding:9px 16px; border-radius:999px; color:#8A6D00;}
+
+  /* Товч — илүү тод interaction */
+  .btn{padding:14px 28px; letter-spacing:.2px;}
+  .btn-primary{box-shadow:0 6px 16px rgba(232,184,0,.30);}
+  .btn-primary:hover{transform:translateY(-2px); box-shadow:0 12px 28px rgba(232,184,0,.45);}
+  .btn-ghost{border-color:var(--navy); color:var(--navy);}
+  .btn-ghost:hover{background:var(--navy); color:#fff; border-color:var(--navy);}
+
+  /* Статистикийн зурвас — дээд шар зураас, тэнцүү зай */
+  .stat-strip{background:linear-gradient(115deg,var(--navy) 0%, var(--navy-2) 100%); box-shadow:inset 0 3px 0 var(--yellow);}
+  .stat{padding:30px 26px 30px 0;}
+  .stat-value{font-size:27px;}
+  @media (min-width:881px){ .stat{padding:32px 26px; } .stat:first-child{padding-left:0;} }
+
+  /* Картуудын нэгдсэн өндөр + hover */
+  .problem-card,.mod-card,.agenda-wrap,.instructor-wrap,.ratio-card,.deliv-grid{border-radius:var(--radius);}
+  .problem-card{box-shadow:var(--shadow-sm); transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;}
+  .problem-card:hover{transform:translateY(-4px); box-shadow:var(--shadow-md); border-color:#C9D2F2;}
+  .problem-mark{box-shadow:0 4px 10px rgba(232,184,0,.35);}
+
+  .mod-card{border-top:none; position:relative; overflow:hidden; box-shadow:var(--shadow-sm);
+    transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;}
+  .mod-card::before{content:""; position:absolute; top:0; left:0; right:0; height:4px;
+    background:linear-gradient(90deg,var(--yellow),var(--yellow-deep));}
+  .mod-card:hover{transform:translateY(-4px); box-shadow:var(--shadow-md); border-color:#C9D2F2;}
+  .mod-tag{transition:background .18s ease, color .18s ease;}
+  .mod-card:hover .mod-tag{background:#DEF2FB;}
+
+  /* Хөтөлбөрийн timeline — градиент шугам, цагиргтай цэг */
+  .agenda-wrap{box-shadow:var(--shadow-sm);}
+  .timeline::before{height:2px; background:linear-gradient(90deg,var(--yellow),var(--cyan)); top:10px; opacity:.5;}
+  .tl-dot{width:14px; height:14px; box-shadow:0 0 0 4px var(--paper), 0 0 0 6px rgba(232,184,0,.25);}
+
+  /* Deliverables — hover, дүрсний градиент */
+  .deliv-grid{box-shadow:var(--shadow-sm);}
+  .deliv-item{transition:background .18s ease;}
+  .deliv-item:hover{background:#FAFBFF;}
+  .deliv-icon{background:linear-gradient(135deg,var(--navy),#2A3BCB); box-shadow:0 6px 14px rgba(14,31,162,.28);}
+
+  /* Who / ratio */
+  .ratio-card{background:linear-gradient(150deg,var(--navy-2),#101A63); box-shadow:var(--shadow-lg);}
+  .tag-pill{transition:background .18s ease, border-color .18s ease, transform .12s ease;}
+  .tag-pill:hover{background:rgba(255,255,255,.08); border-color:var(--yellow); transform:translateY(-1px);}
+
+  /* Instructor */
+  .instructor-wrap{box-shadow:var(--shadow-md);}
+  .instructor-photo{box-shadow:0 10px 24px rgba(10,22,112,.18);}
+  .skill-tag{transition:background .18s ease, border-color .18s ease, color .18s ease;}
+  .skill-tag:hover{background:var(--navy); color:#fff; border-color:var(--navy);}
+
+  /* FAQ — зөөлөн hover, нээгдэхэд шар зүүн зураас */
+  .faq-item{border-radius:10px; padding:0 14px; transition:background .18s ease;}
+  .faq-item:hover{background:#fff;}
+  .faq-item[open]{background:#fff; box-shadow:var(--shadow-sm);}
+  .faq-item summary:hover{color:var(--yellow-deep);}
+
+  /* Final CTA — гүн, badge градиент */
+  .cta-final{background:linear-gradient(140deg,var(--navy) 0%, var(--navy-deep) 100%);}
+  .date-badge{box-shadow:var(--shadow-lg); border-top:4px solid var(--yellow);}
+  .price-line{font-size:24px;}
+  .pill-bar{box-shadow:0 12px 30px rgba(232,184,0,.28);}
+
+  /* Footer */
+  footer{border-top:1px solid var(--line-dark);}
+
+  @media (max-width:880px){
+    .section{padding:60px 0;}
+    .section-head{margin-bottom:36px;}
+    .hero::after{width:300px; height:300px; right:-120px;}
+  }
 </style>
 <script src="analytics.js" defer></script>
 </head>
