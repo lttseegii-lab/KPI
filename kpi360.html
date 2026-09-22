@@ -481,610 +481,18 @@
     .section-head{margin-bottom:36px;}
     .hero::after{width:300px; height:300px; right:-120px;}
   }
-
-
-  /* ==================== Calendly маягийн цэвэрхэн загвар (navy гол + cyan аксент, cream) ==================== */
-  :root{
-    --paper:#f6f4ef;               /* Calendly шиг дулаан cream дэвсгэр */
-    --card:#ffffff;
-    --ink:#111327;                 /* бараг хар navy текст */
-    --slate:#585f79;
-    --slate-light:#9a9fb5;
-    --line:#e8e4da;                /* дулаан цайвар зураас */
-    --navy:#0E1FA2;                /* брэнд navy — гол өнгө */
-    --navy-2:#111b7d;
-    --navy-deep:#0a1150;
-    --cyan:#28a8df;                /* cyan аксент (цайвар дэвсгэрт тод) */
-    --yellow:#0E1FA2;              /* «yellow» хэрэглээг navy болгов */
-    --yellow-deep:#28a8df;         /* «yellow-deep» → cyan аксент */
-    --accent-soft:rgba(40,168,223,.12);
-    --shadow-sm:0 1px 2px rgba(16,18,38,.04), 0 4px 14px rgba(16,18,38,.05);
-    --shadow-md:0 8px 22px rgba(16,18,38,.08), 0 18px 40px rgba(16,18,38,.06);
-    --shadow-lg:0 26px 60px rgba(10,17,80,.16);
-  }
-  body{ font-family:'Inter',sans-serif; background:var(--paper); color:var(--ink); }
-  h1,h2,h3,h4{ font-family:'Montserrat',sans-serif; color:var(--ink); }
-
-  /* Nav — цайвар, цэвэрхэн */
-  .nav{ background:rgba(246,244,239,.85); border-bottom:1px solid var(--line); backdrop-filter:blur(10px); }
-  .nav-links a{ color:var(--slate); }
-  .nav-links a:hover{ color:var(--navy); }
-  .logo-word .kpi{ color:var(--navy); }
-  .logo-word .consulting{ color:var(--cyan); }
-
-  /* Hero — том тод гарчиг, зөөлөн cyan гэрэлтэлт */
-  .hero{ background:var(--paper); }
-  .hero::after{ background:radial-gradient(circle at center, rgba(40,168,223,.16), transparent 66%); }
-  .hero .sunburst{ opacity:.16; }
-  .hero h1{ color:var(--ink); font-size:clamp(34px,5vw,56px); line-height:1.05; letter-spacing:-.03em; }
-  .hero h1 .accent{ color:var(--cyan); }
-  .hero-sub-strong{ color:var(--navy-2); }
-  .hero-note{ background:#fff; border:1px solid var(--line); color:var(--navy-2); box-shadow:var(--shadow-sm); }
-
-  /* Sunburst-ыг cyan болгож зөөлрүүлнэ (navy дэвсгэр дээр ч харагдана) */
-  .sunburst{ background:repeating-conic-gradient(var(--cyan) 0deg 3.2deg, transparent 3.2deg 10deg); }
-
-  /* Товч — Calendly: гүн navy дүүрэн товч, цагаан текст */
-  .btn{ border-radius:12px; }
-  .btn-primary{ background:var(--navy); color:#fff; box-shadow:0 10px 22px -10px rgba(14,31,162,.55); }
-  .btn-primary:hover{ background:#0b1789; transform:translateY(-2px); box-shadow:0 16px 30px -12px rgba(14,31,162,.6); }
-  .btn-ghost{ background:#fff; color:var(--navy); border:1.5px solid var(--line); }
-  .btn-ghost:hover{ background:#fff; border-color:var(--navy); }
-  .btn-white{ background:var(--navy); color:#fff; }
-  .btn-white:hover{ background:#0b1789; transform:translateY(-2px); box-shadow:0 12px 26px -12px rgba(14,31,162,.5); }
-
-  /* Eyebrow */
-  .eyebrow{ color:var(--cyan); }
-  .eyebrow::before{ background:var(--cyan); }
-  .eyebrow.on-dark{ color:var(--cyan); }
-  .eyebrow.on-dark::before{ background:var(--cyan); }
-
-  /* Статистикийн зурвас — брэнд navy панель, цагаан тоо */
-  .stat-strip{ background:var(--navy); box-shadow:inset 0 3px 0 var(--cyan); }
-  .stat-value{ color:#fff; }
-  .stat-label{ color:#c7cdf5; }
-
-  /* Картууд — цагаан, зөөлөн сүүдэр */
-  .problem-card,.mod-card,.agenda-wrap,.deliv-grid,.instructor-wrap{ background:#fff; border-color:var(--line); }
-  .problem-card{ box-shadow:var(--shadow-sm); }
-  .problem-card:hover{ border-color:var(--cyan); box-shadow:var(--shadow-md); }
-  .problem-mark{ background:var(--navy); color:#fff; box-shadow:0 6px 14px rgba(14,31,162,.28); }
-  .problem-card p{ color:var(--slate); }
-
-  .mod-card{ box-shadow:var(--shadow-sm); }
-  .mod-card::before{ background:linear-gradient(90deg,var(--navy),var(--cyan)); }
-  .mod-card:hover{ border-color:var(--cyan); box-shadow:var(--shadow-md); }
-  .mod-card h3{ color:var(--navy); }
-  .mod-num{ color:var(--cyan); }
-  .mod-card p{ color:var(--slate); }
-  .mod-tag{ background:var(--accent-soft); color:#127099; }
-  .mod-card:hover .mod-tag{ background:rgba(40,168,223,.2); }
-
-  /* Timeline */
-  .agenda-wrap{ box-shadow:var(--shadow-sm); }
-  .timeline::before{ background:linear-gradient(90deg,var(--navy),var(--cyan)); opacity:.35; }
-  .tl-time{ color:var(--navy); }
-  .tl-dot{ background:var(--cyan); box-shadow:0 0 0 4px #fff, 0 0 0 6px rgba(40,168,223,.25); }
-  .tl-label{ color:var(--slate); }
-
-  /* Deliverables */
-  .deliv-grid{ background:var(--line); box-shadow:var(--shadow-sm); }
-  .deliv-item{ background:#fff; }
-  .deliv-item:hover{ background:#fbfcff; }
-  .deliv-icon{ background:linear-gradient(135deg,var(--navy),#2a3bcb); box-shadow:0 6px 14px rgba(14,31,162,.25); }
-  .deliv-item h4{ color:var(--navy); }
-  .deliv-item p{ color:var(--slate); }
-
-  /* Who / ratio — navy панель */
-  .who-section{ background:linear-gradient(150deg,var(--navy) 0%, #0a1670 100%); }
-  .who-section .section-sub{ color:#c7cdf5; }
-  .tag-pill{ color:#fff; border-color:rgba(255,255,255,.24); }
-  .tag-pill:hover{ background:rgba(255,255,255,.1); border-color:var(--cyan); }
-  .ratio-card{ background:rgba(255,255,255,.06); border-color:rgba(255,255,255,.16); box-shadow:var(--shadow-lg); }
-  .ratio-num{ color:var(--cyan); }
-  .ratio-label{ color:#c7cdf5; }
-  .ratio-sub{ color:#aeb4dd; border-top-color:rgba(255,255,255,.16); }
-
-  /* Instructor */
-  .instructor-wrap{ border-top:4px solid var(--cyan); box-shadow:var(--shadow-md); }
-  .instructor-wrap h3{ color:var(--navy); }
-  .instructor-role{ color:var(--cyan); }
-  .instructor-wrap p{ color:var(--slate); }
-  .instructor-sub{ color:var(--navy); border-top-color:var(--line); }
-  .proj-year{ background:var(--navy); color:#fff; }
-  .proj-org{ color:var(--ink); }
-  .proj-desc{ color:var(--slate); }
-  .skill-tag{ background:var(--paper); border-color:var(--line); color:var(--navy); }
-  .skill-tag:hover{ background:var(--navy); color:#fff; border-color:var(--navy); }
-
-  /* FAQ */
-  .faq-item{ border-bottom-color:var(--line); }
-  .faq-item summary{ color:var(--navy); }
-  .faq-item summary:hover{ color:var(--cyan); }
-  .faq-plus{ color:var(--cyan); }
-  .faq-item p{ color:var(--slate); }
-  .faq-item:hover{ background:#fff; }
-  .faq-item[open]{ background:#fff; box-shadow:var(--shadow-sm); }
-
-  /* Final CTA — navy панель */
-  .cta-final{ background:linear-gradient(150deg,var(--navy) 0%, var(--navy-deep) 100%); }
-  .cta-panel h2{ color:#fff; }
-  .cta-panel .section-sub{ color:#c7cdf5; }
-  .cta-detail{ color:#c7cdf5; }
-  .cta-detail b{ color:#fff; }
-  .date-badge{ background:#fff; border:1px solid var(--line); border-top:4px solid var(--cyan); box-shadow:var(--shadow-lg); }
-  .db-month{ color:var(--cyan); }
-  .db-day{ color:var(--navy); }
-  .db-time{ color:var(--navy-2); }
-  .db-addr{ color:var(--slate); }
-  .price-line{ color:var(--navy); }
-  .price-note{ color:var(--slate-light); }
-  .seats-left{ color:var(--slate-light); }
-
-  /* Pill bar — цагаан, зөөлөн сүүдэр */
-  .pill-bar{ background:#fff; box-shadow:var(--shadow-lg); }
-  .pill-bar .site{ color:var(--navy); }
-  .globe{ background:var(--accent-soft); }
-
-  /* Footer */
-  footer{ background:var(--navy-deep); color:#aeb4dd; border-top:none; }
-  .logo-word.on-dark .kpi{ color:#fff; }
-  .logo-word.on-dark .consulting{ color:var(--cyan); }
-
-  /* ==================== Hero — интерактив таб карт (Calendly маяг) ==================== */
-  .hero-grid{
-    max-width:none;
-    display:grid; grid-template-columns:1.05fr .95fr; gap:52px;
-    align-items:center; padding:60px 0 76px;
-  }
-  .hero-intro{ max-width:540px; }
-  .hero-intro h1{ margin-bottom:4px; }
-  .hero-intro .hero-sub-strong{ margin-top:14px; }
-  .hero-intro .hero-sub{ margin-bottom:26px; }
-
-  .tabcard{
-    position:relative; background:#fff;
-    border:1px solid var(--line); border-radius:20px;
-    box-shadow:var(--shadow-lg); overflow:hidden;
-  }
-  .tabcard::before{
-    content:""; position:absolute; top:0; left:0; right:0; height:4px;
-    background:linear-gradient(90deg,var(--navy),var(--cyan)); z-index:1;
-  }
-
-  /* цэнхэр хүрээ дотор 4 icon */
-  .tab-frame{
-    display:grid; grid-template-columns:repeat(4,1fr); gap:6px;
-    margin:20px 18px 0; padding:8px;
-    border:1.5px solid var(--cyan); border-radius:14px;
-    background:var(--accent-soft);
-  }
-  .tabbtn{
-    display:flex; flex-direction:column; align-items:center; gap:7px;
-    padding:13px 4px; border-radius:10px; cursor:pointer;
-    border:1px solid transparent; background:transparent;
-    color:var(--slate); font-family:'Inter',sans-serif;
-    transition:background .18s ease, color .18s ease, box-shadow .18s ease, transform .12s ease;
-  }
-  .tabbtn svg{ width:23px; height:23px; stroke:currentColor; }
-  .tabbtn .tb-label{ font-size:12px; font-weight:700; letter-spacing:.2px; }
-  .tabbtn:hover{ color:var(--navy); transform:translateY(-1px); }
-  .tabbtn[aria-selected="true"]{
-    background:#fff; color:var(--navy);
-    box-shadow:0 4px 12px rgba(14,31,162,.15);
-  }
-
-  .tabpanels{ padding:22px 26px 26px; }
-  .tabpanel[hidden]{ display:none; }
-  .tabpanel{ display:none; }
-  .tabpanel.active{ display:block; animation:tpFade .28s ease; }
-  @keyframes tpFade{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
-  .tp-title{ font-size:16px; color:var(--navy); margin-bottom:14px; }
-
-  .tp-list{ display:flex; flex-direction:column; gap:11px; }
-  .tp-list li{ display:flex; gap:10px; font-size:14px; color:var(--ink); line-height:1.5; }
-  .tp-check{ flex:0 0 auto; width:20px; height:20px; border-radius:50%;
-    background:var(--accent-soft); color:var(--cyan); font-weight:800; font-size:11px;
-    display:flex; align-items:center; justify-content:center; margin-top:1px; }
-
-  .tp-agenda{ display:flex; flex-direction:column; }
-  .tp-agenda li{ display:flex; gap:14px; padding:9px 0; font-size:13.6px; color:var(--slate);
-    border-bottom:1px dashed var(--line); }
-  .tp-agenda li:last-child{ border-bottom:none; }
-  .tp-agenda li b{ flex:0 0 42px; font-family:'Montserrat',sans-serif; color:var(--navy); font-size:13px; }
-
-  .tp-teacher{ display:flex; gap:14px; align-items:center; margin-bottom:13px; }
-  .tp-teacher-photo{ width:56px; height:56px; border-radius:12px; object-fit:cover; flex:0 0 auto; }
-  .tp-teacher-role{ font-size:12px; color:var(--cyan); font-weight:700; margin-top:3px; }
-  .tp-text{ font-size:13.6px; color:var(--slate); line-height:1.6; }
-
-  .tp-reg{ display:flex; flex-direction:column; }
-  .tp-reg-row{ display:flex; justify-content:space-between; align-items:center;
-    padding:11px 0; font-size:13.8px; color:var(--slate); border-bottom:1px solid var(--line); }
-  .tp-reg-row b{ color:var(--ink); font-weight:700; }
-  .tp-reg-price{ border-bottom:none; }
-  .tp-reg-price b{ font-family:'Montserrat',sans-serif; color:var(--navy); font-size:19px; }
-  .tp-reg-btn{ width:100%; justify-content:center; margin-top:16px; }
-
-  @media (max-width:880px){
-    .hero-grid{ grid-template-columns:1fr; gap:30px; padding:40px 0 16px; }
-    .hero-intro{ max-width:none; }
-    .tab-frame{ margin:16px 14px 0; }
-    .tabpanels{ padding:20px; }
-    .tabbtn{ padding:12px 3px; }
-    .tabbtn .tb-label{ font-size:11px; }
-  }
-
-  /* ==================== Зөвхөн hero-г үлдээж бусад бүх секцийг нуув ====================
-     Hero (<header class="hero">), nav, footer харагдана; агуулгын бүх <section> нуугдана.
-     (устгаагүй — эх код ба SEO агуулга хэвээр; буцаах бол доорх мөрийг устга) */
-  section{ display:none !important; }
-
-  /* footer-ийг богино хуудсанд доод ирмэгт байлгах */
-  body{ min-height:100vh; display:flex; flex-direction:column; }
-  .hero{ flex:1 0 auto; }
-  footer{ flex-shrink:0; }
-
-  /* Цацраг (sunburst) motif-ийг хаав */
-  .sunburst{ display:none !important; }
-
-  /* ==================== Calendly маягийн төвлөрсөн hero + showcase ==================== */
-  /* Дээд мэдэгдлийн зурвас */
-  .topbar{ background:#dcecfb; color:var(--navy-2); font-size:13px; }
-  .topbar .wrap{ position:relative; display:flex; align-items:center; justify-content:center; gap:12px;
-    min-height:42px; padding-top:9px; padding-bottom:9px; text-align:center; flex-wrap:wrap; }
-  .topbar a{ font-weight:700; color:var(--navy); white-space:nowrap; }
-  .topbar a:hover{ text-decoration:underline; }
-  .topbar-x{ position:absolute; right:24px; top:50%; transform:translateY(-50%);
-    background:none; border:none; font-size:20px; line-height:1; color:var(--navy-2); cursor:pointer; opacity:.6; }
-  .topbar-x:hover{ opacity:1; }
-
-  /* Төвлөрсөн hero толгой */
-  .hero > .wrap{ padding-top:60px; padding-bottom:78px; }
-  .hero-head{ max-width:780px; margin:0 auto; text-align:center; }
-  .hero-head h1{ font-size:clamp(32px,5vw,58px); line-height:1.06; letter-spacing:-.03em; color:var(--ink); }
-  .hero-head h1 .accent{ color:var(--cyan); }
-  .hero-head .hero-sub{ max-width:640px; margin:20px auto 28px; font-size:16px; color:var(--slate); line-height:1.65; }
-  .hero-head .hero-ctas{ justify-content:center; }
-  .hero-head .hero-note{ margin:18px auto 0; }
-
-  /* Showcase градиент карт */
-  .showcase{ position:relative; max-width:1080px; margin:56px auto 0;
-    border-radius:30px; padding:30px 34px 34px;
-    background:linear-gradient(140deg, var(--navy) 0%, var(--navy-deep) 100%);
-    box-shadow:0 34px 74px rgba(10,17,80,.32); }
-  /* Дээд icon-ууд хүрээ дотроо, төвдөө */
-  .showcase-tabs{ display:flex; justify-content:center; gap:14px;
-    --tab-gap:24px;                            /* хүзүүний урт (таб→панель) */
-    --tab-curve:calc(var(--tab-gap) * 0.65);   /* нумын радиус — зайнаас бага байж
-                                                  хүзүү эхлээд шулуун доошилно */
-    margin-bottom:var(--tab-gap); }
-  .stab{ width:58px; height:58px; border-radius:16px; cursor:pointer;
-    display:flex; align-items:center; justify-content:center;
-    background:rgba(255,255,255,.12); color:#dbe0ff; border:1px solid rgba(255,255,255,.22);
-    transition:transform .16s ease, background .18s ease, color .18s ease, box-shadow .18s ease; }
-  .stab svg{ width:24px; height:24px; }
-  .stab:hover{ transform:translateY(-2px); background:rgba(255,255,255,.22); color:#fff; }
-  .stab{ position:relative; }
-  /* Идэвхтэй таб панельтайгаа нэг цул тул доош унах сүүдэр нь залгаасын шугамыг
-     ил гаргадаг — сүүдрийг авч, хүрээг цагаан болгоно. Гүн нь панелийн сүүдрээр гарна. */
-  .stab[aria-selected="true"]{ background:#fff; color:var(--navy); border-color:#fff; box-shadow:none; }
-  /* Идэвхтэй таб аль хэдийн сонгогдсон тул hover дээр үсрэхгүй (үсэрвэл залгаас сална) */
-  .stab[aria-selected="true"]:hover{ transform:none; background:#fff; color:var(--navy); }
-  /* Хулганаар дархад хүрээ гарахгүй, гарнаас удирдахад л харагдана */
-  .stab:focus{ outline:none; }
-  .stab:focus-visible{ outline:2px solid var(--cyan); outline-offset:3px; }
-
-  /* Идэвхтэй таб доорх панельтайгаа нийлнэ: доод булангууд тэгшрэн, табтай ижил
-     өргөнтэй цагаан хүзүү доошилж, хоёр талдаа хонхор нумаар панель руу уусна. */
-  .stab[aria-selected="true"]{ border-bottom-left-radius:0; border-bottom-right-radius:0; }
-  .stab[aria-selected="true"]::after{
-    content:""; position:absolute; left:50%; top:100%;
-    transform:translateX(-50%); pointer-events:none;
-    width:calc(100% + var(--tab-curve) * 2);
-    /* top:100% нь padding box-оос тоологддог тул доод хүрээ (1px) дээр нэмж,
-       панель руу 1px давхцуулж, завсарт нимгэн зурвас үлдэхээс сэргийлнэ */
-    height:calc(var(--tab-gap) + 2px);
-    background:
-      /* табтай ижил өргөнтэй хүзүү */
-      linear-gradient(#fff, #fff)
-        center bottom / calc(100% - var(--tab-curve) * 2) 100% no-repeat,
-      /* зүүн хонхор нум — зөвхөн доод хэсэгт, дээшээ хүзүү шулуун үлдэнэ */
-      radial-gradient(circle at 0 0,
-        transparent var(--tab-curve), #fff calc(var(--tab-curve) + .5px))
-        left bottom / var(--tab-curve) var(--tab-curve) no-repeat,
-      /* баруун хонхор нум */
-      radial-gradient(circle at 100% 0,
-        transparent var(--tab-curve), #fff calc(var(--tab-curve) + .5px))
-        right bottom / var(--tab-curve) var(--tab-curve) no-repeat;
-  }
-
-  /* Дотоод цагаан панель */
-  .showcase-stage{ background:#fff; border-radius:20px; overflow:hidden; box-shadow:0 22px 46px rgba(16,18,38,.14); }
-  .spanel{ display:none; }
-  .spanel.active{ display:grid; grid-template-columns:1.02fr .98fr; animation:tpFade .3s ease; }
-  .spanel-text{ padding:46px 44px; display:flex; flex-direction:column; justify-content:center; }
-  .spanel-eyebrow{ display:inline-flex; align-items:center; gap:8px; font-size:12px; font-weight:700;
-    letter-spacing:.6px; text-transform:uppercase; color:var(--cyan); margin-bottom:14px; }
-  .spanel-eyebrow svg{ width:18px; height:18px; }
-  .spanel-text h3{ font-size:clamp(21px,2.3vw,29px); line-height:1.15; letter-spacing:-.02em; color:var(--ink); margin-bottom:12px; }
-  .spanel-text p{ font-size:15px; color:var(--slate); line-height:1.62; }
-  .spanel-visual{ padding:38px 34px; background:linear-gradient(160deg,#eef4ff,#e5eefe);
-    display:flex; align-items:center; justify-content:center; }
-
-  /* Mock UI картууд */
-  .mock{ width:100%; max-width:330px; background:#fff; border:1px solid var(--line);
-    border-radius:16px; box-shadow:0 14px 32px rgba(16,18,38,.14); padding:20px 22px; }
-  .mock-title{ font-size:13px; font-weight:700; color:var(--navy); margin-bottom:14px; }
-  .mock-list ul{ display:flex; flex-direction:column; gap:12px; }
-  .mock-list li{ display:flex; gap:10px; font-size:13.4px; color:var(--ink); align-items:flex-start; line-height:1.45; }
-  .mock-list .ck{ flex:0 0 auto; width:20px; height:20px; border-radius:50%; background:var(--accent-soft);
-    color:var(--cyan); font-weight:800; font-size:11px; display:flex; align-items:center; justify-content:center; }
-
-  .cal-head{ display:flex; justify-content:space-between; align-items:center; font-size:13px;
-    font-weight:700; color:var(--navy); margin-bottom:12px; }
-  .cal-nav{ color:var(--slate-light); font-weight:800; }
-  .cal-dow{ display:grid; grid-template-columns:repeat(7,1fr); gap:2px; margin-bottom:6px; }
-  .cal-dow span{ font-size:10px; color:var(--slate-light); text-align:center; font-weight:700; }
-  .cal-days{ display:grid; grid-template-columns:repeat(7,1fr); gap:3px; }
-  .cal-days span{ aspect-ratio:1; display:flex; align-items:center; justify-content:center;
-    font-size:12px; color:var(--slate); border-radius:8px; }
-  .cal-days span.on{ background:var(--navy); color:#fff; font-weight:800; box-shadow:0 6px 14px rgba(14,31,162,.35); }
-  .cal-foot{ margin-top:14px; padding-top:12px; border-top:1px solid var(--line);
-    display:flex; justify-content:space-between; align-items:center; }
-  .cal-foot b{ font-size:12.5px; color:var(--ink); }
-  .cal-times{ display:flex; gap:6px; }
-  .cal-times span{ font-size:11px; font-weight:700; color:var(--navy); background:var(--accent-soft);
-    padding:4px 8px; border-radius:6px; }
-
-  .mock-teacher{ text-align:center; }
-  .mock-teacher img{ width:84px; height:84px; border-radius:50%; object-fit:cover; margin:0 auto 12px; display:block; }
-  .mt-name{ font-family:'Montserrat',sans-serif; font-weight:800; font-size:17px; color:var(--navy); }
-  .mt-role{ font-size:12px; color:var(--cyan); font-weight:700; margin-top:2px; }
-  .mt-pills{ display:flex; flex-wrap:wrap; gap:6px; justify-content:center; margin-top:14px; }
-  .mt-pills span{ font-size:11px; font-weight:600; color:var(--navy); background:var(--paper);
-    border:1px solid var(--line); padding:5px 10px; border-radius:100px; }
-
-  .mock-reg{ text-align:center; }
-  .mr-month{ font-size:12px; font-weight:700; color:var(--cyan); }
-  .mr-day{ font-family:'Montserrat',sans-serif; font-weight:900; font-size:52px; color:var(--navy); line-height:1; }
-  .mr-meta{ font-size:12.5px; color:var(--slate); margin-top:6px; }
-  .mr-price{ font-family:'Montserrat',sans-serif; font-weight:800; font-size:22px; color:var(--navy); margin:14px 0 2px; }
-  .mr-price span{ font-size:12px; color:var(--slate-light); font-weight:600; }
-  .mock-reg .btn{ width:100%; justify-content:center; margin-top:12px; }
-
-  @media (max-width:880px){
-    .hero > .wrap{ padding-top:40px; padding-bottom:54px; }
-    .topbar .wrap{ padding-right:44px; gap:8px; font-size:12px; }
-    .showcase{ padding:22px 16px 24px; margin-top:36px; border-radius:22px; }
-    .showcase-tabs{ gap:8px; --tab-gap:20px; margin-bottom:var(--tab-gap); }
-    .stab{ width:50px; height:50px; border-radius:13px; }
-    .stab svg{ width:22px; height:22px; }
-    .spanel.active{ grid-template-columns:1fr; }
-    .spanel-text{ padding:28px 24px 6px; }
-    .spanel-visual{ padding:24px; }
-  }
-
-  /* ==================== Showcase-ийг томсгож, бүрэн агуулга харуулах ==================== */
-  .hero > .wrap{ max-width:1200px; }     /* showcase-д зориулж өргөсгөв */
-  .showcase{ max-width:none; }           /* хүрээг боломжит хэмжээгээр томруулав */
-  .spanel.active{ grid-template-columns:1fr 1fr; }
-
-  /* Өгөөж — дагалдах багцын дэлгэрэнгүй */
-  .dlist{ display:flex; flex-direction:column; gap:15px; width:100%; max-width:430px; }
-  .ditem{ display:flex; gap:12px; align-items:flex-start; }
-  .ditem .dic{ flex:0 0 auto; width:38px; height:38px; border-radius:11px; background:#fff;
-    border:1px solid var(--line); display:flex; align-items:center; justify-content:center; font-size:18px;
-    box-shadow:0 4px 10px rgba(16,18,38,.06); }
-  .ditem b{ display:block; font-size:14px; color:var(--ink); font-weight:700; margin-bottom:2px; }
-  .ditem span{ font-size:12.8px; color:var(--slate); line-height:1.5; }
-
-  /* Хуваарь — өдрийн бүрэн хөтөлбөр */
-  .date-chip{ margin-top:18px; align-self:flex-start; display:inline-flex; align-items:center; gap:6px;
-    font-size:12.5px; font-weight:700; color:var(--navy); background:var(--accent-soft);
-    padding:9px 13px; border-radius:9px; }
-  .alist{ display:flex; flex-direction:column; gap:2px; width:100%; max-width:450px; }
-  .arow{ display:flex; gap:14px; padding:12px 0; border-bottom:1px dashed var(--line); }
-  .arow:last-child{ border-bottom:none; }
-  .arow b{ flex:0 0 46px; font-family:'Montserrat',sans-serif; color:var(--navy); font-size:13px; }
-  .arow .at{ display:block; font-size:13.6px; color:var(--ink); font-weight:600; }
-  .arow .ad{ display:block; font-size:12px; color:var(--slate); margin-top:2px; line-height:1.45; }
-
-  /* Багш — профайл, мэргэшил, төслүүд */
-  .tprof{ display:flex; gap:14px; align-items:center; margin-bottom:14px; }
-  .tprof img{ width:64px; height:64px; border-radius:14px; object-fit:cover; }
-  .tprof-name{ font-family:'Montserrat',sans-serif; font-weight:800; font-size:18px; color:var(--navy); }
-  .tprof-role{ font-size:12.5px; color:var(--cyan); font-weight:700; margin-top:2px; }
-  .tskills{ display:flex; flex-wrap:wrap; gap:7px; margin-top:16px; }
-  .plist{ width:100%; max-width:450px; }
-  .plist-title{ font-family:'Montserrat',sans-serif; font-weight:800; font-size:12px; letter-spacing:.6px;
-    text-transform:uppercase; color:var(--navy); margin-bottom:12px; }
-  .prow{ display:flex; gap:12px; align-items:flex-start; padding:9px 0; border-bottom:1px solid var(--line);
-    font-size:13px; color:var(--ink); line-height:1.4; }
-  .prow:last-child{ border-bottom:none; }
-  .prow .py{ flex:0 0 auto; font-family:'Montserrat',sans-serif; font-weight:800; font-size:11px; color:#fff;
-    background:var(--navy); border-radius:5px; padding:3px 7px; margin-top:1px; }
-  .prow b{ display:block; font-weight:700; color:var(--ink); line-height:1.35; }
-  .pd{ display:block; font-size:11.8px; color:var(--slate); line-height:1.45; margin-top:2px; }
-
-  /* Агуулга багтахгүй үед голлуулах нь дээд талыг тасалж, гүйж хүрэхгүй болгодог.
-     "safe" нь багтахгүй тохиолдолд эхнээс нь эхлүүлж, бүх агуулгыг хүрэхүйц болгоно. */
-  .spanel-visual{ align-items:safe center; }
-  .spanel-text{ justify-content:safe center; }
-
-  /* Урт жагсаалт гүйх үед scrollbar-ыг зөөлөн харуулна */
-  .spanel-text::-webkit-scrollbar, .spanel-visual::-webkit-scrollbar{ width:8px; }
-  .spanel-text::-webkit-scrollbar-track, .spanel-visual::-webkit-scrollbar-track{ background:transparent; }
-  .spanel-text::-webkit-scrollbar-thumb, .spanel-visual::-webkit-scrollbar-thumb{
-    background:rgba(14,31,162,.22); border-radius:99px; }
-  .spanel-text::-webkit-scrollbar-thumb:hover, .spanel-visual::-webkit-scrollbar-thumb:hover{
-    background:rgba(14,31,162,.38); }
-
-  /* Бүртгэл — үнэд багтсан зүйлс */
-  .inc-title{ margin-top:18px; margin-bottom:10px; font-size:12px; font-weight:800; letter-spacing:.5px;
-    text-transform:uppercase; color:var(--navy); }
-  .inc-list{ display:flex; flex-direction:column; gap:10px; }
-  .inc-list li{ display:flex; gap:9px; font-size:13.6px; color:var(--ink); align-items:center; }
-  .inc-list .ck{ flex:0 0 auto; width:19px; height:19px; border-radius:50%; background:var(--accent-soft);
-    color:var(--cyan); font-weight:800; font-size:10px; display:flex; align-items:center; justify-content:center; }
-
-  /* Хөтөлбөр — 3 үе шат */
-  .mlist{ display:flex; flex-direction:column; gap:16px; width:100%; max-width:450px; }
-  .mitem{ display:flex; gap:13px; align-items:flex-start; }
-  .mnum{ flex:0 0 auto; width:34px; height:34px; border-radius:10px; background:var(--navy); color:#fff;
-    font-family:'Montserrat',sans-serif; font-weight:800; font-size:12.5px;
-    display:flex; align-items:center; justify-content:center; box-shadow:0 5px 12px rgba(14,31,162,.28); }
-  .mstage{ font-size:10.5px; font-weight:800; letter-spacing:.7px; text-transform:uppercase;
-    color:var(--cyan); margin-bottom:3px; }
-  .mitem b{ display:block; font-size:14px; color:var(--ink); font-weight:700; margin-bottom:3px; }
-  .mdesc{ display:block; font-size:12.8px; color:var(--slate); line-height:1.5; }
-
-  /* Гар утсан дээр панелийг дээш доош нь давхарлана (дээрх дүрмүүдийг дарна) */
-  @media (max-width:880px){
-    .spanel.active{ grid-template-columns:1fr; }
-    .dlist, .alist, .plist, .mlist{ max-width:none; }
-  }
-
-  /* ==================== Компьютер дээр нэг дэлгэцэнд багтаана ==================== */
-  @media (min-width:881px){
-    .topbar .wrap{ min-height:34px; padding-top:6px; padding-bottom:6px; font-size:12.5px; }
-    .nav .wrap{ height:60px; }
-
-    .hero > .wrap{ padding-top:20px; padding-bottom:20px; }
-    .hero-head h1{ font-size:clamp(28px,3.3vw,44px); }
-    .hero-head .hero-sub{ margin:11px auto 0; font-size:14.5px; }
-    .hero-head .hero-note{ margin-top:12px; padding:7px 14px; font-size:12.5px; }
-
-    /* Жагсаалтуудыг нягтруулж, гүйлтгүйгээр багтаана */
-    .arow{ padding:9px 0; }
-    .prow{ padding:7px 0; }
-    .dlist{ gap:13px; }
-    .mlist{ gap:13px; }
-
-    .showcase{ margin-top:18px; padding:18px 20px 20px; border-radius:24px; }
-    .showcase-tabs{ --tab-gap:22px; margin-bottom:var(--tab-gap); gap:10px; }
-    .stab{ width:46px; height:46px; border-radius:13px; }
-    .stab svg{ width:21px; height:21px; }
-
-    /* Бүх хуудсыг яг нэг дэлгэцэд багтаана: үлдсэн зайг showcase өөрөө дүүргэнэ,
-       урт агуулгатай таб (Багш) багананд нь дотогшоо гүйнэ — мэдээлэл алдагдахгүй */
-    body{ height:100vh; overflow:hidden; }
-    .topbar, .nav{ flex:0 0 auto; }
-    .hero{ display:flex; flex-direction:column; flex:1 1 auto; min-height:0; }
-    .hero > .wrap{ flex:1 1 auto; display:flex; flex-direction:column; min-height:0; }
-    .hero-head{ flex:0 0 auto; }
-    .showcase{ flex:1 1 auto; display:flex; flex-direction:column; min-height:0; }
-    .showcase-tabs{ flex:0 0 auto; }
-    .showcase-stage{ flex:1 1 auto; min-height:0; }
-    .spanel.active{ height:100%; }
-    .spanel-text{ padding:24px 30px; overflow-y:auto; }
-    .spanel-visual{ padding:20px 26px; overflow-y:auto; }
-    .spanel-text h3{ font-size:clamp(17px,1.6vw,21px); }
-    .spanel-text p{ font-size:13px; }
-    .spanel-eyebrow{ font-size:11px; margin-bottom:10px; }
-
-    /* Панелийн агуулгыг нягтруулж, нэг дэлгэцэнд тасралтгүй багтаана */
-    .ditem .dic{ width:32px; height:32px; font-size:16px; border-radius:9px; }
-    .ditem b{ font-size:13px; }
-    .ditem span{ font-size:12px; }
-
-    .arow{ padding:7px 0; }
-    .arow b{ flex-basis:42px; font-size:12px; }
-    .arow .at{ font-size:12.6px; }
-    .arow .ad{ font-size:11.3px; }
-
-    .mnum{ width:30px; height:30px; font-size:11.5px; border-radius:9px; }
-    .mitem b{ font-size:13px; }
-    .mdesc{ font-size:12px; }
-    .mstage{ font-size:10px; }
-
-    .tprof img{ width:54px; height:54px; border-radius:12px; }
-    .tprof-name{ font-size:16px; }
-    .tprof-role{ font-size:11.5px; }
-    .tskills{ gap:6px; margin-top:12px; }
-    .tskills .skill-tag{ font-size:11.3px; padding:5px 11px; }
-
-    .plist-title{ font-size:11px; margin-bottom:9px; }
-    .prow{ padding:6px 0; font-size:12.3px; }
-    .prow .py{ font-size:10.3px; padding:3px 6px; }
-    .pd{ font-size:11.2px; }
-
-    .inc-title{ margin-top:14px; margin-bottom:8px; font-size:11px; }
-    .inc-list{ gap:8px; }
-    .inc-list li{ font-size:12.7px; }
-    .mr-day{ font-size:44px; }
-    .mr-price{ font-size:20px; margin:10px 0 2px; }
-
-    footer{ padding:14px 0; }
-  }
-
-  /* Намхан дэлгэц (≤880px): толгой хэсэг, хүрээг нягтруулж панельд илүү зай өгнө */
-  @media (min-width:881px) and (max-height:880px){
-    .topbar .wrap{ min-height:30px; padding-top:5px; padding-bottom:5px; font-size:12px; }
-    .nav .wrap{ height:54px; }
-    .hero > .wrap{ padding-top:14px; padding-bottom:14px; }
-    .hero-head h1{ font-size:clamp(24px,2.6vw,34px); }
-    .hero-head .hero-sub{ font-size:13.5px; margin-top:9px; }
-    .hero-head .hero-note{ margin-top:10px; font-size:12px; padding:6px 12px; }
-    .showcase{ margin-top:14px; padding:14px 18px 16px; border-radius:20px; }
-    .showcase-tabs{ --tab-gap:18px; margin-bottom:var(--tab-gap); gap:9px; }
-    .stab{ width:42px; height:42px; border-radius:12px; }
-    .stab svg{ width:19px; height:19px; }
-    .spanel-text{ padding:18px 24px; }
-    .spanel-visual{ padding:16px 20px; }
-    footer{ padding:12px 0; }
-  }
-
-  /* Маш өндөр дэлгэц дээр хүрээ хэт сунахгүй — агуулгаараа хэмжигдэж голлоно */
-  @media (min-width:881px) and (min-height:1000px){
-    .hero > .wrap{ justify-content:center; }
-    .showcase{ flex:0 1 auto; }
-    .showcase-stage{ flex:0 1 auto; min-height:400px; max-height:520px; }
-  }
-
-  /* Маш намхан дэлгэц дээр хэт шахахгүй — хэвийн гүйлгэнэ */
-  @media (min-width:881px) and (max-height:750px){
-    body{ height:auto; overflow:visible; }
-    .showcase-stage{ flex:0 0 auto; }
-    .spanel-text, .spanel-visual{ overflow:visible; }
-  }
-
-  /* ==================== Footer — үндсэн вэбтэй ижил ==================== */
-  footer{ background:#070c3b; border-top:1px solid #2e3ba8; padding:26px 0; color:#aeb9ea; font-size:14px; }
-  footer .wrap{ max-width:none; padding:0 26px; }
-  .foot-bar{ display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; }
-  .foot-left{ display:flex; align-items:center; gap:26px; flex-wrap:wrap; }
-  .foot-brand{ font-size:17px; font-weight:500; color:#45a8f0; }
-  .foot-brand b{ color:#fff; font-weight:800; }
-  .foot-social{ display:flex; align-items:center; gap:20px; }
-  .foot-social a{ display:grid; place-items:center; color:#eef3ff; transition:color .2s; }
-  .foot-social a:hover{ color:#45a8f0; }
-  .foot-social svg{ width:22px; height:22px; }
-  .foot-right{ display:flex; align-items:center; gap:24px; flex-wrap:wrap; }
-  .foot-right a{ color:#aeb9ea; text-decoration:none; }
-  .foot-right a:hover{ color:#eef3ff; }
-  .foot-copy{ color:#aeb9ea; opacity:.8; font-size:13.5px; }
-  @media (max-width:640px){ .foot-bar{ flex-direction:column; align-items:flex-start; gap:18px; } }
 </style>
 <script src="/analytics.js" defer></script>
 </head>
 <body>
 
-<!-- ============ Дээд мэдэгдлийн зурвас ============ -->
-<div class="topbar" id="topbar">
-  <div class="wrap">
-    <span>🎓 KPI360 Masterclass · 2026 оны 10-р сарын 10 · зөвхөн 15 суудал</span>
-    <a href="https://tally.so/r/Np2l6G" target="_blank" rel="noopener">Бүртгүүлэх →</a>
-    <button class="topbar-x" id="topbar-x" type="button" aria-label="Хаах">×</button>
-  </div>
-</div>
-
 <!-- ============ NAV ============ -->
 <nav class="nav">
   <div class="wrap">
     <a class="logo-mark" href="/" aria-label="KPI consulting — нүүр хуудас">
-      <svg width="30" height="32" viewBox="0 0 100 100" fill="none" aria-hidden="true">
-        <g transform="skewX(-15)"><rect x="38" y="22" width="21" height="50" rx="7" fill="#4faeee"/><rect x="72" y="8" width="20" height="34" rx="7" fill="#0E1FA2"/><rect x="64" y="46" width="20" height="40" rx="7" fill="#4faeee"/></g>
+      <svg width="30" height="30" viewBox="0 0 30 30">
+        <ellipse cx="10" cy="11" rx="6" ry="9" fill="#53CBF3" transform="rotate(-28 10 11)"/>
+        <ellipse cx="17" cy="19" rx="5.2" ry="7.6" fill="#0E1FA2" transform="rotate(-28 17 19)"/>
       </svg>
       <div>
         <div class="logo-word" style="font-size:20px; line-height:1;"><span class="kpi">KPI360</span> <span class="consulting" style="font-weight:700;">Masterclass</span></div>
@@ -1092,6 +500,10 @@
       </div>
     </a>
     <div class="nav-links">
+      <a href="#curriculum">Хөтөлбөр</a>
+      <a href="#deliverables">Юу авах вэ</a>
+      <a href="#agenda">Хуваарь</a>
+      <a href="#faq">Асуулт хариулт</a>
       <a href="/">KPI consulting →</a>
     </div>
     <a href="https://tally.so/r/Np2l6G" target="_blank" rel="noopener" class="btn btn-primary btn-nav">Бүртгүүлэх</a>
@@ -1102,171 +514,29 @@
 <header class="hero">
   <div class="sunburst"></div>
   <div class="wrap">
-    <!-- Төвлөрсөн танилцуулга (Calendly маяг) -->
-    <div class="hero-head reveal">
-      <h1>KPI360 <span class="accent">Masterclass</span> эрчимжүүлсэн сургалт</h1>
-      <p class="hero-sub">8 цагийн турш KPI-ийн үндэс, сонгох аргачлал, байгууллагад нэвтрүүлэх бүрэн системийг гарын авлага, загваруудын хамт эзэмшинэ.</p>
-      <div class="hero-note">⚠ Зөвхөн 15 суудал — жижиг бүлэг, гүнзгий анхаарал</div>
-    </div>
-
-    <!-- Showcase карт: градиент дэвсгэр, дээр нь 4 icon таб -->
-    <div class="showcase reveal">
-      <div class="showcase-tabs" role="tablist" aria-label="Сургалтын мэдээлэл">
-        <button class="stab" role="tab" id="tab-curriculum" aria-controls="tp-curriculum" aria-selected="true" type="button" aria-label="Хөтөлбөр">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18V5a1 1 0 0 1 1-1h5a3 3 0 0 1 3 3 3 3 0 0 1 3-3h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a2 2 0 0 0-2 2 2 2 0 0 0-2-2H4a1 1 0 0 1-1-1z"/></svg>
-        </button>
-        <button class="stab" role="tab" id="tab-benefit" aria-controls="tp-benefit" aria-selected="false" type="button" aria-label="Өгөөж">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v9h14v-9"/><path d="M12 8S10 3 7.5 4.5 9 8 12 8zM12 8s2-5 4.5-3.5S15 8 12 8z"/></svg>
-        </button>
-        <button class="stab" role="tab" id="tab-schedule" aria-controls="tp-schedule" aria-selected="false" type="button" aria-label="Хуваарь">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg>
-        </button>
-        <button class="stab" role="tab" id="tab-teacher" aria-controls="tp-teacher" aria-selected="false" type="button" aria-label="Багш">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>
-        </button>
-        <button class="stab" role="tab" id="tab-register" aria-controls="tp-register" aria-selected="false" type="button" aria-label="Бүртгэл">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4H5v17h14V8"/><path d="M14 4l5 5h-5z"/><path d="M8 13h7M8 17h5"/></svg>
-        </button>
-      </div>
-
-      <div class="showcase-stage">
-        <!-- Хөтөлбөр -->
-        <div class="spanel active" id="tp-curriculum" role="tabpanel" aria-labelledby="tab-curriculum">
-          <div class="spanel-text">
-            <div class="spanel-eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 7v14"/><path d="M3 18V5a1 1 0 0 1 1-1h5a3 3 0 0 1 3 3 3 3 0 0 1 3-3h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a2 2 0 0 0-2 2 2 2 0 0 0-2-2H4a1 1 0 0 1-1-1z"/></svg> Хөтөлбөр</div>
-            <h3>Нэг өдөр. Гурван үе шат. Бүрэн систем.</h3>
-            <p>Үе шат бүр өмнөхөө дээр суурилж, өдрийн эцэст өөрийн байгууллагад тохирсон хэрэгжүүлэх төлөвлөгөөтэй гарна.</p>
-          </div>
-          <div class="spanel-visual">
-            <div class="mlist">
-              <div class="mitem">
-                <span class="mnum">01</span>
-                <div>
-                  <div class="mstage">09:00 · Үндэс</div>
-                  <b>KPI-ийн үндсэн ойлголтууд</b>
-                  <span class="mdesc">Шийдвэрт нөлөөлдөг жинхэнэ KPI-г тайланд л сайхан харагддаг «хуурамч» үзүүлэлтээс ялгаж сурна.</span>
-                </div>
-              </div>
-              <div class="mitem">
-                <span class="mnum">02</span>
-                <div>
-                  <div class="mstage">11:00 · Аргачлал</div>
-                  <b>Сонгох аргачлалууд</b>
-                  <span class="mdesc">Алба нэгж, албан тушаал, стратегийн зорилт бүрт тохирсон KPI болон таргет сонгох давтагдах арга зүй.</span>
-                </div>
-              </div>
-              <div class="mitem">
-                <span class="mnum">03</span>
-                <div>
-                  <div class="mstage">14:00 · Нэвтрүүлэлт</div>
-                  <b>Байгууллагад хэрэгжүүлэх</b>
-                  <span class="mdesc">KPI-г байгууллагын бүх түвшинд нэвтрүүлж, ажилтнуудын оролцоог сайжруулж, системийг үр дүнтэй хэрэгжүүлэх арга.</span>
-                </div>
-              </div>
-            </div>
-          </div>
+    <div class="hero-grid">
+      <div>
+        <div class="eyebrow">Нээлттэй мастеркласс · HR менежер ба бизнесийн удирдах ажилтнуудад</div>
+        <h1>Байгууллагынхаа гүйцэтгэлийг зөв хэмжиж, <span class="accent">ухаалаг</span> удирдъя.</h1>
+        <div class="hero-sub-strong">8 цагийн эрчимжүүлсэн сургалтаар KPI-ийн үндэс, сонгох аргачлал, байгууллагад нэвтрүүлэх бүрэн системийг гарын авлага, загваруудын хамт эзэмшинэ.</div>
+        <p class="hero-sub">Бодит бизнесийн орчинд хийгдсэн 10 гаруй жилийн судалгаа, олон улсад ашиглагддаг KPI үнэлгээний аргачлал дээр суурилсан гүйцэтгэлийн удирдлагын мэргэжлийн сургалт.</p>
+        <div class="hero-ctas">
+          <a href="https://tally.so/r/Np2l6G" target="_blank" rel="noopener" class="btn btn-primary">Бүртгүүлэх →</a>
+          <a href="#curriculum" class="btn btn-ghost" style="color:var(--navy); border-color:var(--navy);">Хөтөлбөрийг үзэх</a>
         </div>
-
-        <!-- Өгөөж -->
-        <div class="spanel" id="tp-benefit" role="tabpanel" aria-labelledby="tab-benefit" hidden>
-          <div class="spanel-text">
-            <div class="spanel-eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M5 12v9h14v-9"/></svg> Өгөөж</div>
-            <h3>Сургалтаас юу авах вэ</h3>
-            <p>Сургалтын тэмдэглэл биш — Даваа гаригаас шууд ашиглах бэлэн багц. Сургалт дууссаны дараа ч байнга ашиглана.</p>
-          </div>
-          <div class="spanel-visual">
-            <div class="dlist">
-              <div class="ditem"><span class="dic">🗂️</span><div><b>Оролцогчийн гарын авлага</b><span>Сургалт дууссаны дараа ч байнга ашиглах бүрэн гарын авлага.</span></div></div>
-              <div class="ditem"><span class="dic">📊</span><div><b>KPI сонгох загвар</b><span>Дурын албан тушаалд тохирсон үзүүлэлт сонгох ажлын хүрээ.</span></div></div>
-              <div class="ditem"><span class="dic">🧭</span><div><b>Хэрэгжүүлэх төлөвлөгөө</b><span>Байгууллагадаа тохируулсан, алхам алхмаар хэрэгжүүлэх төлөвлөгөө.</span></div></div>
-              <div class="ditem"><span class="dic">⏱️</span><div><b>Скоркард загварууд</b><span>KPI-г эхний өдрөөс хянаж, дүгнэх бэлэн хүснэгтүүд.</span></div></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Хуваарь -->
-        <div class="spanel" id="tp-schedule" role="tabpanel" aria-labelledby="tab-schedule" hidden>
-          <div class="spanel-text">
-            <div class="spanel-eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="17" rx="2"/><path d="M3 9h18M8 2v4M16 2v4"/></svg> Хуваарь</div>
-            <h3>Нэг өдрийн бүрэн хөтөлбөр</h3>
-            <p>Эрчимжүүлсэн 8 цаг. Үе шат бүр өмнөхөө дээр суурилж, өдрийн эцэст хэрэгжүүлэх төлөвлөгөөтэй гарна.</p>
-            <div class="date-chip">📅 2026.10.10 · Бямба · 09:00–17:00</div>
-          </div>
-          <div class="spanel-visual">
-            <div class="alist">
-              <div class="arow"><b>09:00</b><div><span class="at">Нээлт &amp; KPI-ийн үндэс</span><span class="ad">Шийдвэрт нөлөөлдөг жинхэнэ KPI-г ялгах</span></div></div>
-              <div class="arow"><b>11:00</b><div><span class="at">Сонгох аргачлал</span><span class="ad">Алба, албан тушаал бүрт KPI, таргет сонгох</span></div></div>
-              <div class="arow"><b>13:00</b><div><span class="at">Үдийн завсарлага</span></div></div>
-              <div class="arow"><b>14:00</b><div><span class="at">Хэрэгжүүлэх арга зүй</span><span class="ad">Байгууллагад нэвтрүүлэх, оролцоог сайжруулах</span></div></div>
-              <div class="arow"><b>16:00</b><div><span class="at">Өөрийн төлөвлөгөө</span><span class="ad">Байгууллагадаа тохирсон төлөвлөгөө боловсруулах</span></div></div>
-              <div class="arow"><b>17:00</b><div><span class="at">Хаалт &amp; асуулт хариулт</span></div></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Багш -->
-        <div class="spanel" id="tp-teacher" role="tabpanel" aria-labelledby="tab-teacher" hidden>
-          <div class="spanel-text">
-            <div class="spanel-eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg> Багш</div>
-            <div class="tprof">
-              <img src="/kpi360-instructor.jpg" alt="Б.Баярцэцэг — сургалтын багш" loading="lazy">
-              <div><div class="tprof-name">Б.Баярцэцэг</div><div class="tprof-role">Захирал · Хүний нөөцийн зөвлөх</div></div>
-            </div>
-            <p>Хүний нөөцийн салбарт 2015 оноос, 2020 оноос зөвлөх үйлчилгээний чиглэлээр мэргэшин ажилласан. Гүйцэтгэлийн удирдлага, ур чадварын тогтолцоо, HRIS, Green HRM, ажлын байрны шинжилгээ зэрэг чиглэлээр төр, хувийн хэвшлийн байгууллагад төсөл удирдан хэрэгжүүлсэн.</p>
-            <div class="tskills">
-              <span class="skill-tag">Гүйцэтгэлийн удирдлага</span>
-              <span class="skill-tag">Ур чадварын тогтолцоо</span>
-              <span class="skill-tag">HRIS</span>
-              <span class="skill-tag">Green HRM</span>
-              <span class="skill-tag">ХН стратеги, бодлого</span>
-              <span class="skill-tag">Ажлын байрны шинжилгээ</span>
-            </div>
-          </div>
-          <div class="spanel-visual">
-            <div class="plist">
-              <div class="plist-title">Ажилласан төслүүд</div>
-              <div class="prow"><span class="py">2024</span><div><b>Электрокомплект ХХК</b><span class="pd">Хүний хөгжлийн албаны үйл ажиллагаа, хүний нөөцийн бодлого, төлөвлөлтийг удирдан ажилласан</span></div></div>
-              <div class="prow"><span class="py">2023</span><div><b>Ай Си Ти Групп</b><span class="pd">Гүйцэтгэлийн удирдлагын систем боловсруулах, нэвтрүүлэх зөвлөх үйлчилгээ</span></div></div>
-              <div class="prow"><span class="py">2023</span><div><b>Гэр бүл, хөдөлмөр, нийгмийн хамгааллын яам</b><span class="pd">EJOB платформд шинээр бүртгэгдсэн ажил, мэргэжлүүдийн ажлын байрны дэлгэрэнгүй тодорхойлолт боловсруулах зөвлөх үйлчилгээ</span></div></div>
-              <div class="prow"><span class="py">2023</span><div><b>Дижитал Эдү Менежмент ХХК</b><span class="pd">Байгууллагын хүний нөөцийн бүхий л чиг үүрэг, үйл ажиллагааг удирдан зохион байгуулж ажилласан</span></div></div>
-              <div class="prow"><span class="py">2023</span><div><b>Өрх ХХК</b><span class="pd">Хүний нөөцийн бодлого, журам болон холбогдох баримт бичиг боловсруулах зөвлөх үйлчилгээ</span></div></div>
-              <div class="prow"><span class="py">2022</span><div><b>АПУ ХК</b><span class="pd">Хүний нөөцийн систем нэвтрүүлэлтийн төсөл</span></div></div>
-              <div class="prow"><span class="py">2022</span><div><b>Монгол Даатгал ХК</b><span class="pd">Хүний нөөцийн систем нэвтрүүлэлтийн төсөл</span></div></div>
-              <div class="prow"><span class="py">2022</span><div><b>Shangri-La</b><span class="pd">Хүний нөөцийн систем нэвтрүүлэлтийн төсөл</span></div></div>
-              <div class="prow"><span class="py">2022</span><div><b>Мастер Групп</b><span class="pd">Ур чадварын тогтолцоо боловсруулах, нэвтрүүлэх зөвлөх үйлчилгээ</span></div></div>
-              <div class="prow"><span class="py">2020</span><div><b>Нийгмийн даатгалын ерөнхий газар</b><span class="pd">Хүний нөөцийн систем нэвтрүүлэлтийн төсөл</span></div></div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Бүртгэл -->
-        <div class="spanel" id="tp-register" role="tabpanel" aria-labelledby="tab-register" hidden>
-          <div class="spanel-text">
-            <div class="spanel-eyebrow"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4H5v17h14V8"/><path d="M14 4l5 5h-5z"/><path d="M8 13h7M8 17h5"/></svg> Бүртгэл</div>
-            <h3>Суудлаа баталгаажуул</h3>
-            <p>Зөвхөн 15 суудал — суудал дүүрмэгц бүртгэл хаагдана.</p>
-            <div class="inc-title">Үнэд багтсан</div>
-            <ul class="inc-list">
-              <li><span class="ck">✓</span> Бүтэн өдрийн сургалт</li>
-              <li><span class="ck">✓</span> Оролцогчийн гарын авлага, загвар</li>
-              <li><span class="ck">✓</span> Цай, кофе</li>
-              <li><span class="ck">✓</span> Өдрийн хоол</li>
-            </ul>
-          </div>
-          <div class="spanel-visual">
-            <div class="mock mock-reg">
-              <div class="mr-month">2026 оны 10-р сар</div>
-              <div class="mr-day">10</div>
-              <div class="mr-meta">Бямба гараг · 09:00 – 17:00</div>
-              <div class="mr-price">550,000₮ <span>/ суудал</span></div>
-              <a href="https://tally.so/r/Np2l6G" target="_blank" rel="noopener" class="btn btn-primary">Бүртгүүлэх →</a>
-            </div>
-          </div>
-        </div>
+        <div class="hero-note">⚠ Зөвхөн 15 суудал — жижиг бүлэг, гүнзгий анхаарал</div>
       </div>
     </div>
   </div>
 
+  <div class="stat-strip">
+    <div class="wrap">
+      <div class="stat"><div class="stat-value">08 ЦАГ</div><div class="stat-label">Нэг өдрийн эрчимжүүлсэн сургалт</div></div>
+      <div class="stat"><div class="stat-value">05</div><div class="stat-label">Хөтөлбөрийн үндсэн бүлэг</div></div>
+      <div class="stat"><div class="stat-value">04+</div><div class="stat-label">Загвар, гарын авлага дагалдана</div></div>
+      <div class="stat"><div class="stat-value">1:15</div><div class="stat-label">Багш — оролцогчийн харьцаа</div></div>
+    </div>
+  </div>
 </header>
 
 <!-- ============ PROBLEM ============ -->
@@ -1400,7 +670,7 @@
 </section>
 
 <!-- ============ INSTRUCTOR ============ -->
-<section class="section" id="instructor">
+<section class="section">
   <div class="wrap">
     <div class="section-head reveal">
       <div class="eyebrow">Багшийн тухай</div>
@@ -1570,22 +840,20 @@
 
 <!-- ============ FOOTER ============ -->
 <footer>
-  <div class="wrap foot-bar">
-    <div class="foot-left">
-      <span class="foot-brand"><b>KPI</b>&nbsp;consulting</span>
-      <div class="foot-social">
-        <a href="https://www.facebook.com/kpi.mongolia/" target="_blank" rel="noopener" aria-label="Facebook">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M13.5 21v-8h2.7l.4-3.1h-3.1V7.9c0-.9.25-1.5 1.55-1.5H17V3.6c-.3 0-1.3-.1-2.5-.1-2.5 0-4.2 1.5-4.2 4.3v2.1H7.5V13h2.8v8h3.2z"/></svg>
-        </a>
-        <a href="https://www.linkedin.com/company/kpi-consulting-mn/" target="_blank" rel="noopener" aria-label="LinkedIn">
-          <svg viewBox="0 0 24 24" fill="currentColor"><path d="M6.94 5a1.94 1.94 0 1 1-3.88 0 1.94 1.94 0 0 1 3.88 0zM3.4 8.4h3.1V21H3.4V8.4zm5.06 0h2.97v1.72h.04c.41-.78 1.42-1.6 2.93-1.6 3.13 0 3.71 2.06 3.71 4.74V21h-3.1v-5.4c0-1.29-.02-2.95-1.8-2.95-1.8 0-2.08 1.4-2.08 2.85V21H8.46V8.4z"/></svg>
-        </a>
+  <div class="wrap">
+    <div class="footer-row">
+      <div class="logo-mark">
+        <svg width="24" height="24" viewBox="0 0 30 30">
+          <ellipse cx="10" cy="11" rx="6" ry="9" fill="#53CBF3" transform="rotate(-28 10 11)"/>
+          <ellipse cx="17" cy="19" rx="5.2" ry="7.6" fill="#8FA0FF" transform="rotate(-28 17 19)"/>
+        </svg>
+        <div class="logo-word on-dark"><span class="kpi" style="color:#fff;">KPI</span> <span class="consulting">consulting</span></div>
       </div>
-    </div>
-    <div class="foot-right">
-      <a href="/">KPI consulting</a>
-      <a href="mailto:kpiconsultingmn@gmail.com">Холбоо барих</a>
-      <span class="foot-copy">© 2026 KPI consulting. Бүх эрх хуулиар хамгаалагдсан.</span>
+      <div>
+        <a href="mailto:kpiconsultingmn@gmail.com" style="text-decoration:underline;">kpiconsultingmn@gmail.com</a>
+        · <a href="tel:+97699147699" style="text-decoration:underline;">99147699</a>
+        · <a href="/" style="text-decoration:underline;">www.kpiconsulting.mn</a>
+      </div>
     </div>
   </div>
 </footer>
@@ -1605,41 +873,6 @@
     }, { threshold: 0.15 });
     revealEls.forEach(el => io.observe(el));
   }
-
-  // ---- Hero таб карт: icon дээр дарахад мэдээлэл солигдоно ----
-  (function(){
-    const tabs = Array.prototype.slice.call(document.querySelectorAll('.stab'));
-    if (!tabs.length) return;
-    const panels = document.querySelectorAll('.spanel');
-
-    function activate(tab){
-      const id = tab.getAttribute('aria-controls');
-      tabs.forEach(t => t.setAttribute('aria-selected', t === tab ? 'true' : 'false'));
-      panels.forEach(p => {
-        const on = p.id === id;
-        p.classList.toggle('active', on);
-        p.hidden = !on;
-      });
-    }
-
-    tabs.forEach((tab, i) => {
-      tab.addEventListener('click', () => activate(tab));
-      // Сумаар шилжих (гарын хүртээмж)
-      tab.addEventListener('keydown', (e) => {
-        let ni = null;
-        if (e.key === 'ArrowRight') ni = (i + 1) % tabs.length;
-        else if (e.key === 'ArrowLeft') ni = (i - 1 + tabs.length) % tabs.length;
-        if (ni !== null){ e.preventDefault(); tabs[ni].focus(); activate(tabs[ni]); }
-      });
-    });
-  })();
-
-  // ---- Дээд мэдэгдлийн зурвасыг хаах ----
-  (function(){
-    const x = document.getElementById('topbar-x');
-    const bar = document.getElementById('topbar');
-    if (x && bar){ x.addEventListener('click', () => { bar.style.display = 'none'; }); }
-  })();
 </script>
 
 </body>
