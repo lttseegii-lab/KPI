@@ -72,7 +72,13 @@ module.exports = async (req, res) => {
   try { list = await getArticles(); } catch (e) { list = []; }
   const a = id ? findArticle(list, id) : null;
 
-  // Нийтлэл олдохгүй бол сайтын үндсэн OG-тэй, нүүр рүү шилжүүлэх stub
+  // Нийтлэл олдохгүй бол сайтын үндсэн OG-тэй, нүүр рүү шилжүүлэх stub.
+  //
+  // OG тагуудыг ЗААВАЛ гаргана: Firestore-ийн уншилт түр саатсан, эсвэл хэн
+  // нэгэн хуучин/буруу хаяг хуваалцсан тохиолдолд ч Facebook, LinkedIn зэрэг
+  // scraper хоосон хариу авах ёсгүй. OG таггүй хуудсыг олж авбал тэдгээр нь
+  // гарчгийн оронд нүцгэн хаягийг ("www.kpiconsulting.mn") харуулдаг бөгөөд
+  // тэр буруу preview-г 30 хоног кэшлэдэг.
   if (!a) {
     res.statusCode = 404;
     res.setHeader("Content-Type", "text/html; charset=utf-8");
@@ -84,6 +90,20 @@ module.exports = async (req, res) => {
       '<meta name="description" content="' + esc(SITE_DESC) + '">' +
       '<link rel="canonical" href="' + esc(base + "/") + '">' +
       '<meta name="robots" content="noindex, follow">' +
+      '<meta property="og:type" content="website">' +
+      '<meta property="og:site_name" content="' + esc(SITE) + '">' +
+      '<meta property="og:locale" content="mn_MN">' +
+      '<meta property="og:url" content="' + esc(base + "/") + '">' +
+      '<meta property="og:title" content="' + esc(SITE_TITLE) + '">' +
+      '<meta property="og:description" content="' + esc(SITE_DESC) + '">' +
+      '<meta property="og:image" content="' + esc(base + "/og-cover.png") + '">' +
+      '<meta property="og:image:type" content="image/png">' +
+      '<meta property="og:image:width" content="1200">' +
+      '<meta property="og:image:height" content="630">' +
+      '<meta name="twitter:card" content="summary_large_image">' +
+      '<meta name="twitter:title" content="' + esc(SITE_TITLE) + '">' +
+      '<meta name="twitter:description" content="' + esc(SITE_DESC) + '">' +
+      '<meta name="twitter:image" content="' + esc(base + "/og-cover.png") + '">' +
       '<meta http-equiv="refresh" content="0; url=/">' +
       '<style>body{font-family:system-ui,-apple-system,sans-serif;background:#0a1150;color:#fff;padding:48px;text-align:center}a{color:#7cc7ff;font-weight:600}</style>' +
       '</head><body>Нийтлэл олдсонгүй. <a href="/">Нүүр хуудас руу очих</a></body></html>'
