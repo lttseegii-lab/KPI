@@ -398,6 +398,7 @@
         <div class="tab" data-tab="sections" onclick="switchTab('sections')">Хуудасны текст</div>
         <div class="tab" data-tab="authors" onclick="switchTab('authors')">Хүмүүс / Зөвлөх</div>
         <div class="tab" data-tab="register" onclick="switchTab('register')">Бүртгэлийн текст</div>
+        <div class="tab" data-tab="booking" onclick="switchTab('booking')">Цаг товлолтын текст</div>
         <div class="tab" data-tab="admins" onclick="switchTab('admins')">Админууд</div>
         <div class="tab" data-tab="contact" onclick="switchTab('contact')">Холбоо барих</div>
       </div>
@@ -907,6 +908,46 @@
         <div class="field">
           <label>Амжилтын тайлбар</label>
           <textarea id="r-successText" style="min-height:70px" placeholder="Таны мэйл хаяг руу..."></textarea>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== Booking texts panel ===== -->
+    <section id="tab-booking" class="hidden">
+      <div class="panel-head">
+        <h2>Цаг товлох цонхны текст</h2>
+        <div class="actions">
+          <button class="btn btn-primary" onclick="saveBooking()">Хадгалах</button>
+          <button class="btn" onclick="resetBooking()">Анхны төлөвт</button>
+          <span class="saved-msg" id="bookSaved">✓ Хадгалагдлаа</span>
+        </div>
+      </div>
+      <div class="hint">
+        Зочин «Цаг товлох» цонхыг нээх болон цаг амжилттай товлох үед харагдах бичвэрүүд.
+        Хаалтанд бичсэн түлхүүрүүд автоматаар солигдоно:
+        <b>{name}</b> — хэрэглэгчийн нэр, <b>{date}</b> — огноо, <b>{time}</b> — цаг,
+        <b>{email}</b> — бүртгэлтэй и-мэйл хаяг.
+      </div>
+      <div class="editor">
+        <div class="field">
+          <label>Бүртгэлгүй үеийн гарчиг</label>
+          <input id="b-needRegTitle" placeholder="Эхлээд бүртгүүлнэ үү">
+        </div>
+        <div class="field">
+          <label>Бүртгэлгүй үеийн тайлбар</label>
+          <textarea id="b-needRegText" style="min-height:60px" placeholder="Цаг товлохын тулд бүртгэлтэй байх шаардлагатай."></textarea>
+        </div>
+        <div class="field">
+          <label>Мэндчилгээ <span style="color:var(--muted);font-weight:400;">({name} ашиглаж болно)</span></label>
+          <textarea id="b-greeting" style="min-height:60px" placeholder="{name}, зөвлөхөө сонгоод нээлттэй цагаас товлоорой."></textarea>
+        </div>
+        <div class="field">
+          <label>Амжилтын гарчиг</label>
+          <input id="b-successTitle" placeholder="Цаг товлогдлоо!">
+        </div>
+        <div class="field">
+          <label>Амжилтын тайлбар <span style="color:var(--muted);font-weight:400;">({name} {date} {time} {email} ашиглаж болно)</span></label>
+          <textarea id="b-successText" style="min-height:90px" placeholder="{name}, таны {date} {time}-ийн зөвлөгөөний цаг товлогдлоо."></textarea>
         </div>
       </div>
     </section>
@@ -1427,6 +1468,15 @@
     successText: 'Таны мэйл хаяг руу KPI нэвтрүүлэх зөвлөгөөг илгээлээ. Амжилт хүсье.'
   };
   let register = load('kpihub_register', Object.assign({}, DEFAULT_REGISTER));
+  const DEFAULT_BOOKING = {
+    needRegTitle: 'Эхлээд бүртгүүлнэ үү',
+    needRegText: 'Цаг товлохын тулд бүртгэлтэй байх шаардлагатай. Бүртгэл үнэ төлбөргүй.',
+    greeting: '{name}, зөвлөхөө сонгоод нээлттэй цагаас товлоорой.',
+    successTitle: 'Цаг товлогдлоо!',
+    successText: '{name}, таны {date} {time}-ийн зөвлөгөөний цаг товлогдлоо. '
+      + 'Бид баталгаажуулалт болон үнийн саналаа {email} хаяг руу илгээнэ.'
+  };
+  let booking = load('kpihub_booking', Object.assign({}, DEFAULT_BOOKING));
   let authors = load('kpihub_authors', []);
 
   const DEFAULT_QUESTIONS = [
@@ -1483,6 +1533,7 @@
     renderProductsAdmin();
     renderSectionsForm();
     renderRegisterForm();
+    renderBookingForm();
     renderAuthors();
     renderFeedback();
     renderArticles();
@@ -1517,7 +1568,7 @@
 
   // ---------- Tabs ----------
   // «Тохиргоо» бүлэгт багтах дэд цэсүүд
-  const SETTINGS_TABS = ['sections', 'authors', 'register', 'admins', 'contact'];
+  const SETTINGS_TABS = ['sections', 'authors', 'register', 'booking', 'admins', 'contact'];
   function setSettingsOpen(open) {
     document.getElementById('settingsSub').classList.toggle('open', open);
     const tog = document.getElementById('settingsToggle');
@@ -1551,7 +1602,7 @@
     // «Хэрэглэгч» хуудсан дээр бүртгэлтэй хэрэглэгч, захиалагч, санал хүсэлтийг и-мэйлээр
     // нь нэгтгэн НЭГ лидийн жагсаалтад харуулна (тусдаа хэсэг байхгүй).
     const visible = [t];
-    ['home','reports','products','articles','why','pricing','schedule','popup','users','sections','authors','register','admins','contact'].forEach(name =>
+    ['home','reports','products','articles','why','pricing','schedule','popup','users','sections','authors','register','booking','admins','contact'].forEach(name =>
       document.getElementById('tab-' + name).classList.toggle('hidden', visible.indexOf(name) === -1));
     if (t === 'home') renderHome();
     if (t === 'reports') renderReports();
@@ -1561,6 +1612,7 @@
     if (t === 'popup') { renderPopupEditor(); renderPopupSubs(); }
     if (t === 'users') { closeCrm(); renderUsers(); clearUserMsg(); }
     if (t === 'register') renderRegisterForm();
+    if (t === 'booking') renderBookingForm();
     if (t === 'sections') renderSectionsForm();
     if (t === 'authors') renderAuthors();
     if (t === 'admins') { renderAdmins(); clearAdminMsg(); }
@@ -3077,6 +3129,25 @@
     save('kpihub_register', register);
   }
 
+  // ---------- Цаг товлох цонхны текст ----------
+  const BOOK_FIELDS = ['needRegTitle', 'needRegText', 'greeting', 'successTitle', 'successText'];
+  function renderBookingForm() {
+    if (!document.getElementById('b-greeting')) return;
+    BOOK_FIELDS.forEach(f => { document.getElementById('b-' + f).value = booking[f] || ''; });
+  }
+  function saveBooking() {
+    const next = {};
+    BOOK_FIELDS.forEach(f => { next[f] = document.getElementById('b-' + f).value.trim(); });
+    booking = next;
+    save('kpihub_booking', booking).then(ok => { if (ok) flash('bookSaved'); });
+  }
+  function resetBooking() {
+    if (!confirm('Цаг товлох цонхны текстийг анхны төлөвт буцаах уу?')) return;
+    booking = Object.assign({}, DEFAULT_BOOKING);
+    renderBookingForm();
+    save('kpihub_booking', booking);
+  }
+
   // ---------- Contact ----------
   function renderContactForm() {
     document.getElementById('c-intro').value = contact.intro || '';
@@ -3894,6 +3965,7 @@
     articles     = loadArticles();
     products     = load('kpihub_products', JSON.parse(JSON.stringify(DEFAULT_PRODUCTS)));
     register     = load('kpihub_register', Object.assign({}, DEFAULT_REGISTER));
+    booking      = load('kpihub_booking', Object.assign({}, DEFAULT_BOOKING));
     authors      = load('kpihub_authors', []);
     contact      = load('kpihub_contact', Object.assign({}, DEFAULT_CONTACT));
     why          = load('kpihub_why', JSON.parse(JSON.stringify(DEFAULT_WHY)));

@@ -1127,8 +1127,8 @@
       <!-- Not registered -->
       <div class="center hidden" id="bookNeedReg">
         <div class="success-icon" style="background:rgba(255,180,80,.14); border-color:rgba(255,180,80,.4);">🔒</div>
-        <h3 style="font-size:20px;margin-bottom:8px;">Эхлээд бүртгүүлнэ үү</h3>
-        <p>Цаг товлохын тулд бүртгэлтэй байх шаардлагатай. Бүртгэл үнэ төлбөргүй.</p>
+        <h3 id="bookNeedRegTitle" style="font-size:20px;margin-bottom:8px;">Эхлээд бүртгүүлнэ үү</h3>
+        <p id="bookNeedRegText">Цаг товлохын тулд бүртгэлтэй байх шаардлагатай. Бүртгэл үнэ төлбөргүй.</p>
         <button class="btn btn-primary" onclick="closeBooking(); openModal();">Бүртгэл үүсгэх</button>
       </div>
 
@@ -1152,7 +1152,7 @@
       <!-- Success -->
       <div class="center hidden" id="bookSuccess">
         <div class="success-icon">✓</div>
-        <h3 style="font-size:20px;margin-bottom:8px;">Цаг товлогдлоо!</h3>
+        <h3 id="bookSuccessTitle" style="font-size:20px;margin-bottom:8px;">Цаг товлогдлоо!</h3>
         <p id="bookSuccessMsg" style="margin-bottom:18px;"></p>
         <a class="btn btn-primary" id="gcalLink" href="#" target="_blank" rel="noopener" style="display:block; text-align:center; margin-bottom:10px;">📅 Google Calendar-т нэмэх</a>
         <button class="btn btn-ghost" onclick="closeBooking()" style="width:100%;">Хаах</button>
@@ -3072,6 +3072,41 @@
   }
   renderRegisterTexts();
 
+  // ---------- Цаг товлох цонхны текст (админаас удирдана) ----------
+  const DEFAULT_BOOKING = {
+    needRegTitle: 'Эхлээд бүртгүүлнэ үү',
+    needRegText: 'Цаг товлохын тулд бүртгэлтэй байх шаардлагатай. Бүртгэл үнэ төлбөргүй.',
+    greeting: '{name}, зөвлөхөө сонгоод нээлттэй цагаас товлоорой.',
+    successTitle: 'Цаг товлогдлоо!',
+    successText: '{name}, таны {date} {time}-ийн зөвлөгөөний цаг товлогдлоо. '
+      + 'Бид баталгаажуулалт болон үнийн саналаа {email} хаяг руу илгээнэ.'
+  };
+  let BOOKING = DEFAULT_BOOKING;
+  try {
+    const rawB = localStorage.getItem('kpihub_booking');
+    if (rawB) BOOKING = Object.assign({}, DEFAULT_BOOKING, JSON.parse(rawB));
+  } catch (e) {}
+  function renderBookingTexts() {
+    const set = (id, v) => { const el = document.getElementById(id); if (el) el.textContent = v; };
+    set('bookNeedRegTitle', BOOKING.needRegTitle);
+    set('bookNeedRegText', BOOKING.needRegText);
+    set('bookSuccessTitle', BOOKING.successTitle);
+  }
+  renderBookingTexts();
+
+  // {name} {date} {time} {email}-г орлуулна. Админы бичвэрийг эхлээд эсканедэж,
+  // дараа нь орлуулга хийдэг тул тохиргооноос HTML тарих боломжгүй.
+  // bold жагсаалтад орсон утгуудыг <b>-ээр тодруулна.
+  function fillBookingTpl(tpl, vals, bold) {
+    let out = esc(tpl || '');
+    Object.keys(vals).forEach(k => {
+      const v = esc(vals[k] == null ? '' : String(vals[k]));
+      const piece = (bold && bold.indexOf(k) !== -1) ? '<b>' + v + '</b>' : v;
+      out = out.split('{' + k + '}').join(piece);
+    });
+    return out;
+  }
+
   function renderContact() {
     document.getElementById('contactIntro').textContent = CONTACT.intro || '';
     const rows = [];
@@ -3358,8 +3393,16 @@
     document.getElementById('bookingTitle').textContent = 'Цаг товлох';
     if (done) {
       const u = currentUser();
-      document.getElementById('bookGreeting').textContent =
-        (u && u.name ? u.name + ', з' : 'З') + 'өвлөхөө сонгоод нээлттэй цагаас товлоорой.';
+      const nm = (u && u.name) ? u.name : '';
+      let greet = BOOKING.greeting || DEFAULT_BOOKING.greeting;
+      if (nm) {
+        greet = greet.split('{name}').join(nm);
+      } else {
+        // Нэр мэдэгдэхгүй бол «{name}, » хэсгийг авч, эхний үсгийг том болгоно
+        greet = greet.replace(/\{name\}\s*,?\s*/, '');
+        greet = greet.charAt(0).toUpperCase() + greet.slice(1);
+      }
+      document.getElementById('bookGreeting').textContent = greet;
       bkSelDate = null; bkSelTime = null; bkSelAdvisor = null;
       const advisors = advisorsWithAvailability();
       if (advisors.length > 1) {
@@ -3450,13 +3493,16 @@
     });
     KPICloud.addTakenSlot(bkSelDate, bkSelTime, bkSelAdvisor); // тухайн зөвлөхийн цагийг "завгүй" болгох
     const email = u.email || 'бүртгэлтэй и-мэйл';
-    document.getElementById('bookSuccessMsg').innerHTML =
-      name + ', таны <b>' + bkSelDate + ' ' + bkSelTime + '</b>-ийн зөвлөгөөний цаг товлогдлоо. '
-      + 'Бид баталгаажуулалт болон үнийн саналаа <b>' + esc(email) + '</b> хаяг руу илгээнэ.';
+    document.getElementById('bookSuccessMsg').innerHTML = fillBookingTpl(
+      BOOKING.successText || DEFAULT_BOOKING.successText,
+      { name: name, date: bkSelDate, time: bkSelTime, email: email },
+      ['date', 'time', 'email']
+    );
     document.getElementById('gcalLink').href = gcalUrl(bkSelDate, bkSelTime, name);
     document.getElementById('bookForm').classList.add('hidden');
     document.getElementById('bookSuccess').classList.remove('hidden');
-    document.getElementById('bookingTitle').textContent = 'Цаг товлогдлоо';
+    document.getElementById('bookingTitle').textContent =
+      (BOOKING.successTitle || DEFAULT_BOOKING.successTitle).replace(/!+$/, '');
   }
 
   // ---------- Validation helpers ----------
@@ -3625,6 +3671,10 @@
       if (rg) REGISTER = Object.assign({}, DEFAULT_REGISTER, rg);
     } catch (e) {}
     try {
+      const bk = JSON.parse(localStorage.getItem('kpihub_booking') || 'null');
+      if (bk) BOOKING = Object.assign({}, DEFAULT_BOOKING, bk);
+    } catch (e) {}
+    try {
       const au = JSON.parse(localStorage.getItem('kpihub_authors') || 'null');
       if (Array.isArray(au)) AUTHORS = au;
     } catch (e) {}
@@ -3645,6 +3695,7 @@
     renderProducts();
     renderContact();
     renderRegisterTexts();
+    renderBookingTexts();
     if (currentArticleId && arOverlay.classList.contains('open')) renderByline();
     renderFooterSocial();
     renderWhy();
