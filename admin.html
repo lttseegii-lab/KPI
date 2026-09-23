@@ -950,6 +950,26 @@
           <textarea id="b-successText" style="min-height:90px" placeholder="{name}, таны {date} {time}-ийн зөвлөгөөний цаг товлогдлоо."></textarea>
         </div>
       </div>
+
+      <div class="panel-head" style="margin-top:28px">
+        <h2>Шинэ товлолтын и-мэйл мэдэгдэл</h2>
+      </div>
+      <div class="hint">
+        Зочин цаг товлох бүрт админуудад и-мэйл очно: огноо, цаг, зөвлөх, захиалагчийн нэр, утас,
+        и-мэйл, байгууллага. Мэйлд хариу бичвэл шууд захиалагч руу очно.
+        Хүлээн авагчид болон мэйл үйлчилгээний түлхүүрийг <b>Vercel → Settings → Environment Variables</b>
+        хэсэгт тохируулна (кодод хадгалахгүй).
+      </div>
+      <div class="editor">
+        <div class="field">
+          <label>Төлөв</label>
+          <div id="bnStatus" style="font-size:14px; line-height:1.6;">Шалгаж байна…</div>
+        </div>
+        <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
+          <button class="btn" id="bnTestBtn" onclick="sendBookingTestMail()">Туршилтын мэйл илгээх</button>
+          <span id="bnTestMsg" style="font-size:13px; color:var(--muted);"></span>
+        </div>
+      </div>
     </section>
 
     <section id="tab-admins" class="hidden">
@@ -1612,7 +1632,7 @@
     if (t === 'popup') { renderPopupEditor(); renderPopupSubs(); }
     if (t === 'users') { closeCrm(); renderUsers(); clearUserMsg(); }
     if (t === 'register') renderRegisterForm();
-    if (t === 'booking') renderBookingForm();
+    if (t === 'booking') { renderBookingForm(); loadBookingNotifyStatus(); }
     if (t === 'sections') renderSectionsForm();
     if (t === 'authors') renderAuthors();
     if (t === 'admins') { renderAdmins(); clearAdminMsg(); }
@@ -3146,6 +3166,48 @@
     booking = Object.assign({}, DEFAULT_BOOKING);
     renderBookingForm();
     save('kpihub_booking', booking);
+  }
+
+  // ---------- Шинэ товлолтын и-мэйл мэдэгдэл (api/notify-booking) ----------
+  // Серверээс зөвхөн тохиргооны төлөв ирнэ (хаягуудыг задруулахгүй, тоо л).
+  const BN_PROVIDERS = { resend: 'Resend', sendgrid: 'SendGrid', brevo: 'Brevo' };
+  function loadBookingNotifyStatus() {
+    const el = document.getElementById('bnStatus');
+    if (!el) return;
+    el.textContent = 'Шалгаж байна…';
+    fetch('/api/notify-booking', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : Promise.reject(new Error('HTTP ' + r.status)))
+      .then(d => {
+        if (d.configured) {
+          el.innerHTML = '<span style="color:#16a34a;font-weight:700">✓ Идэвхтэй</span> — '
+            + esc(String(d.recipients)) + ' хүлээн авагч руу ' + esc(BN_PROVIDERS[d.provider] || d.provider) + '-ээр илгээнэ.';
+        } else {
+          el.innerHTML = '<span style="color:#b45309;font-weight:700">⚠ Тохируулаагүй</span> — мэйл явахгүй байна.'
+            + '<br><span style="color:var(--muted)">Vercel env-д дутуу: </span><code>' + (d.missing || []).map(esc).join('</code>, <code>') + '</code>';
+        }
+      })
+      .catch(err => { el.innerHTML = '<span style="color:#dc2626">Төлөв шалгаж чадсангүй</span> (' + esc(err.message || err) + ')'; });
+  }
+  function sendBookingTestMail() {
+    const me = KPICloud.authUser && KPICloud.authUser();
+    const msg = document.getElementById('bnTestMsg');
+    const btn = document.getElementById('bnTestBtn');
+    const say = (t, c) => { msg.textContent = t; msg.style.color = c === 'ok' ? '#16a34a' : c === 'err' ? '#dc2626' : 'var(--muted)'; };
+    if (!me) { say('Эхлээд админаар нэвтэрнэ үү.', 'err'); return; }
+    btn.disabled = true; say('Илгээж байна…');
+    me.getIdToken()
+      .then(token => fetch('/api/notify-booking', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ test: true })
+      }))
+      .then(r => r.json().then(d => ({ ok: r.ok, d })))
+      .then(({ ok, d }) => {
+        if (ok) say('✓ Илгээлээ — ' + d.recipients + ' хүлээн авагчийн мэйлээ шалгана уу (spam хавтсыг ч).', 'ok');
+        else say('Алдаа: ' + (d && d.error || 'тодорхойгүй'), 'err');
+      })
+      .catch(err => say('Сүлжээний алдаа: ' + (err && err.message || err), 'err'))
+      .finally(() => { btn.disabled = false; });
   }
 
   // ---------- Contact ----------

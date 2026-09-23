@@ -3484,6 +3484,20 @@
       + '&add=' + encodeURIComponent(ADVISOR_EMAIL);
   }
 
+  // Админуудад шинэ товлолтыг и-мэйлээр мэдэгдэнэ (api/notify-booking).
+  // Зочны туршлагыг хэзээ ч саатуулахгүй: хариуг хүлээхгүй, алдааг чимээгүй
+  // залгина — товлолт Firestore-д аль хэдийн бичигдсэн. keepalive нь зочин
+  // цонхоо шууд хаасан ч хүсэлтийг дуусгана.
+  function notifyBooking(b) {
+    try {
+      fetch('/api/notify-booking', {
+        method: 'POST', keepalive: true,
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(b)
+      }).catch(() => {});
+    } catch (e) {}
+  }
+
   // Огноо/цаг сонгоод "Цаг товлох" → шууд баталгаажна.
   // Зөвлөгөөний төлбөр энд авахгүй: бид үнийн саналаа и-мэйлээр илгээнэ.
   function confirmBooking() {
@@ -3495,6 +3509,10 @@
       date: bkSelDate, time: bkSelTime, paid: false, advisor: bkSelAdvisor || ''
     });
     KPICloud.addTakenSlot(bkSelDate, bkSelTime, bkSelAdvisor); // тухайн зөвлөхийн цагийг "завгүй" болгох
+    notifyBooking({
+      name, phone: u.phone || '', email: u.email || '', org: u.org || '',
+      date: bkSelDate, time: bkSelTime, advisor: bkSelAdvisor || ''
+    });
     const email = u.email || 'бүртгэлтэй и-мэйл';
     document.getElementById('bookSuccessMsg').innerHTML = fillBookingTpl(
       BOOKING.successText || DEFAULT_BOOKING.successText,
