@@ -61,7 +61,9 @@ module.exports = async (req, res) => {
       if (cfg.missing.length) return sendJson(res, 503, { error: "Тохиргоо дутуу: " + cfg.missing.join(", ") });
       const now = new Date();
       const sample = {
-        name: "Туршилтын хэрэглэгч", email: "", phone: "99112233", org: "Жишээ ХХК",
+        // Зочны оронд админ өөрөө — Meet урилгын товчийг бүтэн замаар нь
+        // (Calendar → Save → Send → урилга ирэх) өөр дээрээ туршиж болно.
+        name: "Туршилтын хэрэглэгч", email: cfg.to[0] || "", phone: "99112233", org: "Жишээ ХХК",
         date: ymd(now), time: "10:00", advisor: "Зөвлөх",
       };
       try {
@@ -174,6 +176,40 @@ function cleanBooking(x) {
 // Мэйлийн агуулга
 // ---------------------------------------------------------------------------
 const WEEKDAYS = ["Ням", "Даваа", "Мягмар", "Лхагва", "Пүрэв", "Баасан", "Бямба"];
+const MEETING_MIN = 60; // index.html-ийн gcalUrl-тэй ижил — 1 цагийн зөвлөгөө
+
+// Админ дарахад Google Calendar-ийн шинэ үйл явдлыг БӨГЛӨӨСТЭЙ нээнэ: гарчиг,
+// цаг, тайлбар, зочны и-мэйл. Google Meet линкийг Calendar өөрөө нэмдэг
+// («Google Meet-ийг автоматаар нэмэх» тохиргоо, анхдагчаар асаалттай), админ
+// Save → «Send» дарахад зочинд албан ёсны урилга + уулзалтын линк очно.
+// Ингэснээр зочны хаяг руу манай системээс мэйл явуулах шаардлагагүй —
+// Resend домэйн баталгаажуулалтгүйгээр ажиллана.
+//
+// Цагийг «floating» (Z-гүй) хэлбэрээр өгч ctz=Asia/Ulaanbaatar зааж өгнө:
+// товлолт Улаанбаатарын цагаар хийгддэг тул админы календарийн бүс ямар ч
+// байсан зөв цагт унана.
+function calendarInviteUrl(b) {
+  const hhmm = b.time.length === 4 ? "0" + b.time : b.time;
+  const start = new Date(b.date + "T" + hhmm + ":00Z");
+  const end = new Date(start.getTime() + MEETING_MIN * 60000); // 23:00 → маргааш 00:00
+  const f = (d) => d.toISOString().replace(/[-:]/g, "").slice(0, 15); // YYYYMMDDTHHMMSS
+  const who = b.name || b.email || b.phone || "Зочин";
+  const details = ["KPI consulting — онлайн зөвлөгөө.", ""]
+    .concat([
+      ["Захиалагч", b.name], ["Байгууллага", b.org], ["Утас", b.phone],
+      ["И-мэйл", b.email], ["Зөвлөх", b.advisor],
+    ].filter((r) => r[1]).map((r) => r[0] + ": " + r[1]))
+    .join("\n");
+  const q = new URLSearchParams({
+    action: "TEMPLATE",
+    text: "KPI зөвлөгөө — " + who,
+    dates: f(start) + "/" + f(end),
+    ctz: "Asia/Ulaanbaatar",
+    details: details,
+  });
+  if (b.email) q.set("add", b.email);
+  return "https://calendar.google.com/calendar/render?" + q.toString();
+}
 
 function compose(b, base, isTest) {
   const d = new Date(b.date + "T00:00:00Z");
@@ -195,10 +231,16 @@ function compose(b, base, isTest) {
   ].filter(r => r[1]);
 
   const admin = base + "/admin";
+  const invite = calendarInviteUrl(b);
+  const inviteNote = b.email
+    ? "Google Calendar нээгдэж, зочин болон цаг бөглөгдсөн байна. Google Meet линк автоматаар нэмэгдэнэ — Save → «Send» дарахад зочинд урилга очно."
+    : "Захиалагч и-мэйл үлдээгээгүй тул Calendar-т зочныг гараар нэмнэ үү.";
   const text =
     (isTest ? "Энэ бол туршилтын мэйл — тохиргоо зөв ажиллаж байна.\n\n" : "") +
     "Шинэ цаг товлолт ирлээ.\n\n" +
     rows.map(r => r[0] + ": " + r[1]).join("\n") +
+    "\n\nGoogle Meet уулзалт үүсгэх: " + invite +
+    "\n(" + inviteNote + ")" +
     "\n\nТовлосон: " + booked + " (Улаанбаатар)" +
     "\nАдмин самбар: " + admin +
     (b.email ? "\n\nЭнэ мэйлд хариу бичвэл шууд захиалагч руу очно." : "") + "\n";
@@ -222,7 +264,9 @@ function compose(b, base, isTest) {
     "</td></tr>" +
     '<tr><td style="padding:14px 28px 4px"><table role="presentation" width="100%" cellpadding="0" cellspacing="0">' + tr + "</table></td></tr>" +
     '<tr><td style="padding:18px 28px 26px">' +
-    '<a href="' + esc(admin) + '" style="display:inline-block;background:#1b6fd0;color:#fff;text-decoration:none;font-weight:700;font-size:14.5px;padding:11px 22px;border-radius:999px">Админ самбарт харах</a>' +
+    '<a href="' + esc(invite) + '" style="display:inline-block;background:#1b6fd0;color:#fff;text-decoration:none;font-weight:700;font-size:14.5px;padding:11px 22px;border-radius:999px;margin:0 8px 8px 0">Google Meet уулзалт үүсгэх</a>' +
+    '<a href="' + esc(admin) + '" style="display:inline-block;background:#fff;color:#1a1a1a;text-decoration:none;font-weight:600;font-size:14.5px;padding:10px 20px;border-radius:999px;border:1px solid #cfd2da;margin:0 0 8px">Админ самбар</a>' +
+    '<div style="margin-top:6px;font-size:13px;color:#444;line-height:1.5">' + esc(inviteNote) + "</div>" +
     '<div style="margin-top:16px;font-size:12.5px;color:#6b7280">Товлосон: ' + esc(booked) + " (Улаанбаатар)" +
     (b.email ? "<br>Энэ мэйлд хариу бичвэл шууд захиалагч руу очно." : "") + "</div>" +
     "</td></tr></table></td></tr></table></body></html>";
