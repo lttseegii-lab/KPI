@@ -967,7 +967,7 @@
         </div>
         <div style="display:flex; gap:12px; align-items:center; flex-wrap:wrap;">
           <button class="btn" id="bnTestBtn" onclick="sendBookingTestMail()">Туршилтын мэйл илгээх</button>
-          <span id="bnTestMsg" style="font-size:13px; color:var(--muted);"></span>
+          <span id="bnTestMsg" style="font-size:13px; color:var(--muted); white-space:pre-line;"></span>
         </div>
       </div>
     </section>
@@ -3203,8 +3203,13 @@
       }))
       .then(r => r.json().then(d => ({ ok: r.ok, d })))
       .then(({ ok, d }) => {
-        if (ok) say('✓ Илгээлээ — ' + d.recipients + ' хүлээн авагчийн мэйлээ шалгана уу (spam хавтсыг ч).', 'ok');
-        else say('Алдаа: ' + (d && d.error || 'тодорхойгүй'), 'err');
+        if (ok) { say('✓ Илгээлээ — ' + d.recipients + ' хүлээн авагчийн мэйлээ шалгана уу (spam хавтсыг ч).', 'ok'); return; }
+        let t = 'Алдаа: ' + (d && d.error || 'тодорхойгүй');
+        // Түлхүүр буруу үед Vercel-д юу хадгалагдсаныг харуулна — Resend → API keys
+        // жагсаалтын «Token» баганатай тулгаж шалгана.
+        if (d && d.keyHint) t += '\nVercel-д хадгалагдсан түлхүүр: ' + d.keyHint
+          + '\nResend → API keys жагсаалтын Token баганатай тулгана уу. Таарахгүй бол Vercel-д түлхүүрээ дахин буулгаад Redeploy хийнэ.';
+        say(t, 'err');
       })
       .catch(err => say('Сүлжээний алдаа: ' + (err && err.message || err), 'err'))
       .finally(() => { btn.disabled = false; });

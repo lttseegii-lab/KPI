@@ -64,7 +64,17 @@ module.exports = async (req, res) => {
         name: "Туршилтын хэрэглэгч", email: "", phone: "99112233", org: "Жишээ ХХК",
         date: ymd(now), time: "10:00", advisor: "Зөвлөх",
       };
-      await deliver(cfg, compose(sample, siteBase(req), true));
+      try {
+        await deliver(cfg, compose(sample, siteBase(req), true));
+      } catch (err) {
+        // Түлхүүр буруу бол Vercel-д ЯГ юу хадгалагдсаныг админд харуулна:
+        // Secret утгыг Vercel дахин харуулдаггүй тул өөр аргаар мэдэх боломжгүй.
+        const bad = /\b(401|403)\b/.test(String(err && err.message));
+        return sendJson(res, 502, {
+          error: "Мэйл илгээж чадсангүй: " + (err && err.message || "алдаа"),
+          keyHint: bad ? keyHint(cfg.key) : undefined,
+        });
+      }
       return sendJson(res, 200, { ok: true, recipients: cfg.to.length });
     }
 
@@ -102,9 +112,9 @@ function config() {
   const to = String(env.BOOKING_NOTIFY_TO || "")
     .split(/[,;\s]+/).map(s => s.trim()).filter(s => /^[^\s@<>]+@[^\s@<>]+\.[^\s@<>]+$/.test(s));
   let provider = "", key = "";
-  if (env.RESEND_API_KEY) { provider = "resend"; key = env.RESEND_API_KEY; }
-  else if (env.SENDGRID_API_KEY) { provider = "sendgrid"; key = env.SENDGRID_API_KEY; }
-  else if (env.BREVO_API_KEY) { provider = "brevo"; key = env.BREVO_API_KEY; }
+  if (env.RESEND_API_KEY) { provider = "resend"; key = cleanKey(env.RESEND_API_KEY); }
+  else if (env.SENDGRID_API_KEY) { provider = "sendgrid"; key = cleanKey(env.SENDGRID_API_KEY); }
+  else if (env.BREVO_API_KEY) { provider = "brevo"; key = cleanKey(env.BREVO_API_KEY); }
 
   // Resend нь домэйн баталгаажуулаагүй үед onboarding@resend.dev-ээр илгээж
   // чаддаг (гэхдээ зөвхөн Resend бүртгэлийн эзний хаяг руу). SendGrid, Brevo
@@ -117,6 +127,21 @@ function config() {
   if (!provider) missing.push("RESEND_API_KEY / SENDGRID_API_KEY / BREVO_API_KEY");
   if (provider && !from) missing.push("BOOKING_NOTIFY_FROM");
   return { to, provider, key, from: parseAddr(from), missing };
+}
+
+// Vercel-д буулгахдаа түгээмэл гардаг алдааг засна: хашилт ("re_…"), .env
+// мөрийг бүтнээр нь буулгасан (RESEND_API_KEY=re_…), зай, мөр шилжилт.
+// Түлхүүрүүд (re_…, SG.…, xkeysib-…) "=" тэмдэгт агуулдаггүй.
+function cleanKey(v) {
+  let k = String(v || "").trim().replace(/^["'`]+|["'`]+$/g, "").trim();
+  if (k.indexOf("=") !== -1) k = k.slice(k.lastIndexOf("=") + 1).trim().replace(/^["'`]+|["'`]+$/g, "");
+  return k.replace(/\s+/g, "");
+}
+// Түлхүүрийн нууц БИШ ул мөр: эхний 11 тэмдэгт + урт. Resend-ийн самбар API
+// keys жагсаалтдаа яг эхний 11 тэмдэгтийг ил харуулдаг тул тулгаж шалгаж болно.
+// Зөвхөн админы туршилтын хариунд буцаана — нийтийн замд хэзээ ч үгүй.
+function keyHint(k) {
+  return k ? k.slice(0, 11) + "… (" + k.length + " тэмдэгт)" : "(хоосон)";
 }
 
 // "Нэр <a@b.mn>" эсвэл "a@b.mn" → { name, email }
