@@ -23,45 +23,64 @@ function clip(s, n) {
   return s.length > n ? s.slice(0, n - 1).replace(/\s+\S*$/, "") + "…" : s;
 }
 
+/* Сайтын дотоод уншигчтай (index.html-ийн .reader-*) ижил ЦАЙВАР загвар.
+   Гүн хөх дэвсгэр дээр урт нийтлэл унших нь ядаргаатай байсан тул энд ч
+   #f2f3f7 дэвсгэр, хар бичвэр, төвлөрсөн serif гарчиг — өөрөөр хэлбэл
+   хэрэглэгч сайт дотор нээсэн ч, сошиалын холбоосоор орж ирсэн ч ялгаагүй
+   нэг л хуудас харна. Өнгө, хэмжээсүүд index.html:432-560-аас хуулбарлав. */
 const CSS = `
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--bg:#0a1150;--soft:#0f1a6b;--card:#16227e;--line:#2e3ba8;--text:#eef3ff;--muted:#aeb9ea;--accent:#4faeee}
+:root{--page:#f2f3f7;--ink:#1a1a1a;--line:#e3e5ec;--muted:#6b7280;--accent:#45a8f0;--link:#15529c;--brand:#0a1150}
 html{scroll-behavior:smooth}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--text);line-height:1.7;-webkit-font-smoothing:antialiased}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;background:var(--page);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased}
 a{color:inherit}
 img{display:block;max-width:100%}
-.top{border-bottom:1px solid var(--line);background:rgba(10,17,80,.85);backdrop-filter:saturate(140%) blur(8px);position:sticky;top:0;z-index:5}
-.top .in{max-width:760px;margin:0 auto;padding:16px 22px;display:flex;align-items:center;justify-content:space-between}
-.brand{font-size:18px;font-weight:600;color:var(--muted);text-decoration:none}
-.brand b{color:#fff;font-weight:800}
-.back{font-size:13.5px;color:var(--muted);text-decoration:none;border:1px solid var(--line);border-radius:9px;padding:8px 14px}
-.back:hover{color:#fff;border-color:var(--accent)}
-main{max-width:760px;margin:0 auto;padding:34px 22px 64px}
-.eyebrow{font-size:12.5px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;color:var(--accent)}
-h1{font-size:33px;line-height:1.22;margin:14px 0 12px;letter-spacing:-.3px}
-.meta{font-size:13px;color:var(--muted);margin-bottom:24px}
-.cover{border-radius:16px;overflow:hidden;margin:0 0 28px;border:1px solid var(--line)}
+.top{border-bottom:1px solid var(--line);background:rgba(242,243,247,.9);backdrop-filter:saturate(140%) blur(8px);position:sticky;top:0;z-index:5}
+.top .in{max-width:1040px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:14px}
+.brand{font-size:18px;font-weight:600;color:#5b6270;text-decoration:none}
+.brand b{color:#14161c;font-weight:800}
+.back{font-size:14px;color:#444;text-decoration:none;border:1px solid #cfd2da;border-radius:999px;padding:8px 18px;background:#fff;font-weight:500}
+.back:hover{color:var(--link);border-color:var(--link)}
+main{max-width:1040px;margin:0 auto;padding:26px 24px 90px}
+.eyebrow{text-align:center;color:#6b6b6b;font-size:15px;margin-bottom:18px}
+h1{text-align:center;font-family:Georgia,"Times New Roman",serif;font-weight:700;font-size:clamp(26px,4vw,40px);line-height:1.18;color:#111;letter-spacing:-.3px;max-width:900px;margin:0 auto 18px}
+.byline{text-align:center;font-size:19px;color:#111;margin-bottom:10px}
+.byline b{color:var(--link);font-weight:800}
+.meta{text-align:center;font-size:15px;color:#444;margin-bottom:34px}
+.cover{max-width:1000px;margin:0 auto 34px;border-radius:12px;overflow:hidden;border:1px solid #e2e4ea;background:#eef0f5}
 .cover img{width:100%;height:auto}
-.hero-ic{aspect-ratio:16/8;display:grid;place-items:center;font-size:76px;background:linear-gradient(160deg,#16227e,#0f1a6b)}
-article p{margin:0 0 18px;font-size:16.5px;color:#e6ecff}
-article h3{font-size:20px;margin:30px 0 12px;color:#fff}
-article ul{margin:0 0 18px;padding-left:22px}
-article li{margin:0 0 9px;font-size:16px;color:#e6ecff}
-article blockquote{margin:22px 0;padding:14px 20px;border-left:3px solid var(--accent);background:var(--soft);border-radius:0 10px 10px 0;color:#dfe7ff;font-style:italic}
-article figure{margin:22px 0}
-article figure img{width:100%;border-radius:12px;border:1px solid var(--line)}
-article figcaption{font-size:12.5px;color:var(--muted);margin-top:8px;text-align:center}
-article a{color:var(--accent);text-decoration:underline}
+.hero-ic{aspect-ratio:16/8;display:grid;place-items:center;font-size:90px;background:linear-gradient(160deg,#eef1f7,#e3e7f2)}
+article{max-width:720px;margin:0 auto}
+article p{margin:0 0 18px;font-size:16.5px;color:#222;line-height:1.75}
+article h3{font-size:20px;font-weight:700;color:#111;margin:30px 0 10px}
+article ul{margin:0 0 20px 4px;padding:0;display:flex;flex-direction:column;gap:11px;list-style:none}
+article li{display:flex;gap:12px;font-size:16.5px;color:#222;line-height:1.65}
+article li::before{content:"•";color:var(--accent);font-weight:800}
+article blockquote{border-left:4px solid var(--accent);padding:6px 0 6px 22px;margin:24px 0;color:#444;font-style:italic;font-size:17.5px;line-height:1.6}
+article figure{margin:30px 0}
+article figure img{width:100%;max-height:520px;object-fit:cover;border-radius:12px;border:1px solid #e2e4ea;background:#eef0f5}
+article figcaption{margin-top:8px;font-size:13px;color:#666;text-align:center}
+article a{color:var(--link);text-decoration:underline;text-underline-offset:2px}
 article .lg{font-size:1.3em}article .sm{font-size:0.82em}
-.cta{margin:40px 0 8px;padding:24px;background:var(--card);border:1px solid var(--line);border-radius:16px;text-align:center}
-.cta p{margin:0 0 14px;color:var(--muted);font-size:14.5px}
-.btn{display:inline-block;background:var(--accent);color:#00122b;font-weight:700;text-decoration:none;padding:12px 22px;border-radius:11px;font-size:14.5px}
-.more{margin-top:44px;border-top:1px solid var(--line);padding-top:26px}
-.more h2{font-size:15px;color:var(--muted);font-weight:700;margin-bottom:14px}
-.more a{display:block;text-decoration:none;color:var(--text);padding:12px 0;border-bottom:1px solid var(--line);font-size:15.5px}
-.more a:last-child{border-bottom:0}
-.more a:hover{color:var(--accent)}
+.cta{max-width:720px;margin:46px auto 0;padding-top:26px;border-top:1px solid #e0e2e9;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.cta p{margin:0;color:#5b6270;font-size:15px;flex:1 1 260px}
+.btn{display:inline-block;background:#1f7ae0;color:#fff;font-weight:700;text-decoration:none;padding:11px 24px;border-radius:999px;font-size:15px}
+.btn:hover{background:#1663bb}
+.more{max-width:1000px;margin:48px auto 0}
+.more h2{font-size:12.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:18px}
+.more-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px}
+.more-card{border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#fff;display:flex;flex-direction:column;text-decoration:none;color:inherit;transition:box-shadow .2s,transform .2s,border-color .2s}
+.more-card:hover{box-shadow:0 14px 32px rgba(0,0,0,.11);transform:translateY(-3px);border-color:#d4d7e0}
+.more-thumb{height:172px;display:grid;place-items:center;font-size:48px;background:#eef1f7}
+.more-thumb img{width:100%;height:100%;object-fit:cover}
+.more-body{padding:16px 18px 20px}
+.more-meta{display:flex;align-items:center;gap:10px;font-size:12.5px;margin-bottom:10px}
+.more-cat{font-weight:700;color:#14161c}
+.more-date{color:var(--muted)}
+.more-title{font-size:17px;font-weight:800;line-height:1.32;color:#14161c}
 footer{border-top:1px solid var(--line);color:var(--muted);font-size:12.5px;text-align:center;padding:26px 22px}
+@media (max-width:860px){.more-grid{grid-template-columns:1fr 1fr}}
+@media (max-width:560px){.more-grid{grid-template-columns:1fr}}
 `;
 
 module.exports = async (req, res) => {
@@ -105,7 +124,7 @@ module.exports = async (req, res) => {
       '<meta name="twitter:description" content="' + esc(SITE_DESC) + '">' +
       '<meta name="twitter:image" content="' + esc(base + "/og-cover.png") + '">' +
       '<meta http-equiv="refresh" content="0; url=/">' +
-      '<style>body{font-family:system-ui,-apple-system,sans-serif;background:#0a1150;color:#fff;padding:48px;text-align:center}a{color:#7cc7ff;font-weight:600}</style>' +
+      '<style>body{font-family:system-ui,-apple-system,sans-serif;background:#f2f3f7;color:#1a1a1a;padding:48px;text-align:center}a{color:#15529c;font-weight:600}</style>' +
       '</head><body>Нийтлэл олдсонгүй. <a href="/">Нүүр хуудас руу очих</a></body></html>'
     );
     return;
@@ -135,20 +154,36 @@ module.exports = async (req, res) => {
     if (dim) { ogW = dim.w; ogH = dim.h; } else { ogW = 0; ogH = 0; } // тодорхойгүй бол зарлахгүй
   }
   const coverDims = (ogW && ogH) ? ' width="' + ogW + '" height="' + ogH + '"' : "";
+  // Хуудсан доторх <img> нь ХАРЬЦАНГУЙ зам ашиглана (og:image заавал үнэмлэхүй
+  // байх ёстой тул тэнд `ogImage` хэвээр). Ингэснээр http/https, apex/www
+  // алийг нь ч дагаад ажиллана.
+  const coverSrc = "/og/" + encodeURIComponent(id);
   const coverHtml = hasPhoto
-    ? '<div class="cover"><img src="' + esc(ogImage) + '" alt="' + esc(a.title) + '"' + coverDims + '></div>'
+    ? '<div class="cover"><img src="' + esc(coverSrc) + '" alt="' + esc(a.title) + '"' + coverDims + '></div>'
     : '<div class="cover"><div class="hero-ic">' + esc(a.icon || "📊") + "</div></div>";
 
   // Метадата мөр (ангилал | огноо · унших)
   const metaBits = [a.date, a.read].filter(Boolean).join(" · ");
 
-  // Бусад нийтлэл — crawl-discovery ба дотоод холбоос
-  const others = list.filter(x => x && x.id !== id).slice(0, 5);
+  // Бусад нийтлэл — crawl-discovery ба дотоод холбоос. Сайтын уншигчийн
+  // "холбоотой нийтлэл" картуудтай ижил: зураг, ангилал/огноо, гарчиг.
+  const others = list.filter(x => x && x.id !== id).slice(0, 3);
   const moreHtml = others.length
-    ? '<nav class="more"><h2>Бусад нийтлэл</h2>' +
-      others.map(x =>
-        '<a href="/a/' + esc(encodeURIComponent(x.id)) + '">' + esc(x.title) + "</a>"
-      ).join("") + "</nav>"
+    ? '<nav class="more"><h2>Бусад нийтлэл</h2><div class="more-grid">' +
+      others.map(x => {
+        const thumb = x.image
+          ? '<img src="/og/' + esc(encodeURIComponent(x.id)) + '" alt="' + esc(x.title) +
+            '" loading="lazy" width="1200" height="630">'
+          : "<span>" + esc(x.icon || "📄") + "</span>";
+        const bits = (x.cat ? '<span class="more-cat">' + esc(x.cat) + "</span>" : "") +
+          (x.date ? '<span class="more-date">' + esc(x.date) + "</span>" : "");
+        return '<a class="more-card" href="/a/' + esc(encodeURIComponent(x.id)) + '">' +
+          '<div class="more-thumb">' + thumb + "</div>" +
+          '<div class="more-body">' +
+          (bits ? '<div class="more-meta">' + bits + "</div>" : "") +
+          '<div class="more-title">' + esc(x.title) + "</div>" +
+          "</div></a>";
+      }).join("") + "</div></nav>"
     : "";
 
   // BlogPosting JSON-LD. Publisher-ийг бүрэн Organization (нэр + logo)-оор
@@ -188,7 +223,7 @@ module.exports = async (req, res) => {
     '<meta name="robots" content="index, follow, max-image-preview:large">' +
     '<link rel="icon" href="/favicon.svg" type="image/svg+xml">' +
     '<link rel="icon" href="/favicon.ico" sizes="32x32">' +
-    '<meta name="theme-color" content="#0a1150">' +
+    '<meta name="theme-color" content="#f2f3f7">' +
     '<meta property="og:type" content="article">' +
     '<meta property="og:site_name" content="' + esc(SITE) + '">' +
     '<meta property="og:locale" content="mn_MN">' +
@@ -212,13 +247,16 @@ module.exports = async (req, res) => {
     '<a class="brand" href="/"><b>KPI</b>&nbsp;consulting</a>' +
     '<a class="back" href="/">← Бүх нийтлэл</a>' +
     "</div></header>" +
-    "<main><article>" +
-    '<div class="eyebrow">' + esc(a.cat || SITE) + "</div>" +
+    // Гарчиг, зохиогч, cover нь <article>-ээс ГАДНА байна: биеийг 720px-ээр
+    // уншихад тохиромжтой нарийхан баганад барьж, гарчиг (900px) болон
+    // зургийг (1000px) илүү өргөн байлгахын тулд — сайтын уншигчтай адил.
+    "<main>" +
+    '<div class="eyebrow">' + esc(a.cat || "Нийтлэл") + " | " + esc(SITE) + "</div>" +
     "<h1>" + esc(a.title) + "</h1>" +
+    (a.author ? '<div class="byline">By <b>' + esc(a.author) + "</b></div>" : "") +
     (metaBits ? '<div class="meta">' + esc(metaBits) + "</div>" : "") +
     coverHtml +
-    renderBody(a.body) +
-    "</article>" +
+    "<article>" + renderBody(a.body) + "</article>" +
     '<div class="cta"><p>Байгууллагынхаа гүйцэтгэлийг зөв хэмжиж, ухаалаг удирдъя.</p>' +
     '<a class="btn" href="/">KPI consulting-тэй танилцах</a></div>' +
     moreHtml +
