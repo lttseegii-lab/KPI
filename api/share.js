@@ -23,6 +23,26 @@ function clip(s, n) {
   return s.length > n ? s.slice(0, n - 1).replace(/\s+\S*$/, "") + "…" : s;
 }
 
+// og-image.js-ийн дэмждэг растер төрлүүд. Cover болон "бусад нийтлэл"-ийн
+// зураг ИЖИЛ шалгуураар шийдэгдэх ёстой: эс тэгвээс og-image нь /og-cover.png
+// руу шилжүүлж, нэг нийтлэл нэг газартаа брэндийн зураг, нөгөө газартаа өөрийн
+// icon-оо харуулна.
+const PHOTO_RE = /^data:(image\/(?:jpeg|jpg|png|gif|webp))/i;
+const photoType = (v) => (typeof v === "string" && (PHOTO_RE.exec(v) || [])[1]) || "";
+
+// Зураггүй нийтлэлийн hero — index.html:1523-1531 дэх THEMES-ийн хуулбар.
+// Сайт дотор ангилал бүр өөрийн дэвсгэртэй байдаг тул энд ч ижил байлгана.
+const HERO_BG = {
+  "Судалгаа": "radial-gradient(120% 90% at 50% 118%, #2a3aa8 0%, transparent 55%), linear-gradient(160deg, #141d70 0%, #0a1150 100%)",
+  "Гарын авлага": "linear-gradient(160deg, #f5f7ff 0%, #dde5f6 100%)",
+  "Бенчмарк": "radial-gradient(100% 85% at 78% 12%, #45a8f0 0%, transparent 55%), linear-gradient(160deg, #16358c 0%, #0c1e64 100%)",
+  "Туршлага": "radial-gradient(110% 90% at 28% 8%, #3348c8 0%, transparent 55%), linear-gradient(160deg, #111c66 0%, #0a1248 100%)",
+  "Кейс": "linear-gradient(160deg, #eef2fb 0%, #d3ddf0 100%)",
+  "Тренд": "radial-gradient(110% 90% at 72% 10%, #2f97e8 0%, transparent 55%), linear-gradient(160deg, #132a86 0%, #0a1556 100%)",
+  _default: "linear-gradient(160deg, #16227e, #0f1a6b)",
+};
+const heroBg = (cat) => HERO_BG[cat] || HERO_BG._default;
+
 /* Сайтын дотоод уншигчтай (index.html-ийн .reader-*) ижил ЦАЙВАР загвар.
    Гүн хөх дэвсгэр дээр урт нийтлэл унших нь ядаргаатай байсан тул энд ч
    #f2f3f7 дэвсгэр, хар бичвэр, төвлөрсөн serif гарчиг — өөрөөр хэлбэл
@@ -30,14 +50,14 @@ function clip(s, n) {
    нэг л хуудас харна. Өнгө, хэмжээсүүд index.html:432-560-аас хуулбарлав. */
 const CSS = `
 *{box-sizing:border-box;margin:0;padding:0}
-:root{--page:#f2f3f7;--ink:#1a1a1a;--line:#e3e5ec;--muted:#6b7280;--accent:#45a8f0;--link:#15529c;--brand:#0a1150}
+:root{--page:#f2f3f7;--ink:#1a1a1a;--line:#e3e5ec;--muted:#616875;--accent:#45a8f0;--link:#15529c}
 html{scroll-behavior:smooth}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;background:var(--page);color:var(--ink);line-height:1.7;-webkit-font-smoothing:antialiased}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue",Arial,sans-serif;background:var(--page);color:var(--ink);line-height:1.6;-webkit-font-smoothing:antialiased}
 a{color:inherit}
 img{display:block;max-width:100%}
 .top{border-bottom:1px solid var(--line);background:rgba(242,243,247,.9);backdrop-filter:saturate(140%) blur(8px);position:sticky;top:0;z-index:5}
 .top .in{max-width:1040px;margin:0 auto;padding:16px 24px;display:flex;align-items:center;justify-content:space-between;gap:14px}
-.brand{font-size:18px;font-weight:600;color:#5b6270;text-decoration:none}
+.brand{font-size:18px;font-weight:600;color:#565c69;text-decoration:none}
 .brand b{color:#14161c;font-weight:800}
 .back{font-size:14px;color:#444;text-decoration:none;border:1px solid #cfd2da;border-radius:999px;padding:8px 18px;background:#fff;font-weight:500}
 .back:hover{color:var(--link);border-color:var(--link)}
@@ -47,9 +67,9 @@ h1{text-align:center;font-family:Georgia,"Times New Roman",serif;font-weight:700
 .byline{text-align:center;font-size:19px;color:#111;margin-bottom:10px}
 .byline b{color:var(--link);font-weight:800}
 .meta{text-align:center;font-size:15px;color:#444;margin-bottom:34px}
-.cover{max-width:1000px;margin:0 auto 34px;border-radius:12px;overflow:hidden;border:1px solid #e2e4ea;background:#eef0f5}
-.cover img{width:100%;height:auto}
-.hero-ic{aspect-ratio:16/8;display:grid;place-items:center;font-size:90px;background:linear-gradient(160deg,#eef1f7,#e3e7f2)}
+.cover{aspect-ratio:16/8;max-width:1000px;margin:0 auto 34px;border-radius:12px;overflow:hidden;border:1px solid #e2e4ea;background:#eef0f5}
+.cover img{width:100%;height:100%;object-fit:cover}
+.hero-ic{width:100%;height:100%;display:grid;place-items:center;font-size:90px}
 article{max-width:720px;margin:0 auto}
 article p{margin:0 0 18px;font-size:16.5px;color:#222;line-height:1.75}
 article h3{font-size:20px;font-weight:700;color:#111;margin:30px 0 10px}
@@ -64,7 +84,7 @@ article a{color:var(--link);text-decoration:underline;text-underline-offset:2px}
 article .lg{font-size:1.3em}article .sm{font-size:0.82em}
 .cta{max-width:720px;margin:46px auto 0;padding-top:26px;border-top:1px solid #e0e2e9;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
 .cta p{margin:0;color:#5b6270;font-size:15px;flex:1 1 260px}
-.btn{display:inline-block;background:#1f7ae0;color:#fff;font-weight:700;text-decoration:none;padding:11px 24px;border-radius:999px;font-size:15px}
+.btn{display:inline-block;background:#1b6fd0;color:#fff;font-weight:700;text-decoration:none;padding:11px 24px;border-radius:999px;font-size:15px}
 .btn:hover{background:#1663bb}
 .more{max-width:1000px;margin:48px auto 0}
 .more h2{font-size:12.5px;letter-spacing:.6px;text-transform:uppercase;color:var(--muted);font-weight:700;margin-bottom:18px}
@@ -144,8 +164,7 @@ module.exports = async (req, res) => {
   // Cover ба og:image-ийн хэмжээ/төрөл. Растер зурагтай бол og-image түүнийг
   // шууд өгнө (хэмжээ = imageSize); эс бол og-cover.png (1200×630). Facebook
   // эхний scrape-д зургийг шууд гаргахын тулд og:image:width/height зарлана.
-  const photoMime = ((typeof a.image === "string"
-    && /^data:(image\/(?:jpeg|jpg|png|gif|webp))/i.exec(a.image)) || [])[1];
+  const photoMime = photoType(a.image);
   const hasPhoto = !!photoMime;
   let ogW = 1200, ogH = 630, ogType = "image/png";
   if (hasPhoto) {
@@ -160,7 +179,8 @@ module.exports = async (req, res) => {
   const coverSrc = "/og/" + encodeURIComponent(id);
   const coverHtml = hasPhoto
     ? '<div class="cover"><img src="' + esc(coverSrc) + '" alt="' + esc(a.title) + '"' + coverDims + '></div>'
-    : '<div class="cover"><div class="hero-ic">' + esc(a.icon || "📊") + "</div></div>";
+    : '<div class="cover"><div class="hero-ic" style="background:' + esc(heroBg(a.cat)) + '">' +
+      esc(a.icon || "📊") + "</div></div>";
 
   // Метадата мөр (ангилал | огноо · унших)
   const metaBits = [a.date, a.read].filter(Boolean).join(" · ");
@@ -171,14 +191,14 @@ module.exports = async (req, res) => {
   const moreHtml = others.length
     ? '<nav class="more"><h2>Бусад нийтлэл</h2><div class="more-grid">' +
       others.map(x => {
-        const thumb = x.image
+        const thumb = photoType(x.image)
           ? '<img src="/og/' + esc(encodeURIComponent(x.id)) + '" alt="' + esc(x.title) +
             '" loading="lazy" width="1200" height="630">'
           : "<span>" + esc(x.icon || "📄") + "</span>";
         const bits = (x.cat ? '<span class="more-cat">' + esc(x.cat) + "</span>" : "") +
           (x.date ? '<span class="more-date">' + esc(x.date) + "</span>" : "");
         return '<a class="more-card" href="/a/' + esc(encodeURIComponent(x.id)) + '">' +
-          '<div class="more-thumb">' + thumb + "</div>" +
+          '<div class="more-thumb" style="background:' + esc(heroBg(x.cat)) + '">' + thumb + "</div>" +
           '<div class="more-body">' +
           (bits ? '<div class="more-meta">' + bits + "</div>" : "") +
           '<div class="more-title">' + esc(x.title) + "</div>" +
